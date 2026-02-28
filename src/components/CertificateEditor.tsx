@@ -24,7 +24,7 @@ const validateCertificate = (cert: Certificate): string[] => {
 const formatDate = (iso: string | null | undefined): string => {
   if (!iso) return "Present"
   const [y, m] = iso.split("-")
-  return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+  return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+m - 1]} ${y}`
 }
 
 export function CertificateEditor({ certificates, onChange }: CertificateEditorProps) {
@@ -32,6 +32,7 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
   const [editingCert, setEditingCert] = useState<Certificate | null>(null)
 
   const addCertificate = () => {
+    if (editingCert) return
     setEditingCert({
       id: crypto.randomUUID(),
       name: "",
