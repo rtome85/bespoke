@@ -34,7 +34,13 @@ interface GenerationResult {
   resumeFilename: string
   coverLetterContent: string
   coverLetterFilename: string
-  match: { percentage: number; summary: string }
+  match: {
+    percentage: number
+    summary: string
+    strengths: string[]
+    weaknesses: string[]
+    improvements: string[]
+  }
 }
 
 type View = "form" | "loading" | "success" | "saveForm" | "applicationsList"
@@ -121,7 +127,7 @@ function IndexDialog() {
           setQuoteIndex((i) => (i + 1) % QUOTES.length)
           setQuoteVisible(true)
         }, 400)
-      }, 4000)
+      }, 8000)
     } else {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)
@@ -314,6 +320,53 @@ function IndexDialog() {
               <p className="text-xs text-gray-600 leading-relaxed">{result.match.summary}</p>
             )}
           </div>
+
+          {/* Strengths / Weaknesses / Improvements */}
+          {((result.match.strengths?.length ?? 0) > 0 || (result.match.weaknesses?.length ?? 0) > 0 || (result.match.improvements?.length ?? 0) > 0) && (
+            <div className="space-y-3 mb-5">
+              {(result.match.strengths?.length ?? 0) > 0 && (
+                <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">Strengths</p>
+                  <ul className="space-y-1">
+                    {result.match.strengths.map((s, i) => (
+                      <li key={i} className="flex gap-2 text-xs text-green-800">
+                        <span className="mt-0.5 shrink-0">✓</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(result.match.weaknesses?.length ?? 0) > 0 && (
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">Weaknesses</p>
+                  <ul className="space-y-1">
+                    {result.match.weaknesses.map((w, i) => (
+                      <li key={i} className="flex gap-2 text-xs text-red-800">
+                        <span className="mt-0.5 shrink-0">✗</span>
+                        <span>{w}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(result.match.improvements?.length ?? 0) > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">Improvements</p>
+                  <ul className="space-y-1">
+                    {result.match.improvements.map((imp, i) => (
+                      <li key={i} className="flex gap-2 text-xs text-blue-800">
+                        <span className="mt-0.5 shrink-0">→</span>
+                        <span>{imp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Download buttons */}
           <div className="space-y-3">

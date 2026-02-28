@@ -30,7 +30,10 @@ export class OllamaClient {
     }
   }
 
-  protected formatUserProfile(profile: UserProfile, includeYears = false): string {
+  protected formatUserProfile(
+    profile: UserProfile,
+    includeYears = false
+  ): string {
     if (!profile) return ""
 
     const p = profile.personalInfo
@@ -42,15 +45,18 @@ export class OllamaClient {
     if (p?.website) contactParts.push(`Website: ${p.website}`)
     if (p?.linkedin) contactParts.push(`LinkedIn: ${p.linkedin}`)
     if (p?.github) contactParts.push(`GitHub: ${p.github}`)
-    const personalInfo = contactParts.length > 0
-      ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
-      : ""
+    const personalInfo =
+      contactParts.length > 0
+        ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
+        : ""
 
     const education =
       (profile.education?.length ?? 0) > 0
         ? `**Education:**\n${profile.education
             .map((e) => {
-              const dates = e.endDate ? `${e.startDate} – ${e.endDate}` : `${e.startDate} – Present`
+              const dates = e.endDate
+                ? `${e.startDate} – ${e.endDate}`
+                : `${e.startDate} – Present`
               const field = e.fieldOfStudy ? `, ${e.fieldOfStudy}` : ""
               return `- ${e.degree}${field} at ${e.institution} (${dates})`
             })
@@ -60,7 +66,11 @@ export class OllamaClient {
     const skills =
       (profile.skills?.length ?? 0) > 0
         ? profile.skills
-            .map((s) => includeYears ? `- ${s.name} (${s.yearsOfExperience} years)` : `- ${s.name}`)
+            .map((s) =>
+              includeYears
+                ? `- ${s.name} (${s.yearsOfExperience} years)`
+                : `- ${s.name}`
+            )
             .join("\n")
         : "No skills specified"
 
@@ -101,7 +111,14 @@ export class OllamaClient {
         ? `**Languages:**\n${profile.languages.map((l) => `- ${l.name}: ${l.level}`).join("\n")}`
         : ""
 
-    return [personalInfo, education, `**Skills:**\n${skills}`, `**Work Experience:**\n${experience}`, `**Personal Projects:**\n${projects}`, languages]
+    return [
+      personalInfo,
+      education,
+      `**Skills:**\n${skills}`,
+      `**Work Experience:**\n${experience}`,
+      `**Personal Projects:**\n${projects}`,
+      languages
+    ]
       .filter(Boolean)
       .join("\n\n")
   }
@@ -167,6 +184,7 @@ export class OllamaClient {
     }
 
     const data = await response.json()
+    console.log(data)
     return data.message?.content || "No content generated"
   }
 
@@ -224,16 +242,43 @@ export class OllamaClient {
     return { resume, coverLetter }
   }
 
-  async analyzeMatch(
-    request: GenerateRequest
-  ): Promise<{ percentage: number; summary: string }> {
+  async analyzeMatch(request: GenerateRequest): Promise<{
+    percentage: number
+    summary: string
+    strengths: string[]
+    weaknesses: string[]
+    improvements: string[]
+  }> {
+    console.log("[analyzeMatch] called")
     try {
-      const userPrompt = `Analyze the fit between this candidate and the job posting.
-Return ONLY a valid JSON object in this exact format: {"percentage": <0-100>, "summary": "<2 concise sentences>"}
+      const userPrompt = `You are a career advisor. Analyze how well this candidate fits the job posting below.
 
+Respond with ONLY a single valid JSON object — no prose, no markdown fences, no explanation outside the JSON.
+
+The JSON must have exactly these five keys:
+- "percentage": integer 0–100 representing overall fit
+- "summary": string with 2 concise sentences summarising the overall fit
+- "strengths": array of 3 to 5 strings, each describing a specific reason the candidate is a strong fit
+- "weaknesses": array of 3 to 5 strings, each describing a specific gap or missing requirement
+- "improvements": array of 3 to 5 strings, each an actionable step the candidate can take to improve their chances
+
+Example of the required shape (use real content, not these placeholders):
+{
+  "percentage": 72,
+  "summary": "The candidate has strong frontend experience matching most requirements. However, they lack the required cloud and DevOps skills.",
+  "strengths": ["5 years React experience matches the role requirement", "TypeScript proficiency listed in job description", "Agile/Scrum background aligns with team process"],
+  "weaknesses": ["No AWS or cloud platform experience mentioned", "Missing CI/CD pipeline skills required by the job", "No mention of GraphQL which is listed as required"],
+  "improvements": ["Obtain an AWS Cloud Practitioner certification", "Build a side project using GitHub Actions for CI/CD", "Complete a GraphQL course and add a project to the portfolio"]
+}
+
+---
 Job Title: ${request.jobTitle} at ${request.companyName}
-Job Description: ${request.jobDescription.substring(0, 2000)}
-Candidate Profile: ${this.formatUserProfile(request.userProfile, true)}`
+
+Job Description:
+${request.jobDescription.substring(0, 2500)}
+
+Candidate Profile:
+${this.formatUserProfile(request.userProfile, true)}`
 
       const response = await fetch(`${this.config.baseUrl}/chat`, {
         method: "POST",
@@ -261,18 +306,36 @@ Candidate Profile: ${this.formatUserProfile(request.userProfile, true)}`
 
       const data = await response.json()
       const content = data.message?.content || "{}"
-      const cleaned = content
-        .replace(/```json?\n?/g, "")
-        .replace(/```/g, "")
-        .trim()
-      const parsed = JSON.parse(cleaned)
+      console.log("[analyzeMatch] raw response:", content)
+
+      // Extract the outermost JSON object regardless of surrounding text/markdown
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error("No JSON object found in response")
+      const parsed = JSON.parse(jsonMatch[0])
+      console.log("[analyzeMatch] parsed:", parsed)
 
       return {
         percentage: Math.min(100, Math.max(0, Number(parsed.percentage) || 0)),
-        summary: String(parsed.summary || "")
+        summary: String(parsed.summary || ""),
+        strengths: Array.isArray(parsed.strengths)
+          ? parsed.strengths.map(String)
+          : [],
+        weaknesses: Array.isArray(parsed.weaknesses)
+          ? parsed.weaknesses.map(String)
+          : [],
+        improvements: Array.isArray(parsed.improvements)
+          ? parsed.improvements.map(String)
+          : []
       }
-    } catch {
-      return { percentage: 0, summary: "Match analysis unavailable." }
+    } catch (err) {
+      console.error("[analyzeMatch] failed:", err)
+      return {
+        percentage: 0,
+        summary: "Match analysis unavailable.",
+        strengths: [],
+        weaknesses: [],
+        improvements: []
+      }
     }
   }
 }
