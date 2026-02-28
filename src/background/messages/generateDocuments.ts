@@ -2,7 +2,7 @@ import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 import { OllamaClient } from "~api/ollamaClient"
 import { STORAGE_KEYS } from "~storage/keys"
-import { DEFAULT_PROMPTS } from "~types/config"
+import { DEFAULT_LLM_TUNING, DEFAULT_PROMPTS } from "~types/config"
 import { type UserProfile } from "~types/userProfile"
 import {
   formatMarkdownContent,
@@ -19,7 +19,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           STORAGE_KEYS.OLLAMA_CONFIG,
           STORAGE_KEYS.CUSTOM_PROMPTS,
           STORAGE_KEYS.LAST_SELECTED_MODEL,
-          STORAGE_KEYS.PENDING_JOB_DATA
+          STORAGE_KEYS.PENDING_JOB_DATA,
+          STORAGE_KEYS.LLM_TUNING
         ],
         resolve
       )
@@ -28,6 +29,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const ollamaConfig = storage[STORAGE_KEYS.OLLAMA_CONFIG]
     const customPrompts =
       storage[STORAGE_KEYS.CUSTOM_PROMPTS] || DEFAULT_PROMPTS
+    const llmTuning = storage[STORAGE_KEYS.LLM_TUNING] || DEFAULT_LLM_TUNING
     const jobData = storage[STORAGE_KEYS.PENDING_JOB_DATA]
     const selectedModel =
       model || storage[STORAGE_KEYS.LAST_SELECTED_MODEL] || "gpt-oss:20b-cloud"
@@ -58,7 +60,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       jobTitle,
       model: selectedModel,
       prompts: customPrompts,
-      userProfile: userProfile as UserProfile
+      userProfile: userProfile as UserProfile,
+      llmTuning
     }
 
     const analyzeMatchInline = async () => {

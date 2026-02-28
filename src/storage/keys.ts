@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   LAST_SELECTED_MODEL: "lastSelectedModel",
   PENDING_JOB_DATA: "pendingJobData",
   SAVED_APPLICATIONS: "savedApplications",
+  LLM_TUNING: "llmTuning",
 } as const
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS]
