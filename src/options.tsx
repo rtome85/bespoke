@@ -12,7 +12,7 @@ import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
 import { SkillEditor } from "~components/SkillEditor"
 import { Tabs } from "~components/Tabs"
-import { AVAILABLE_MODELS, DEFAULT_PROMPTS, PROMPTS_VERSION, type CustomPrompts } from "~types/config"
+import { AVAILABLE_MODELS, DEFAULT_LLM_TUNING, DEFAULT_PROMPTS, PROMPTS_VERSION, type CustomPrompts, type LLMTuningConfig } from "~types/config"
 import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
 
 import "./style.css"
@@ -34,6 +34,11 @@ function Options() {
   const [customPrompts, setCustomPrompts] = useStorage<CustomPrompts>(
     "customPrompts",
     DEFAULT_PROMPTS
+  )
+
+  const [llmTuning, setLlmTuning] = useStorage<LLMTuningConfig>(
+    "llmTuning",
+    DEFAULT_LLM_TUNING
   )
 
   const [storedPromptsVersion, setStoredPromptsVersion, { isLoading: isVersionLoading }] = useStorage<string>(
@@ -302,67 +307,250 @@ function Options() {
       label: "Prompts",
       value: "prompts",
       content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Custom Prompts
-            </h2>
-            <button
-              onClick={handleResetPrompts}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg
-                       hover:bg-gray-200 transition-colors">
-              Reset to Defaults
-            </button>
-          </div>
+        <div className="flex flex-row gap-4">
+          {/* ── LLM Fine-tuning ─────────────────────────────────────── */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">LLM Fine-tuning</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Adjust model behaviour and document generation style. Changes apply to the next generation.
+              </p>
+            </div>
 
-          <div className="space-y-6">
-            {(
-              [
-                {
-                  key: "resumeSystemPrompt" as keyof CustomPrompts,
-                  label: "Resume System Prompt",
-                  hint: "Defines how the AI behaves when generating resumes."
-                },
-                {
-                  key: "resumeUserPromptTemplate" as keyof CustomPrompts,
-                  label: "Resume User Prompt Template",
-                  hint: 'Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders.'
-                },
-                {
-                  key: "coverLetterSystemPrompt" as keyof CustomPrompts,
-                  label: "Cover Letter System Prompt",
-                  hint: "Defines how the AI behaves when generating cover letters."
-                },
-                {
-                  key: "coverLetterUserPromptTemplate" as keyof CustomPrompts,
-                  label: "Cover Letter User Prompt Template",
-                  hint: 'Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders.'
-                }
-              ] as const
-            ).map(({ key, label, hint }) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {label}
-                </label>
-                <textarea
-                  value={customPrompts[key]}
-                  onChange={(e) => handlePromptChange(key, e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                           font-mono text-sm"
-                />
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">{hint}</p>
-                  <button
-                    onClick={() => openPromptDialog(label, key)}
-                    className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
-                             hover:bg-purple-200 transition-colors font-medium">
-                    Expand
-                  </button>
+            <div className="space-y-8">
+              {/* ── Generation Parameters ── */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+                  Generation Parameters
+                </h3>
+                <div className="space-y-5">
+
+                  {/* Temperature */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Temperature</label>
+                      <span className="text-sm font-mono font-semibold text-purple-600 w-10 text-right">
+                        {(llmTuning ?? DEFAULT_LLM_TUNING).temperature.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range" min="0.1" max="1.5" step="0.1"
+                      value={(llmTuning ?? DEFAULT_LLM_TUNING).temperature}
+                      onChange={(e) => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), temperature: parseFloat(e.target.value) })}
+                      className="w-full accent-purple-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                      <span>0.1 — Precise &amp; deterministic</span>
+                      <span>1.5 — Creative &amp; varied</span>
+                    </div>
+                  </div>
+
+                  {/* Top P */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Top P</label>
+                      <span className="text-sm font-mono font-semibold text-purple-600 w-10 text-right">
+                        {(llmTuning ?? DEFAULT_LLM_TUNING).topP.toFixed(2)}
+                      </span>
+                    </div>
+                    <input
+                      type="range" min="0.5" max="1.0" step="0.05"
+                      value={(llmTuning ?? DEFAULT_LLM_TUNING).topP}
+                      onChange={(e) => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), topP: parseFloat(e.target.value) })}
+                      className="w-full accent-purple-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                      <span>0.5 — Conservative vocabulary</span>
+                      <span>1.0 — Full diversity</span>
+                    </div>
+                  </div>
+
+                  {/* Max Tokens */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Max Output Tokens</label>
+                      <span className="text-sm font-mono font-semibold text-purple-600 w-16 text-right">
+                        {(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens.toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="range" min="1024" max="8192" step="256"
+                      value={(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens}
+                      onChange={(e) => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), maxTokens: parseInt(e.target.value) })}
+                      className="w-full accent-purple-600"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                      <span>1 024 — Concise</span>
+                      <span>8 192 — Detailed &amp; long</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+
+              <hr className="border-gray-100" />
+
+              {/* ── Analysis & Style ── */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+                  Analysis &amp; Style
+                </h3>
+                <div className="space-y-5">
+
+                  {/* Match Strictness */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Profile Match Strictness
+                    </label>
+                    <p className="text-xs text-gray-400 mb-2">
+                      How rigorously the AI scores your profile against the job requirements.
+                    </p>
+                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+                      {(["strict", "balanced", "generous"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), matchStrictness: opt })}
+                          className={`px-4 py-2 font-medium capitalize transition-colors
+                            ${(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness === opt
+                              ? "bg-purple-600 text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+                          {opt === "strict" ? "Strict" : opt === "balanced" ? "Balanced" : "Generous"}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-400">
+                      {{
+                        strict: "Gaps and missing skills are weighted heavily. Scores tend lower.",
+                        balanced: "Fair assessment — explicit requirements and transferable skills weighed equally.",
+                        generous: "Transferable skills and potential count. Scores tend higher."
+                      }[(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness]}
+                    </p>
+                  </div>
+
+                  {/* Writing Tone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Writing Tone
+                    </label>
+                    <p className="text-xs text-gray-400 mb-2">
+                      Applies to both resumes and cover letters.
+                    </p>
+                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+                      {(["formal", "professional", "conversational"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), writingTone: opt })}
+                          className={`px-4 py-2 font-medium capitalize transition-colors
+                            ${(llmTuning ?? DEFAULT_LLM_TUNING).writingTone === opt
+                              ? "bg-purple-600 text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Resume Focus */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Resume Focus
+                    </label>
+                    <p className="text-xs text-gray-400 mb-2">
+                      Which section the model leads with and emphasises most.
+                    </p>
+                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+                      {(["skills", "balanced", "experience"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setLlmTuning({ ...(llmTuning ?? DEFAULT_LLM_TUNING), resumeFocus: opt })}
+                          className={`px-4 py-2 font-medium transition-colors
+                            ${(llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus === opt
+                              ? "bg-purple-600 text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+                          {opt === "skills" ? "Skills-first" : opt === "balanced" ? "Balanced" : "Experience-first"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset tuning */}
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors underline-offset-2 hover:underline">
+                  Reset to defaults
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Custom Prompts ─────────────────────────────────────── */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Custom Prompts</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Override the system and user prompts sent to the model.
+                </p>
+              </div>
+              <button
+                onClick={handleResetPrompts}
+                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg
+                         hover:bg-gray-200 transition-colors">
+                Reset to Defaults
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {(
+                [
+                  {
+                    key: "resumeSystemPrompt" as keyof CustomPrompts,
+                    label: "Resume System Prompt",
+                    hint: "Defines how the AI behaves when generating resumes."
+                  },
+                  {
+                    key: "resumeUserPromptTemplate" as keyof CustomPrompts,
+                    label: "Resume User Prompt Template",
+                    hint: 'Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders.'
+                  },
+                  {
+                    key: "coverLetterSystemPrompt" as keyof CustomPrompts,
+                    label: "Cover Letter System Prompt",
+                    hint: "Defines how the AI behaves when generating cover letters."
+                  },
+                  {
+                    key: "coverLetterUserPromptTemplate" as keyof CustomPrompts,
+                    label: "Cover Letter User Prompt Template",
+                    hint: 'Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders.'
+                  }
+                ] as const
+              ).map(({ key, label, hint }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {label}
+                  </label>
+                  <textarea
+                    value={customPrompts[key]}
+                    onChange={(e) => handlePromptChange(key, e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                             focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                             font-mono text-sm"
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">{hint}</p>
+                    <button
+                      onClick={() => openPromptDialog(label, key)}
+                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
+                               hover:bg-purple-200 transition-colors font-medium">
+                      Expand
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )

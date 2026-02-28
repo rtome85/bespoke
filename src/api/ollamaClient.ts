@@ -1,8 +1,10 @@
 import type {
   CustomPrompts,
   GenerateRequest,
+  LLMTuningConfig,
   OllamaConfig
 } from "~types/config"
+import { DEFAULT_LLM_TUNING } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
 
 export type { GenerateRequest }
@@ -123,6 +125,32 @@ export class OllamaClient {
       .join("\n\n")
   }
 
+  private tuningInstructions(tuning: LLMTuningConfig): {
+    toneInstruction: string
+    focusInstruction: string
+    strictnessInstruction: string
+  } {
+    const tone = {
+      formal: "Use formal, precise corporate language throughout.",
+      professional: "Use professional yet approachable language.",
+      conversational: "Use warm, engaging language while remaining professional."
+    }[tuning.writingTone]
+
+    const focus = {
+      skills: "Lead with and prominently feature the candidate's technical skills near the top of the resume.",
+      experience: "Lead with and emphasise Work Experience and concrete achievements above all else.",
+      balanced: ""
+    }[tuning.resumeFocus]
+
+    const strictness = {
+      strict: "Be rigorous and critical. Weight missing skills and experience gaps heavily in your assessment. Scores below 50% are expected for imperfect matches.",
+      balanced: "Provide a balanced, fair assessment. Consider both explicit requirements and transferable skills equally.",
+      generous: "Be optimistic and give credit for transferable skills and adjacent experience. Highlight how the candidate's background could apply even when not an exact match."
+    }[tuning.matchStrictness]
+
+    return { toneInstruction: tone, focusInstruction: focus, strictnessInstruction: strictness }
+  }
+
   private interpolatePrompt(
     template: string,
     companyName: string,
@@ -150,8 +178,15 @@ export class OllamaClient {
       jobTitle,
       model,
       prompts,
-      userProfile
+      userProfile,
+      llmTuning = DEFAULT_LLM_TUNING
     } = request
+
+    const { toneInstruction, focusInstruction } = this.tuningInstructions(llmTuning)
+    const extraInstructions = [toneInstruction, focusInstruction].filter(Boolean).join(" ")
+    const systemPrompt = extraInstructions
+      ? `${prompts.resumeSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
+      : prompts.resumeSystemPrompt
 
     const interpolatedUserPrompt = this.interpolatePrompt(
       prompts.resumeUserPromptTemplate,
@@ -170,10 +205,13 @@ export class OllamaClient {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: prompts.resumeSystemPrompt },
+          { role: "system", content: systemPrompt },
           { role: "user", content: interpolatedUserPrompt }
         ],
-        stream: false
+        stream: false,
+        temperature: llmTuning.temperature,
+        top_p: llmTuning.topP,
+        max_tokens: llmTuning.maxTokens
       })
     })
 
@@ -195,8 +233,14 @@ export class OllamaClient {
       jobTitle,
       model,
       prompts,
-      userProfile
+      userProfile,
+      llmTuning = DEFAULT_LLM_TUNING
     } = request
+
+    const { toneInstruction } = this.tuningInstructions(llmTuning)
+    const systemPrompt = toneInstruction
+      ? `${prompts.coverLetterSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${toneInstruction}`
+      : prompts.coverLetterSystemPrompt
 
     const interpolatedUserPrompt = this.interpolatePrompt(
       prompts.coverLetterUserPromptTemplate,
@@ -215,10 +259,13 @@ export class OllamaClient {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: prompts.coverLetterSystemPrompt },
+          { role: "system", content: systemPrompt },
           { role: "user", content: interpolatedUserPrompt }
         ],
-        stream: false
+        stream: false,
+        temperature: llmTuning.temperature,
+        top_p: llmTuning.topP,
+        max_tokens: llmTuning.maxTokens
       })
     })
 
@@ -249,8 +296,12 @@ export class OllamaClient {
     weaknesses: string[]
     improvements: string[]
   }> {
+    const llmTuning = request.llmTuning ?? DEFAULT_LLM_TUNING
+    const { strictnessInstruction } = this.tuningInstructions(llmTuning)
+
     try {
       const userPrompt = `You are a career advisor. Analyze how well this candidate fits the job posting below.
+${strictnessInstruction}
 
 Respond with ONLY a single valid JSON object — no prose, no markdown fences, no explanation outside the JSON.
 
@@ -295,7 +346,10 @@ ${this.formatUserProfile(request.userProfile, true)}`
             },
             { role: "user", content: userPrompt }
           ],
-          stream: false
+          stream: false,
+          temperature: Math.min(llmTuning.temperature, 0.4), // keep analysis deterministic
+          top_p: llmTuning.topP,
+          max_tokens: 1024
         })
       })
 

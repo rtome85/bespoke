@@ -45,6 +45,30 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   }
 ]
 
+export interface LLMTuningConfig {
+  /** Creativity / randomness (0.1 = deterministic, 1.5 = very creative). Default 0.7 */
+  temperature: number
+  /** Nucleus sampling — lower = more conservative vocabulary. Default 0.9 */
+  topP: number
+  /** Maximum tokens the model may generate per call. Default 4096 */
+  maxTokens: number
+  /** How rigorously the profile-vs-job match is scored */
+  matchStrictness: "strict" | "balanced" | "generous"
+  /** Tone injected into every generated document */
+  writingTone: "formal" | "professional" | "conversational"
+  /** Which profile section the resume should lead with */
+  resumeFocus: "skills" | "experience" | "balanced"
+}
+
+export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
+  temperature: 0.7,
+  topP: 0.9,
+  maxTokens: 4096,
+  matchStrictness: "balanced",
+  writingTone: "professional",
+  resumeFocus: "balanced"
+}
+
 export interface CustomPrompts {
   resumeSystemPrompt: string
   resumeUserPromptTemplate: string
@@ -109,4 +133,5 @@ export interface GenerateRequest {
   model: string
   prompts: CustomPrompts
   userProfile?: UserProfile
+  llmTuning?: LLMTuningConfig
 }
