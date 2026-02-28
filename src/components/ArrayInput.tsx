@@ -10,6 +10,7 @@ interface ArrayInputProps<T> {
     index: number,
     onUpdate: (item: T) => void
   ) => React.ReactNode
+  renderSummary?: (item: T, index: number) => React.ReactNode
   emptyMessage: string
   addButtonText: string
 }
@@ -20,6 +21,7 @@ export function ArrayInput<T>({
   onUpdate,
   onRemove,
   renderItem,
+  renderSummary,
   emptyMessage,
   addButtonText
 }: ArrayInputProps<T>) {
@@ -53,16 +55,18 @@ export function ArrayInput<T>({
             {items.map((item, index) => (
               <div
                 key={index}
-                className="bg-white border border-gray-200 rounded-lg p-4
-                         hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
+                className={`bg-white border rounded-lg transition-all
+                  ${expandedItems.has(index)
+                    ? "border-purple-300 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm"}`}>
+                {/* Accordion header */}
+                <div className="flex items-center gap-2 px-4 py-3">
                   <button
                     onClick={() => toggleExpanded(index)}
-                    className="flex items-center text-gray-700 hover:text-gray-900">
+                    className="flex-1 flex items-center gap-3 min-w-0 text-left group">
                     <svg
-                      className={`w-4 h-4 mr-2 transition-transform ${
-                        expandedItems.has(index) ? "rotate-90" : ""
-                      }`}
+                      className={`w-4 h-4 shrink-0 text-gray-400 transition-transform duration-150
+                        ${expandedItems.has(index) ? "rotate-90 text-purple-500" : "group-hover:text-gray-600"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24">
@@ -73,15 +77,22 @@ export function ArrayInput<T>({
                         d="M9 5l7 7-7 7"
                       />
                     </svg>
-                    {expandedItems.has(index) ? "Collapse" : "Expand"}
+                    {renderSummary ? (
+                      renderSummary(item, index)
+                    ) : (
+                      <span className="text-sm text-gray-600">
+                        {expandedItems.has(index) ? "Collapse" : "Expand"}
+                      </span>
+                    )}
                   </button>
 
                   <button
                     onClick={() => onRemove(index)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
+                    className="shrink-0 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50
+                               rounded-md transition-colors"
                     title="Delete item">
                     <svg
-                      className="w-5 h-5"
+                      className="w-4 h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24">
@@ -96,7 +107,7 @@ export function ArrayInput<T>({
                 </div>
 
                 {expandedItems.has(index) && (
-                  <div className="mt-4">
+                  <div className="px-4 pb-4 border-t border-gray-100 pt-4">
                     {renderItem(item, index, (updatedItem) =>
                       onUpdate(index, updatedItem)
                     )}

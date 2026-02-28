@@ -43,6 +43,15 @@ export interface Education {
   description?: string
 }
 
+export interface Certificate {
+  id: string // crypto.randomUUID()
+  name: string          // e.g. "AWS Certified Developer"
+  issuer: string        // e.g. "Amazon Web Services"
+  issueDate: string     // ISO date string: "2023-06-01"
+  expiryDate?: string | null // null = no expiry
+  credentialUrl?: string
+}
+
 export interface Language {
   id: string // crypto.randomUUID()
   name: string
@@ -52,6 +61,7 @@ export interface Language {
 export interface UserProfile {
   personalInfo: PersonalInfo
   education: Education[]
+  certificates: Certificate[]
   skills: Skill[]
   workExperience: WorkExperience[]
   personalProjects: PersonalProject[]
@@ -104,6 +114,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
     summary: ""
   },
   education: [],
+  certificates: [],
   skills: [],
   workExperience: [],
   personalProjects: [],

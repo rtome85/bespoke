@@ -204,6 +204,20 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
         onUpdate={updateProject}
         onRemove={removeProject}
         renderItem={renderProjectItem}
+        renderSummary={(project) => (
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate leading-tight">
+              {project.title || <span className="italic text-gray-400">Untitled project</span>}
+            </p>
+            {project.description && (
+              <p className="text-xs text-gray-500 truncate mt-0.5">
+                {project.description.length > 80
+                  ? project.description.slice(0, 80) + "…"
+                  : project.description}
+              </p>
+            )}
+          </div>
+        )}
         emptyMessage="No personal projects added yet. Add your first project to showcase your work!"
         addButtonText="Personal Project"
       />

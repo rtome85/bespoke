@@ -209,6 +209,32 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
         onUpdate={updateEducation}
         onRemove={removeEducation}
         renderItem={renderEducationItem}
+        renderSummary={(edu) => {
+          const fmt = (iso: string | null) => {
+            if (!iso) return "Present"
+            const [y, m] = iso.split("-")
+            return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+          }
+          return (
+            <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate leading-tight">
+                  {edu.degree
+                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-gray-500"> · {edu.fieldOfStudy}</span>}</>
+                    : <span className="italic text-gray-400">Untitled degree</span>}
+                </p>
+                <p className="text-xs text-gray-500 truncate mt-0.5">
+                  {edu.institution || "—"}
+                </p>
+              </div>
+              {edu.startDate && (
+                <span className="ml-4 shrink-0 text-xs text-gray-400">
+                  {fmt(edu.startDate)} – {fmt(edu.endDate)}
+                </span>
+              )}
+            </div>
+          )
+        }}
         emptyMessage="No education added yet. Add your educational background to get started!"
         addButtonText="Education"
       />

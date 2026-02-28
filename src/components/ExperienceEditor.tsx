@@ -241,6 +241,30 @@ export function ExperienceEditor({
         onUpdate={updateExperience}
         onRemove={removeExperience}
         renderItem={renderExperienceItem}
+        renderSummary={(exp) => {
+          const fmt = (iso: string | null) => {
+            if (!iso) return "Present"
+            const [y, m] = iso.split("-")
+            return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+          }
+          return (
+            <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate leading-tight">
+                  {exp.jobTitle || <span className="italic text-gray-400">Untitled role</span>}
+                </p>
+                <p className="text-xs text-gray-500 truncate mt-0.5">
+                  {exp.company || "—"}
+                </p>
+              </div>
+              {exp.startDate && (
+                <span className="ml-4 shrink-0 text-xs text-gray-400">
+                  {fmt(exp.startDate)} – {fmt(exp.endDate)}
+                </span>
+              )}
+            </div>
+          )
+        }}
         emptyMessage="No work experience added yet. Add your first position to get started!"
         addButtonText="Work Experience"
       />

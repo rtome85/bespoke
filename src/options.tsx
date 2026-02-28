@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import { useStorage } from "@plasmohq/storage/hook"
 
+import { CertificateEditor } from "~components/CertificateEditor"
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
 import { LanguageEditor } from "~components/LanguageEditor"
@@ -387,16 +388,33 @@ function Options() {
       label: "Education",
       value: "education",
       content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Education
-          </h2>
-          <EducationEditor
-            education={userProfile.education}
-            onChange={(education) =>
-              setUserProfile({ ...userProfile, education })
-            }
-          />
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Education
+            </h2>
+            <EducationEditor
+              education={userProfile.education}
+              onChange={(education) =>
+                setUserProfile({ ...userProfile, education })
+              }
+            />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+              Certificates
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Certifications, online courses, bootcamps and professional training.
+            </p>
+            <CertificateEditor
+              certificates={userProfile.certificates ?? []}
+              onChange={(certificates) =>
+                setUserProfile({ ...userProfile, certificates })
+              }
+            />
+          </div>
         </div>
       )
     },
