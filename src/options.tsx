@@ -1,16 +1,17 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
+import { LanguageEditor } from "~components/LanguageEditor"
 import { PersonalInfo } from "~components/PersonalInfo"
 import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
 import { SkillEditor } from "~components/SkillEditor"
 import { Tabs } from "~components/Tabs"
-import { AVAILABLE_MODELS, DEFAULT_PROMPTS, type CustomPrompts } from "~types/config"
+import { AVAILABLE_MODELS, DEFAULT_PROMPTS, PROMPTS_VERSION, type CustomPrompts } from "~types/config"
 import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
 
 import "./style.css"
@@ -33,6 +34,18 @@ function Options() {
     "customPrompts",
     DEFAULT_PROMPTS
   )
+
+  const [storedPromptsVersion, setStoredPromptsVersion, { isLoading: isVersionLoading }] = useStorage<string>(
+    "promptsVersion",
+    ""
+  )
+
+  useEffect(() => {
+    if (!isVersionLoading && storedPromptsVersion !== PROMPTS_VERSION) {
+      setCustomPrompts(DEFAULT_PROMPTS)
+      setStoredPromptsVersion(PROMPTS_VERSION)
+    }
+  }, [storedPromptsVersion, isVersionLoading])
 
   const [testStatus, setTestStatus] = useState<{
     type: "idle" | "loading" | "success" | "error"
@@ -431,6 +444,23 @@ function Options() {
             projects={userProfile.personalProjects}
             onChange={(personalProjects) =>
               setUserProfile({ ...userProfile, personalProjects })
+            }
+          />
+        </div>
+      )
+    },
+    {
+      label: "Languages",
+      value: "languages",
+      content: (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Languages
+          </h2>
+          <LanguageEditor
+            languages={userProfile.languages}
+            onChange={(languages) =>
+              setUserProfile({ ...userProfile, languages })
             }
           />
         </div>

@@ -1,4 +1,8 @@
-import type { CustomPrompts, GenerateRequest, OllamaConfig } from "~types/config"
+import type {
+  CustomPrompts,
+  GenerateRequest,
+  OllamaConfig
+} from "~types/config"
 import type { UserProfile } from "~types/userProfile"
 
 export type { GenerateRequest }
@@ -26,13 +30,37 @@ export class OllamaClient {
     }
   }
 
-  protected formatUserProfile(profile: UserProfile): string {
+  protected formatUserProfile(profile: UserProfile, includeYears = false): string {
     if (!profile) return ""
+
+    const p = profile.personalInfo
+    const contactParts: string[] = []
+    if (p?.fullName) contactParts.push(`Name: ${p.fullName}`)
+    if (p?.email) contactParts.push(`Email: ${p.email}`)
+    if (p?.phone) contactParts.push(`Phone: ${p.phone}`)
+    if (p?.location) contactParts.push(`Location: ${p.location}`)
+    if (p?.website) contactParts.push(`Website: ${p.website}`)
+    if (p?.linkedin) contactParts.push(`LinkedIn: ${p.linkedin}`)
+    if (p?.github) contactParts.push(`GitHub: ${p.github}`)
+    const personalInfo = contactParts.length > 0
+      ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
+      : ""
+
+    const education =
+      (profile.education?.length ?? 0) > 0
+        ? `**Education:**\n${profile.education
+            .map((e) => {
+              const dates = e.endDate ? `${e.startDate} – ${e.endDate}` : `${e.startDate} – Present`
+              const field = e.fieldOfStudy ? `, ${e.fieldOfStudy}` : ""
+              return `- ${e.degree}${field} at ${e.institution} (${dates})`
+            })
+            .join("\n")}`
+        : ""
 
     const skills =
       (profile.skills?.length ?? 0) > 0
         ? profile.skills
-            .map((s) => `- ${s.name} (${s.yearsOfExperience} years)`)
+            .map((s) => includeYears ? `- ${s.name} (${s.yearsOfExperience} years)` : `- ${s.name}`)
             .join("\n")
         : "No skills specified"
 
@@ -68,7 +96,14 @@ export class OllamaClient {
             .join("\n\n")
         : "No personal projects specified"
 
-    return `**Skills:**\n${skills}\n\n**Work Experience:**\n${experience}\n\n**Personal Projects:**\n${projects}`
+    const languages =
+      (profile.languages?.length ?? 0) > 0
+        ? `**Languages:**\n${profile.languages.map((l) => `- ${l.name}: ${l.level}`).join("\n")}`
+        : ""
+
+    return [personalInfo, education, `**Skills:**\n${skills}`, `**Work Experience:**\n${experience}`, `**Personal Projects:**\n${projects}`, languages]
+      .filter(Boolean)
+      .join("\n\n")
   }
 
   private interpolatePrompt(
@@ -126,7 +161,9 @@ export class OllamaClient {
     })
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}`
+      )
     }
 
     const data = await response.json()
@@ -168,7 +205,9 @@ export class OllamaClient {
     })
 
     if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `Ollama API error: ${response.status} ${response.statusText}`
+      )
     }
 
     const data = await response.json()
@@ -194,7 +233,7 @@ Return ONLY a valid JSON object in this exact format: {"percentage": <0-100>, "s
 
 Job Title: ${request.jobTitle} at ${request.companyName}
 Job Description: ${request.jobDescription.substring(0, 2000)}
-Candidate Profile: ${this.formatUserProfile(request.userProfile)}`
+Candidate Profile: ${this.formatUserProfile(request.userProfile, true)}`
 
       const response = await fetch(`${this.config.baseUrl}/chat`, {
         method: "POST",
@@ -207,7 +246,8 @@ Candidate Profile: ${this.formatUserProfile(request.userProfile)}`
           messages: [
             {
               role: "system",
-              content: "You are a career advisor. Return only valid JSON, no markdown."
+              content:
+                "You are a career advisor. Return only valid JSON, no markdown."
             },
             { role: "user", content: userPrompt }
           ],

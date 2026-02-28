@@ -81,6 +81,17 @@ function IndexPopup() {
     chrome.runtime.openOptionsPage()
   }
 
+  const openApplications = () => {
+    chrome.windows.create({
+      url: chrome.runtime.getURL("tabs/dialog.html") + "?view=applicationsList",
+      type: "popup",
+      width: 700,
+      height: 520,
+      focused: true
+    })
+    window.close()
+  }
+
   return (
     <div className="w-72 p-5 bg-white">
       <div className="mb-4">
@@ -88,20 +99,16 @@ function IndexPopup() {
         <p className="text-xs text-gray-500 mt-0.5">Tailor your CV to every job</p>
       </div>
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading}
-        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg
-                   hover:bg-purple-700 transition-colors font-medium
-                   disabled:opacity-50 disabled:cursor-not-allowed">
-        {loading ? "Scraping..." : "Generate CV for this job"}
-      </button>
-
       {status && (
-        <p className="mt-3 text-sm text-red-600">{status}</p>
+        <p className="mb-3 text-sm text-red-600">{status}</p>
       )}
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
+      <div className="mt-4 pt-4 border-t border-gray-100 space-y-1">
+        <button
+          onClick={openApplications}
+          className="w-full text-sm text-gray-500 hover:text-purple-600 transition-colors text-left">
+          My Applications
+        </button>
         <button
           onClick={openOptions}
           className="w-full text-sm text-gray-500 hover:text-purple-600 transition-colors text-left">
@@ -110,7 +117,7 @@ function IndexPopup() {
       </div>
 
       <p className="mt-3 text-xs text-gray-400">
-        Tip: You can also right-click on any job posting and select "Generate CV for this job"
+        Tip: Right-click on any job posting and select "Generate CV for this job"
       </p>
     </div>
   )

@@ -3,7 +3,13 @@ import { useEffect, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 
 import { AVAILABLE_MODELS } from "~types/config"
-import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
+import {
+  APPLICATION_STATUSES,
+  DEFAULT_USER_PROFILE,
+  type ApplicationStatus,
+  type SavedApplication,
+  type UserProfile
+} from "~types/userProfile"
 import { downloadMarkdownFile } from "~utils/documentFormatter"
 
 import "../style.css"
@@ -31,7 +37,24 @@ interface GenerationResult {
   match: { percentage: number; summary: string }
 }
 
+type View = "form" | "loading" | "success" | "saveForm" | "applicationsList"
+
+function statusBadgeClass(status: ApplicationStatus): string {
+  switch (status) {
+    case "Offer":
+      return "bg-green-100 text-green-800"
+    case "Reject":
+      return "bg-red-100 text-red-800"
+    case "Applied":
+      return "bg-blue-100 text-blue-800"
+    default:
+      return "bg-yellow-100 text-yellow-800"
+  }
+}
+
 function IndexDialog() {
+  const initialView = new URLSearchParams(window.location.search).get("view") as View | null
+  const [view, setView] = useState<View>(initialView ?? "form")
   const [companyName, setCompanyName] = useState("")
   const [jobTitle, setJobTitle] = useState("")
   const [selectedModel, setSelectedModel] = useState("gpt-oss:20b-cloud")
@@ -45,12 +68,28 @@ function IndexDialog() {
   const [quoteVisible, setQuoteVisible] = useState(true)
   const [result, setResult] = useState<GenerationResult | null>(null)
 
+  // Application tracker state
+  const [savedApplications, setSavedApplications] = useState<SavedApplication[]>([])
+  const [editingApplication, setEditingApplication] = useState<SavedApplication | null>(null)
+  const [viewingApplication, setViewingApplication] = useState<SavedApplication | null>(null)
+  const [saveFormData, setSaveFormData] = useState({
+    company: "",
+    jobTitle: "",
+    status: "Applied" as ApplicationStatus,
+    date: new Date().toISOString().split("T")[0],
+  })
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  // Track where the save form was opened from so Cancel goes back correctly
+  const [saveFormOrigin, setSaveFormOrigin] = useState<"success" | "applicationsList">("success")
+  const [saveDocs, setSaveDocs] = useState(true)
+  const [saveFormError, setSaveFormError] = useState("")
+
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const quoteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     chrome.storage.local.get(
-      ["lastSelectedModel", "userProfile", "pendingJobData"],
+      ["lastSelectedModel", "userProfile", "pendingJobData", "savedApplications"],
       (res) => {
         if (res.lastSelectedModel) setSelectedModel(res.lastSelectedModel)
         if (res.userProfile) setUserProfile(res.userProfile)
@@ -58,12 +97,14 @@ function IndexDialog() {
           setCompanyName(res.pendingJobData.companyName)
         if (res.pendingJobData?.jobTitle)
           setJobTitle(res.pendingJobData.jobTitle)
+        if (res.savedApplications) setSavedApplications(res.savedApplications)
       }
     )
   }, [])
 
   useEffect(() => {
     if (loading) {
+      setView("loading")
       setProgress(0)
 
       progressIntervalRef.current = setInterval(() => {
@@ -122,17 +163,89 @@ function IndexDialog() {
         setTimeout(() => {
           setLoading(false)
           setResult(response.data)
+          setView("success")
         }, 400)
       } else {
         setLoading(false)
+        setView("form")
         setStatus(response?.message || "Generation failed. Please try again.")
       }
     } catch (error) {
       setLoading(false)
+      setView("form")
       setStatus(
         error instanceof Error ? error.message : "An unexpected error occurred"
       )
     }
+  }
+
+  const openSaveForm = (origin: "success" | "applicationsList", app: SavedApplication | null = null) => {
+    setEditingApplication(app)
+    setSaveFormOrigin(origin)
+
+    if (!app && origin === "success") {
+      setSaveDocs(true)
+    }
+
+    if (app) {
+      setSaveFormData({
+        company: app.company,
+        jobTitle: app.jobTitle,
+        status: app.status,
+        date: app.date,
+      })
+    } else {
+      setSaveFormData({
+        company: companyName,
+        jobTitle: jobTitle,
+        status: "Applied",
+        date: new Date().toISOString().split("T")[0],
+      })
+    }
+    setView("saveForm")
+  }
+
+  const handleSaveApplication = () => {
+    if (!saveFormData.company.trim() || !saveFormData.jobTitle.trim() || !saveFormData.date) {
+      setSaveFormError("Company, job title, and date are required.")
+      return
+    }
+    setSaveFormError("")
+
+    const docs = !editingApplication && result && saveDocs
+      ? {
+        resumeContent: result.resumeContent,
+        resumeFilename: result.resumeFilename,
+        coverLetterContent: result.coverLetterContent,
+        coverLetterFilename: result.coverLetterFilename,
+      }
+      : {}
+
+    const updated: SavedApplication[] = editingApplication
+      ? savedApplications.map((a) =>
+        a.id === editingApplication.id
+          ? { ...a, ...saveFormData }   // preserve existing docs
+          : a
+      )
+      : [
+        ...savedApplications,
+        {
+          ...saveFormData,
+          ...docs,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+        },
+      ]
+    chrome.storage.local.set({ savedApplications: updated })
+    setSavedApplications(updated)
+    setView("applicationsList")
+  }
+
+  const handleDeleteApplication = (id: string) => {
+    const updated = savedApplications.filter((a) => a.id !== id)
+    chrome.storage.local.set({ savedApplications: updated })
+    setSavedApplications(updated)
+    setDeleteConfirmId(null)
   }
 
   const matchColor = (pct: number) => {
@@ -142,7 +255,7 @@ function IndexDialog() {
   }
 
   // Loading screen
-  if (loading) {
+  if (view === "loading") {
     const quote = QUOTES[quoteIndex]
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
@@ -151,7 +264,6 @@ function IndexDialog() {
           <h2 className="text-xl font-bold text-gray-900 mb-1">Crafting your documents…</h2>
           <p className="text-sm text-gray-500 mb-6">This may take a minute</p>
 
-          {/* Progress bar */}
           <div className="w-full bg-gray-100 rounded-full h-2.5 mb-8 overflow-hidden">
             <div
               className="h-2.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 ease-out"
@@ -159,7 +271,6 @@ function IndexDialog() {
             />
           </div>
 
-          {/* Quote */}
           <div
             className="transition-opacity duration-400"
             style={{ opacity: quoteVisible ? 1 : 0 }}>
@@ -174,7 +285,7 @@ function IndexDialog() {
   }
 
   // Success screen
-  if (result) {
+  if (view === "success" && result) {
     const pct = result.match.percentage
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
@@ -188,9 +299,8 @@ function IndexDialog() {
           <div className="bg-gray-50 rounded-xl p-5 mb-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-gray-700">Match Score</span>
-              <span className={`text-2xl font-bold ${
-                pct >= 70 ? "text-green-600" : pct >= 50 ? "text-yellow-600" : "text-red-600"
-              }`}>
+              <span className={`text-2xl font-bold ${pct >= 70 ? "text-green-600" : pct >= 50 ? "text-yellow-600" : "text-red-600"
+                }`}>
                 {pct}%
               </span>
             </div>
@@ -231,10 +341,25 @@ function IndexDialog() {
           </div>
 
           <button
-            onClick={() => window.close()}
-            className="w-full mt-4 px-4 py-2 text-sm text-gray-500
+            onClick={() => openSaveForm("success")}
+            className="w-full mt-3 px-4 py-3 text-sm font-medium
+                       bg-gradient-to-r from-emerald-500 to-emerald-600
+                       text-white rounded-lg hover:opacity-90 transition-opacity">
+            Save Application
+          </button>
+
+          <button
+            onClick={() => setView("applicationsList")}
+            className="w-full mt-2 px-4 py-2 text-sm text-gray-500
                        border border-gray-200 rounded-lg hover:bg-gray-50
                        transition-colors">
+            View Saved Applications
+          </button>
+
+          <button
+            onClick={() => window.close()}
+            className="w-full mt-2 px-4 py-2 text-sm text-gray-400
+                       hover:text-gray-600 transition-colors">
             Close
           </button>
         </div>
@@ -242,15 +367,324 @@ function IndexDialog() {
     )
   }
 
-  // Form screen
+  // Save form screen
+  if (view === "saveForm") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
+        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
+              {editingApplication ? "Edit Application" : "Save Application"}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">Track your job application</p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company
+              </label>
+              <input
+                type="text"
+                value={saveFormData.company}
+                onChange={(e) =>
+                  setSaveFormData((d) => ({ ...d, company: e.target.value }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Job Title
+              </label>
+              <input
+                type="text"
+                value={saveFormData.jobTitle}
+                onChange={(e) =>
+                  setSaveFormData((d) => ({ ...d, jobTitle: e.target.value }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={saveFormData.status}
+                onChange={(e) =>
+                  setSaveFormData((d) => ({
+                    ...d,
+                    status: e.target.value as ApplicationStatus,
+                  }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                           focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white">
+                {APPLICATION_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date Applied
+              </label>
+              <input
+                type="date"
+                value={saveFormData.date}
+                onChange={(e) =>
+                  setSaveFormData((d) => ({ ...d, date: e.target.value }))
+                }
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {saveFormOrigin === "success" && result && (
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mt-4">
+              <input
+                type="checkbox"
+                checked={saveDocs}
+                onChange={(e) => setSaveDocs(e.target.checked)}
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              Save resume and cover letter
+            </label>
+          )}
+
+          {saveFormError && (
+            <p className="mt-4 text-sm text-red-600">{saveFormError}</p>
+          )}
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={handleSaveApplication}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600
+                         text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
+              Save
+            </button>
+            <button
+              onClick={() => setView(saveFormOrigin)}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg
+                         text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Applications list screen
+  if (view === "applicationsList") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
+        {/* Detail modal overlay */}
+        {viewingApplication && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-gray-900">Application Details</h3>
+                <button
+                  onClick={() => setViewingApplication(null)}
+                  className="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                  ×
+                </button>
+              </div>
+              <dl className="space-y-3">
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Company</dt>
+                  <dd className="text-sm text-gray-900 mt-0.5">{viewingApplication.company}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Job Title</dt>
+                  <dd className="text-sm text-gray-900 mt-0.5">{viewingApplication.jobTitle}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</dt>
+                  <dd className="mt-0.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(viewingApplication.status)}`}>
+                      {viewingApplication.status}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date Applied</dt>
+                  <dd className="text-sm text-gray-900 mt-0.5">{viewingApplication.date}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Saved At</dt>
+                  <dd className="text-sm text-gray-900 mt-0.5">
+                    {new Date(viewingApplication.createdAt).toLocaleString()}
+                  </dd>
+                </div>
+              </dl>
+              {(viewingApplication.resumeContent || viewingApplication.coverLetterContent) && (
+                <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Documents</p>
+                  {viewingApplication.resumeContent && viewingApplication.resumeFilename && (
+                    <button
+                      onClick={() => downloadMarkdownFile(viewingApplication.resumeFilename, viewingApplication.resumeContent)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                                 bg-gradient-to-r from-purple-500 to-purple-600
+                                 text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
+                      <span>↓</span>
+                      <span>Download CV</span>
+                    </button>
+                  )}
+                  {viewingApplication.coverLetterContent && viewingApplication.coverLetterFilename && (
+                    <button
+                      onClick={() => downloadMarkdownFile(viewingApplication.coverLetterFilename, viewingApplication.coverLetterContent)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                                 bg-gradient-to-r from-indigo-500 to-indigo-600
+                                 text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
+                      <span>↓</span>
+                      <span>Download Cover Letter</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-6 pt-2">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Saved Applications</h2>
+              <p className="text-sm text-gray-500 mt-0.5">{savedApplications.length} application{savedApplications.length !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="flex gap-2">
+              {result && (
+                <button
+                  onClick={() => setView("success")}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
+                             text-gray-600 hover:bg-gray-50 transition-colors">
+                  ← Back
+                </button>
+              )}
+              {!result && (
+                <button
+                  onClick={() => window.close()}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
+                             text-gray-600 hover:bg-gray-50 transition-colors">
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+
+          {savedApplications.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+              <p className="text-gray-400 text-sm">No applications saved yet.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Job Title</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedApplications.map((app, idx) => (
+                    <tr
+                      key={app.id}
+                      className={`border-b border-gray-50 ${idx % 2 === 0 ? "" : "bg-gray-50/40"}`}>
+                      <td className="px-4 py-3 font-medium text-gray-900">{app.company}</td>
+                      <td className="px-4 py-3 text-gray-600">{app.jobTitle}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(app.status)}`}>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{app.date}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 justify-end">
+                          <button
+                            title="View"
+                            onClick={() => setViewingApplication(app)}
+                            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                            👁
+                          </button>
+                          <button
+                            title="Edit"
+                            onClick={() => openSaveForm("applicationsList", app)}
+                            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                            ✏️
+                          </button>
+                          {app.resumeContent && app.resumeFilename && (
+                            <button
+                              title="Download CV"
+                              onClick={() => downloadMarkdownFile(app.resumeFilename, app.resumeContent)}
+                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                              📄
+                            </button>
+                          )}
+                          {app.coverLetterContent && app.coverLetterFilename && (
+                            <button
+                              title="Download Cover Letter"
+                              onClick={() => downloadMarkdownFile(app.coverLetterFilename, app.coverLetterContent)}
+                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                              ✉️
+                            </button>
+                          )}
+                          {deleteConfirmId === app.id ? (
+                            <button
+                              onClick={() => handleDeleteApplication(app.id)}
+                              className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors whitespace-nowrap">
+                              Confirm
+                            </button>
+                          ) : (
+                            <button
+                              title="Delete"
+                              onClick={() => setDeleteConfirmId(app.id)}
+                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors">
+                              🗑
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Form screen (default)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
       <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl">
-        <div className="mb-5">
-          <h1 className="text-xl font-bold text-gray-900">Generate Documents</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Confirm job details and select model
-          </p>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Generate Documents</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Confirm job details and select model
+            </p>
+          </div>
+          <button
+            onClick={() => setView("applicationsList")}
+            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg
+                       text-gray-500 hover:bg-gray-50 transition-colors whitespace-nowrap">
+            My Applications
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -305,7 +739,8 @@ function IndexDialog() {
             <p className="text-xs text-gray-500">
               Profile: {userProfile.skills.length} skills,{" "}
               {userProfile.workExperience.length} experiences,{" "}
-              {userProfile.personalProjects.length} projects
+              {userProfile.personalProjects.length} projects,{" "}
+              {userProfile.languages?.length ?? 0} languages
             </p>
           </div>
 
@@ -319,13 +754,12 @@ function IndexDialog() {
 
         {status && (
           <p
-            className={`mt-3 text-sm ${
-              status.includes("failed") ||
+            className={`mt-3 text-sm ${status.includes("failed") ||
               status.includes("error") ||
               status.includes("Error")
-                ? "text-red-600"
-                : "text-purple-600"
-            }`}>
+              ? "text-red-600"
+              : "text-purple-600"
+              }`}>
             {status}
           </p>
         )}
