@@ -95,6 +95,8 @@ export interface SavedApplication {
   date: string       // "YYYY-MM-DD"
   createdAt: string  // ISO timestamp, set once on save
 
+  jobUrl?: string     // URL of the job posting
+
   // Optional — present only when saved from the success screen
   resumeContent?: string
   resumeFilename?: string

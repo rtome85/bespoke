@@ -78,11 +78,13 @@ function IndexDialog() {
   const [savedApplications, setSavedApplications] = useState<SavedApplication[]>([])
   const [editingApplication, setEditingApplication] = useState<SavedApplication | null>(null)
   const [viewingApplication, setViewingApplication] = useState<SavedApplication | null>(null)
+  const [pendingJobUrl, setPendingJobUrl] = useState("")
   const [saveFormData, setSaveFormData] = useState({
     company: "",
     jobTitle: "",
     status: "Applied" as ApplicationStatus,
     date: new Date().toISOString().split("T")[0],
+    jobUrl: "",
   })
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   // Track where the save form was opened from so Cancel goes back correctly
@@ -103,6 +105,8 @@ function IndexDialog() {
           setCompanyName(res.pendingJobData.companyName)
         if (res.pendingJobData?.jobTitle)
           setJobTitle(res.pendingJobData.jobTitle)
+        if (res.pendingJobData?.tabUrl)
+          setPendingJobUrl(res.pendingJobData.tabUrl)
         if (res.savedApplications) setSavedApplications(res.savedApplications)
       }
     )
@@ -199,6 +203,7 @@ function IndexDialog() {
         jobTitle: app.jobTitle,
         status: app.status,
         date: app.date,
+        jobUrl: app.jobUrl ?? "",
       })
     } else {
       setSaveFormData({
@@ -206,6 +211,7 @@ function IndexDialog() {
         jobTitle: jobTitle,
         status: "Applied",
         date: new Date().toISOString().split("T")[0],
+        jobUrl: pendingJobUrl,
       })
     }
     setView("saveForm")
@@ -230,13 +236,14 @@ function IndexDialog() {
     const updated: SavedApplication[] = editingApplication
       ? savedApplications.map((a) =>
         a.id === editingApplication.id
-          ? { ...a, ...saveFormData }   // preserve existing docs
+          ? { ...a, ...saveFormData, jobUrl: saveFormData.jobUrl || undefined }
           : a
       )
       : [
         ...savedApplications,
         {
           ...saveFormData,
+          jobUrl: saveFormData.jobUrl || undefined,
           ...docs,
           id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
@@ -499,6 +506,22 @@ function IndexDialog() {
                            focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Job Posting URL
+              </label>
+              <input
+                type="url"
+                value={saveFormData.jobUrl}
+                onChange={(e) =>
+                  setSaveFormData((d) => ({ ...d, jobUrl: e.target.value }))
+                }
+                placeholder="https://..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
           </div>
 
           {saveFormOrigin === "success" && result && (
@@ -579,6 +602,20 @@ function IndexDialog() {
                     {new Date(viewingApplication.createdAt).toLocaleString()}
                   </dd>
                 </div>
+                {viewingApplication.jobUrl && (
+                  <div>
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Job Posting</dt>
+                    <dd className="text-sm mt-0.5">
+                      <a
+                        href={viewingApplication.jobUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-600 hover:underline break-all">
+                        {viewingApplication.jobUrl}
+                      </a>
+                    </dd>
+                  </div>
+                )}
               </dl>
               {(viewingApplication.resumeContent || viewingApplication.coverLetterContent) && (
                 <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
@@ -656,7 +693,22 @@ function IndexDialog() {
                     <tr
                       key={app.id}
                       className={`border-b border-gray-50 ${idx % 2 === 0 ? "" : "bg-gray-50/40"}`}>
-                      <td className="px-4 py-3 font-medium text-gray-900">{app.company}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        <div className="flex items-center gap-1.5">
+                          {app.company}
+                          {app.jobUrl && (
+                            <a
+                              href={app.jobUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open job posting"
+                              className="text-purple-400 hover:text-purple-600 transition-colors shrink-0"
+                              onClick={(e) => e.stopPropagation()}>
+                              🔗
+                            </a>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-gray-600">{app.jobTitle}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(app.status)}`}>
