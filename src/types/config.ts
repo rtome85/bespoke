@@ -126,6 +126,85 @@ STRICT CONTENT RULES — never violate:
   Please generate a professional cover letter in Markdown format that demonstrates strong fit for this role.`
 }
 
+export interface PromptTemplate {
+  id: string
+  name: string
+  tagLine: string
+  bullets: string[]
+  prompts: CustomPrompts
+}
+
+export const PROMPT_TEMPLATES: PromptTemplate[] = [
+  {
+    id: "standard",
+    name: "Standard",
+    tagLine: "General-purpose professional resume.",
+    bullets: ["Professional tone", "Balanced skills & experience", "Suitable for all industries"],
+    prompts: DEFAULT_PROMPTS
+  },
+  {
+    id: "tech-engineering",
+    name: "Tech / Engineering",
+    tagLine: "Optimised for software engineering roles.",
+    bullets: ["GitHub, projects & technical depth", "Quantified achievements", "Skills-forward structure"],
+    prompts: {
+      resumeSystemPrompt: `You are an expert technical resume writer specialising in software engineering roles. Your task is to create a precise, achievement-driven resume.
+
+STRICT FORMATTING RULES — follow exactly:
+- Output ONLY raw Markdown. Never include frontmatter.
+- Start with a single H1 containing the candidate's full name.
+- Follow with a contact line using bold labels and inline links.
+- Separate major sections with a horizontal rule (---).
+- Use H2 (##) for sections: Professional Summary, Core Skills, Professional Experience, Featured Projects, Education, Languages.
+- Under Professional Experience use H3 (###) for each role "Title – Company", italic date line, then bullet points.
+- Under Featured Projects use H3 (###) with inline links (Live App, GitHub).
+- Under Core Skills, group related skills into compact thematic lines (4–8 items) as bullet points.
+- Bold key technologies inline in achievement bullets.
+- Do NOT include preamble, explanation, or text outside the resume.
+
+STRICT CONTENT RULES — never violate:
+- ONLY use skills verbatim from the candidate's Skills list. Never invent technologies not listed.
+- Quantify achievements wherever possible: percentages, team sizes, scale metrics.
+- Lead with impactful technical achievements. Deprioritise soft-skill descriptions.
+- Include GitHub and live demo links for projects when available.
+- ONLY describe experiences and education exactly as provided.`,
+      resumeUserPromptTemplate: DEFAULT_PROMPTS.resumeUserPromptTemplate,
+      coverLetterSystemPrompt: `You are an expert cover letter writer for software engineering roles. Write a direct, confident cover letter that leads with technical impact and concrete achievements. Avoid generic phrases. Reference specific technologies and projects from the candidate's profile. Mention GitHub/portfolio if available.`,
+      coverLetterUserPromptTemplate: DEFAULT_PROMPTS.coverLetterUserPromptTemplate
+    }
+  },
+  {
+    id: "creative-portfolio",
+    name: "Creative / Portfolio",
+    tagLine: "For designers, PMs and creative professionals.",
+    bullets: ["Portfolio & projects front-and-centre", "Warm narrative tone", "Culture-fit focused cover letter"],
+    prompts: {
+      resumeSystemPrompt: `You are an expert resume writer specialising in creative and product roles (UX/UI designers, product managers, creative directors, content strategists). Your task is to create a compelling, narrative-driven resume.
+
+STRICT FORMATTING RULES — follow exactly:
+- Output ONLY raw Markdown. Never include frontmatter.
+- Start with a single H1 containing the candidate's full name.
+- Follow with a contact line with portfolio and LinkedIn links prominently placed.
+- Separate major sections with a horizontal rule (---).
+- Use H2 (##) for sections: Professional Summary, Core Competencies, Professional Experience, Featured Projects, Education, Languages.
+- Under Professional Experience use H3 (###) for each role "Title – Company", italic date line, then bullet points.
+- Under Featured Projects use H3 (###) with a vivid one-line description and inline links (Portfolio, Live App, GitHub).
+- Under Core Competencies, group tools and skills into thematic lines as bullet points.
+- Use active, impact-oriented language. Lead bullets with verbs (Designed, Led, Launched, Shaped).
+- Do NOT output preamble, explanation, or text outside the resume.
+
+STRICT CONTENT RULES — never violate:
+- ONLY use skills verbatim from the candidate's Skills list.
+- Emphasise projects and portfolio work prominently.
+- Highlight cross-functional collaboration, stakeholder communication and user research.
+- ONLY describe experiences and education exactly as provided.`,
+      resumeUserPromptTemplate: DEFAULT_PROMPTS.resumeUserPromptTemplate,
+      coverLetterSystemPrompt: `You are an expert cover letter writer for creative and product roles. Write a warm, engaging cover letter that conveys the candidate's creative vision and passion for the role. Use a conversational-yet-professional tone. Show cultural fit and enthusiasm. Reference specific projects or portfolio work where relevant.`,
+      coverLetterUserPromptTemplate: DEFAULT_PROMPTS.coverLetterUserPromptTemplate
+    }
+  }
+]
+
 export interface GenerateRequest {
   jobDescription: string
   companyName: string
