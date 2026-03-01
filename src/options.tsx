@@ -12,7 +12,7 @@ import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
 import { SkillEditor } from "~components/SkillEditor"
 import { Tabs } from "~components/Tabs"
-import { AVAILABLE_MODELS, DEFAULT_LLM_TUNING, DEFAULT_PROMPTS, PROMPTS_VERSION, type CustomPrompts, type LLMTuningConfig } from "~types/config"
+import { AVAILABLE_MODELS, DEFAULT_LLM_TUNING, DEFAULT_PROMPTS, PROMPT_TEMPLATES, PROMPTS_VERSION, type CustomPrompts, type LLMTuningConfig, type PromptTemplate } from "~types/config"
 import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
 
 import "./style.css"
@@ -128,6 +128,19 @@ function Options() {
     if (dialogState.promptKey) {
       setCustomPrompts({ ...customPrompts, [dialogState.promptKey]: prompt })
     }
+  }
+
+  const activeTemplateName = PROMPT_TEMPLATES.find(t =>
+    t.prompts.resumeSystemPrompt === customPrompts?.resumeSystemPrompt &&
+    t.prompts.resumeUserPromptTemplate === customPrompts?.resumeUserPromptTemplate &&
+    t.prompts.coverLetterSystemPrompt === customPrompts?.coverLetterSystemPrompt &&
+    t.prompts.coverLetterUserPromptTemplate === customPrompts?.coverLetterUserPromptTemplate
+  )?.name
+
+  const handleApplyTemplate = (template: PromptTemplate) => {
+    const isCustomised = activeTemplateName === undefined
+    if (isCustomised && !confirm(`Apply "${template.name}"? This will overwrite your current custom prompts.`)) return
+    setCustomPrompts(template.prompts)
   }
 
   const handleExportData = async () => {
@@ -309,7 +322,7 @@ function Options() {
       content: (
         <div className="flex flex-row gap-4">
           {/* ── LLM Fine-tuning ─────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-1/3">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900">LLM Fine-tuning</h2>
               <p className="text-sm text-gray-500 mt-1">
@@ -486,7 +499,7 @@ function Options() {
           </div>
 
           {/* ── Custom Prompts ─────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-2/3">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Custom Prompts</h2>
@@ -551,6 +564,69 @@ function Options() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      label: "Templates",
+      value: "templates",
+      content: (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Prompt Templates</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Apply a preset to instantly configure your Custom Prompts for a specific role type.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {PROMPT_TEMPLATES.map((template) => {
+              const isActive = activeTemplateName === template.name
+              return (
+                <div key={template.id}
+                  className={`flex flex-col rounded-xl border-2 p-5 transition-all
+                    ${isActive
+                      ? "border-purple-400 bg-purple-50"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"}`}>
+
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900 text-sm">{template.name}</h3>
+                    {isActive && (
+                      <span className="text-xs font-medium bg-emerald-100 text-emerald-700
+                                       border border-emerald-200 rounded-full px-2 py-0.5 shrink-0 ml-2">
+                        Active
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tag line */}
+                  <p className="text-xs text-gray-500 mb-4">{template.tagLine}</p>
+
+                  {/* Bullets */}
+                  <ul className="space-y-1.5 flex-1 mb-5">
+                    {template.bullets.map(b => (
+                      <li key={b} className="flex items-start gap-2 text-xs text-gray-600">
+                        <span className="text-purple-400 mt-0.5 shrink-0">•</span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Apply button */}
+                  <button
+                    onClick={() => handleApplyTemplate(template)}
+                    disabled={isActive}
+                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isActive
+                        ? "bg-gray-100 text-gray-400 cursor-default"
+                        : "bg-purple-600 text-white hover:bg-purple-700"}`}>
+                    {isActive ? "Applied" : "Apply Template"}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       )
