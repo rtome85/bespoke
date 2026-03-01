@@ -159,6 +159,7 @@ function Options() {
         ollamaConfig,
         customPrompts,
         userProfile,
+        llmTuning,
         savedApplications: savedApplications ?? []
       }
 
@@ -207,6 +208,7 @@ function Options() {
           if (data.ollamaConfig) setOllamaConfig(data.ollamaConfig)
           if (data.customPrompts) setCustomPrompts(data.customPrompts)
           if (data.userProfile) setUserProfile(data.userProfile)
+          if (data.llmTuning) setLlmTuning(data.llmTuning)
           if (data.savedApplications) {
             await chrome.storage.local.set({ savedApplications: data.savedApplications })
           }

@@ -26,14 +26,20 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (!syncConfig?.token) return
     try {
       await push(syncConfig.token)
-      await chrome.storage.local.set({
-        syncConfig: { ...syncConfig, lastSynced: new Date().toISOString(), error: undefined }
-      })
+      const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+      if (current?.token === syncConfig.token) {
+        await chrome.storage.local.set({
+          syncConfig: { ...current, lastSynced: new Date().toISOString(), error: undefined }
+        })
+      }
     } catch (err) {
       // Mark sync error (token may be expired)
-      await chrome.storage.local.set({
-        syncConfig: { ...syncConfig, error: (err as Error).message }
-      })
+      const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+      if (current?.token === syncConfig.token) {
+        await chrome.storage.local.set({
+          syncConfig: { ...current, error: (err as Error).message }
+        })
+      }
     }
   }, 2_000)
 })

@@ -44,6 +44,8 @@
       ]
     },
     "host_permissions": [
+      "https://www.googleapis.com/*",
+      "https://oauth2.googleapis.com/*",
       "*://*.linkedin.com/*",
       "*://ollama.com/*",
       "*://www.ollama.com/*"
