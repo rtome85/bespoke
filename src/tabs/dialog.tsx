@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
+import { Briefcase, Download, ExternalLink, Eye, FileText, Mail, Pencil, Trash2, X } from "lucide-react"
+
 import { sendToBackground } from "@plasmohq/messaging"
 
 import { AVAILABLE_MODELS } from "~types/config"
@@ -571,8 +573,8 @@ function IndexDialog() {
                 <h3 className="text-lg font-bold text-gray-900">Application Details</h3>
                 <button
                   onClick={() => setViewingApplication(null)}
-                  className="text-gray-400 hover:text-gray-600 text-xl leading-none">
-                  ×
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                  <X size={16} />
                 </button>
               </div>
               <dl className="space-y-3">
@@ -626,7 +628,7 @@ function IndexDialog() {
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5
                                  bg-gradient-to-r from-purple-500 to-purple-600
                                  text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
-                      <span>↓</span>
+                      <Download size={14} />
                       <span>Download CV</span>
                     </button>
                   )}
@@ -636,7 +638,7 @@ function IndexDialog() {
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5
                                  bg-gradient-to-r from-indigo-500 to-indigo-600
                                  text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
-                      <span>↓</span>
+                      <Download size={14} />
                       <span>Download Cover Letter</span>
                     </button>
                   )}
@@ -674,7 +676,11 @@ function IndexDialog() {
 
           {savedApplications.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-              <p className="text-gray-400 text-sm">No applications saved yet.</p>
+              <div className="flex justify-center mb-4">
+                <Briefcase size={36} className="text-gray-200" />
+              </div>
+              <p className="text-gray-600 text-sm font-medium">No applications saved yet</p>
+              <p className="text-gray-400 text-xs mt-1">Save your first application after generating documents.</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -702,9 +708,9 @@ function IndexDialog() {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Open job posting"
-                              className="text-purple-400 hover:text-purple-600 transition-colors shrink-0"
+                              className="text-gray-300 hover:text-purple-500 transition-colors shrink-0"
                               onClick={(e) => e.stopPropagation()}>
-                              🔗
+                              <ExternalLink size={12} />
                             </a>
                           )}
                         </div>
@@ -717,47 +723,48 @@ function IndexDialog() {
                       </td>
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{app.date}</td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 justify-end">
+                        <div className="flex items-center gap-0.5 justify-end">
                           <button
-                            title="View"
+                            title="View details"
                             onClick={() => setViewingApplication(app)}
-                            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-                            👁
+                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                            <Eye size={14} />
                           </button>
                           <button
                             title="Edit"
                             onClick={() => openSaveForm("applicationsList", app)}
-                            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-                            ✏️
+                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                            <Pencil size={14} />
                           </button>
                           {app.resumeContent && app.resumeFilename && (
                             <button
                               title="Download CV"
                               onClick={() => downloadMarkdownFile(app.resumeFilename, app.resumeContent)}
-                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-                              📄
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                              <FileText size={14} />
                             </button>
                           )}
                           {app.coverLetterContent && app.coverLetterFilename && (
                             <button
                               title="Download Cover Letter"
                               onClick={() => downloadMarkdownFile(app.coverLetterFilename, app.coverLetterContent)}
-                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
-                              ✉️
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                              <Mail size={14} />
                             </button>
                           )}
+                          <div className="w-px h-4 bg-gray-200 mx-1" />
                           {deleteConfirmId === app.id ? (
                             <button
                               onClick={() => handleDeleteApplication(app.id)}
-                              className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors whitespace-nowrap">
+                              className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap">
                               Confirm
                             </button>
                           ) : (
                             <button
                               title="Delete"
                               onClick={() => setDeleteConfirmId(app.id)}
-                              className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors">
-                              🗑
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors">
+                              <Trash2 size={14} />
                             </button>
                           )}
                         </div>
