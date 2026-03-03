@@ -49,6 +49,8 @@ type View = "form" | "loading" | "success" | "saveForm" | "applicationsList"
 
 function statusBadgeClass(status: ApplicationStatus): string {
   switch (status) {
+    case "Saved":
+      return "bg-gray-100 text-gray-800"
     case "Offer":
       return "bg-green-100 text-green-800"
     case "Reject":
@@ -84,7 +86,7 @@ function IndexDialog() {
   const [saveFormData, setSaveFormData] = useState({
     company: "",
     jobTitle: "",
-    status: "Applied" as ApplicationStatus,
+    status: "Saved" as ApplicationStatus,
     date: new Date().toISOString().split("T")[0],
     jobUrl: "",
   })
@@ -211,7 +213,7 @@ function IndexDialog() {
       setSaveFormData({
         company: companyName,
         jobTitle: jobTitle,
-        status: "Applied",
+        status: "Saved",
         date: new Date().toISOString().split("T")[0],
         jobUrl: pendingJobUrl,
       })

@@ -45,9 +45,9 @@ export interface Education {
 
 export interface Certificate {
   id: string // crypto.randomUUID()
-  name: string          // e.g. "AWS Certified Developer"
-  issuer: string        // e.g. "Amazon Web Services"
-  issueDate: string     // ISO date string: "2023-06-01"
+  name: string // e.g. "AWS Certified Developer"
+  issuer: string // e.g. "Amazon Web Services"
+  issueDate: string // ISO date string: "2023-06-01"
   expiryDate?: string | null // null = no expiry
   credentialUrl?: string
 }
@@ -69,6 +69,7 @@ export interface UserProfile {
 }
 
 export type ApplicationStatus =
+  | "Saved"
   | "Applied"
   | "HR Interview"
   | "1st Technical Interview"
@@ -78,13 +79,14 @@ export type ApplicationStatus =
   | "Reject"
 
 export const APPLICATION_STATUSES: ApplicationStatus[] = [
+  "Saved",
   "Applied",
   "HR Interview",
   "1st Technical Interview",
   "2nd Technical Interview",
   "Final Interview",
   "Offer",
-  "Reject",
+  "Reject"
 ]
 
 export interface SavedApplication {
@@ -92,10 +94,10 @@ export interface SavedApplication {
   company: string
   jobTitle: string
   status: ApplicationStatus
-  date: string       // "YYYY-MM-DD"
-  createdAt: string  // ISO timestamp, set once on save
+  date: string // "YYYY-MM-DD"
+  createdAt: string // ISO timestamp, set once on save
 
-  jobUrl?: string     // URL of the job posting
+  jobUrl?: string // URL of the job posting
 
   // Optional — present only when saved from the success screen
   resumeContent?: string
