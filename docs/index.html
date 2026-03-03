@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobTailor – AI-Powered CV Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #1a73e8;
+      color: #fff;
+      padding: 3rem 1rem 2.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.5px; }
+    header p { margin-top: 0.5rem; font-size: 1.1rem; opacity: 0.9; }
+    main {
+      flex: 1;
+      max-width: 680px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .card p { color: #444; }
+    .card ul { margin: 0.5rem 0 0 1.25rem; color: #444; }
+    .card li { margin-bottom: 0.25rem; }
+    .btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.6rem 1.4rem;
+      background: #1a73e8;
+      color: #fff;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .btn:hover { background: #1558c0; }
+    .btn-outline {
+      background: transparent;
+      color: #1a73e8;
+      border: 2px solid #1a73e8;
+    }
+    .btn-outline:hover { background: #e8f0fe; }
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.85rem;
+      color: #777;
+      border-top: 1px solid #e0e0e0;
+    }
+    footer a { color: #1a73e8; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>JobTailor</h1>
+    <p>Generate tailored CVs and cover letters with local AI — directly in your browser.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>What is JobTailor?</h2>
+      <p>
+        JobTailor is a browser extension that reads a job listing, combines it with your
+        saved profile, and uses a locally-running AI model (via Ollama) to generate a
+        customised CV and cover letter — all without sending your data to third-party
+        cloud services.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Key Features</h2>
+      <ul>
+        <li>One-click CV &amp; cover letter generation from any job page</li>
+        <li>Works with local Ollama models — your data stays on your machine</li>
+        <li>Optional Google Drive backup for your profile</li>
+        <li>Supports Chrome and Firefox</li>
+      </ul>
+      <a class="btn btn-outline" href="https://github.com/rtome85/jobtailor" target="_blank" rel="noopener">
+        View on GitHub
+      </a>
+    </div>
+
+    <div class="card">
+      <h2>Privacy</h2>
+      <p>
+        JobTailor stores your profile locally on your device and only contacts the AI
+        endpoint you configure. No analytics, no tracking, no data sold to third parties.
+      </p>
+      <a class="btn" href="privacy-policy.html">Read the Privacy Policy</a>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2026 Roberto Tome &middot;
+    <a href="mailto:contact@robtome.com">contact@robtome.com</a> &middot;
+    <a href="privacy-policy.html">Privacy Policy</a>
+  </footer>
+</body>
+</html>

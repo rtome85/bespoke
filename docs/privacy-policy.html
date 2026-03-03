@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – JobTailor Extension</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .meta {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 2.5rem;
+    }
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 0.25rem;
+    }
+    p { margin-bottom: 0.75rem; }
+    ul {
+      margin: 0.5rem 0 0.75rem 1.5rem;
+    }
+    li { margin-bottom: 0.25rem; }
+    a { color: #1a73e8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back { display: inline-block; margin-bottom: 2rem; font-size: 0.9rem; color: #555; }
+    .back:hover { color: #1a73e8; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0e0e0;
+      font-size: 0.85rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="index.html">← Back to JobTailor</a>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">JobTailor Browser Extension &nbsp;|&nbsp; Last updated: March 2026</p>
+
+    <!-- 1. Introduction -->
+    <h2>1. Introduction</h2>
+    <p>
+      JobTailor is a browser extension developed by Roberto Tome
+      (<a href="mailto:contact@robtome.com">contact@robtome.com</a>).
+      It helps job seekers generate tailored CVs and cover letters by combining
+      their saved profile with job descriptions extracted from the current web page,
+      then sending that information to a user-configured AI model (Ollama).
+    </p>
+    <p>
+      This Privacy Policy explains what data the extension collects, how it is used,
+      and the choices you have. By installing and using JobTailor you agree to
+      these practices.
+    </p>
+
+    <!-- 2. Data We Collect -->
+    <h2>2. Data We Collect</h2>
+    <p>
+      The extension stores the following information <strong>locally on your device</strong>
+      using the browser's <code>chrome.storage.local</code> API:
+    </p>
+    <ul>
+      <li>Personal details you enter in the extension profile: name, email address, phone number, location</li>
+      <li>Professional history: work experience, education, skills, languages, certifications</li>
+      <li>Extension configuration: Ollama API endpoint URL, selected model, Google Drive backup preference</li>
+      <li>Temporarily, during document generation: the job description extracted from the current page</li>
+    </ul>
+    <p>
+      We do <strong>not</strong> collect browser history, browsing behaviour, cookies,
+      or any data beyond what you explicitly enter in the extension.
+    </p>
+
+    <!-- 3. How We Use Your Data -->
+    <h2>3. How We Use Your Data</h2>
+    <p>Your data is used exclusively for the following purposes:</p>
+    <ul>
+      <li>
+        <strong>CV / cover letter generation:</strong> when you click "Generate", your profile
+        and the extracted job description are sent to the Ollama API endpoint you configured
+        (which may be a local or remote server you control) to produce the document.
+      </li>
+      <li>
+        <strong>Profile persistence:</strong> your profile is stored locally so you do not have
+        to re-enter it each session.
+      </li>
+      <li>
+        <strong>Optional Google Drive backup:</strong> if you enable Drive backup, your profile
+        is copied to your Google Drive account's private app folder (see Section 5).
+      </li>
+    </ul>
+
+    <!-- 4. Data Sharing -->
+    <h2>4. Data Sharing</h2>
+    <p>
+      JobTailor does <strong>not</strong> sell, rent, or share your data with any advertising
+      networks, analytics providers, or unrelated third parties.
+    </p>
+    <p>The only external services that may receive your data are:</p>
+    <ul>
+      <li>
+        <strong>Ollama API</strong> — the endpoint URL is set by you in the extension settings.
+        This server may be running locally on your machine or on a remote server you own or trust.
+        Your profile and the job description are sent to this endpoint solely to generate
+        the requested document. We have no control over, and no visibility into, the server
+        you configure.
+      </li>
+      <li>
+        <strong>Google Drive (optional)</strong> — if you enable backup, your profile data is
+        uploaded to the private <code>drive.appdata</code> folder of your Google account.
+        This folder is not visible to other users or other apps; only JobTailor can access it.
+      </li>
+    </ul>
+
+    <!-- 5. Google OAuth and Drive -->
+    <h2>5. Google OAuth and Drive Access</h2>
+    <p>
+      JobTailor requests the <code>https://www.googleapis.com/auth/drive.appdata</code> OAuth
+      scope. This scope grants access only to a hidden application data folder in your
+      Google Drive; it does not provide access to files you have created or any other
+      part of your Drive.
+    </p>
+    <p>
+      You will be shown Google's standard consent screen before any Drive access is granted.
+      Authorisation is entirely optional — the extension is fully functional without it.
+    </p>
+    <p>
+      To revoke access at any time, visit
+      <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">
+        Google Account → Security → Third-party access
+      </a>
+      and remove JobTailor.
+    </p>
+
+    <!-- 6. Job Data Extraction -->
+    <h2>6. Job Data Extraction</h2>
+    <p>
+      When you click "Generate CV" on a job listing page, the extension's content script
+      reads text from that page (job title, company name, job description) to use as context
+      for document generation.
+    </p>
+    <p>
+      This data is held only in memory for the duration of the generation request and is
+      discarded immediately afterwards. It is never stored persistently or sent to any
+      service other than your configured Ollama endpoint.
+    </p>
+
+    <!-- 7. Data Retention & Deletion -->
+    <h2>7. Data Retention and Deletion</h2>
+    <p>
+      Your profile data remains in <code>chrome.storage.local</code> until you explicitly
+      delete it. You can remove all locally stored data by opening the extension and
+      using the <strong>"Clear Data"</strong> option in the settings.
+    </p>
+    <p>
+      If you have enabled Google Drive backup, disabling the integration or revoking
+      Google's permission will stop future backups. To delete existing backup data,
+      use the "Delete Drive backup" option in the extension settings, or delete the
+      app data folder manually via Google Drive settings.
+    </p>
+    <p>Uninstalling the extension removes all data stored in <code>chrome.storage.local</code>.</p>
+
+    <!-- 8. Security -->
+    <h2>8. Security</h2>
+    <p>
+      Profile data is stored in the browser's local storage mechanism, which is sandboxed
+      to the extension and not accessible by websites or other extensions. No additional
+      encryption is applied beyond what the browser provides natively.
+    </p>
+    <p>
+      Communications between the extension and the Ollama API use the protocol of the
+      endpoint URL you provide (HTTP or HTTPS). We strongly recommend using an HTTPS
+      endpoint, especially for remote servers.
+    </p>
+    <p>
+      Communications between the extension and Google Drive use HTTPS enforced by
+      Google's APIs.
+    </p>
+
+    <!-- 9. Changes to This Policy -->
+    <h2>9. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. Any changes will be reflected
+      on this page with an updated "Last updated" date. We encourage you to review this
+      page periodically. Continued use of the extension after changes constitutes
+      acceptance of the revised policy.
+    </p>
+
+    <!-- 10. Contact -->
+    <h2>10. Contact</h2>
+    <p>
+      If you have questions or concerns about this Privacy Policy or the data practices
+      of JobTailor, please contact:
+    </p>
+    <p>
+      Roberto Tome<br />
+      <a href="mailto:contact@robtome.com">contact@robtome.com</a>
+    </p>
+
+    <footer>
+      &copy; 2026 Roberto Tome &middot;
+      <a href="index.html">JobTailor</a> &middot;
+      <a href="privacy-policy.html">Privacy Policy</a>
+    </footer>
+  </div>
+</body>
+</html>
