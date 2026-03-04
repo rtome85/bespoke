@@ -99,6 +99,8 @@ export interface SavedApplication {
 
   jobUrl?: string // URL of the job posting
 
+  matchPercentage?: number // Match % calculated by the LLM
+
   // Optional — present only when saved from the success screen
   resumeContent?: string
   resumeFilename?: string

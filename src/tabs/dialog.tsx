@@ -237,6 +237,10 @@ function IndexDialog() {
       }
       : {}
 
+    const matchData = !editingApplication && result
+      ? { matchPercentage: result.match.percentage }
+      : {}
+
     const updated: SavedApplication[] = editingApplication
       ? savedApplications.map((a) =>
         a.id === editingApplication.id
@@ -249,6 +253,7 @@ function IndexDialog() {
           ...saveFormData,
           jobUrl: saveFormData.jobUrl || undefined,
           ...docs,
+          ...matchData,
           id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
         },
@@ -654,7 +659,7 @@ function IndexDialog() {
           </div>
         )}
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-6 pt-2">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Saved Applications</h2>
@@ -695,8 +700,10 @@ function IndexDialog() {
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Job Title</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">Match %</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -722,6 +729,20 @@ function IndexDialog() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{app.jobTitle}</td>
+                      <td className="px-4 py-3">
+                        {app.matchPercentage != null ? (
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${app.matchPercentage >= 70
+                            ? "bg-green-100 text-green-800"
+                            : app.matchPercentage >= 50
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                            }`}>
+                            {app.matchPercentage}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(app.status)}`}>
                           {app.status}
