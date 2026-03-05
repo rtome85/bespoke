@@ -253,7 +253,7 @@ function IndexDialog() {
                 {
                   role: "system",
                   content:
-                    "You are a company research assistant. Provide accurate, concise information about companies based on your web search capabilities."
+                    "You are a company research assistant. Always respond with valid JSON only, no markdown formatting."
                 },
                 {
                   role: "user",
@@ -273,65 +273,105 @@ function IndexDialog() {
           const data = await response.json()
           const content = data.choices?.[0]?.["message"]?.["content"] || ""
 
-          const industry =
-            extractField(
-              content,
-              /(?:^|\n)[^\n]*(?:sector|industry|field)[^\n]*:\s*([^\n]+)/i
-            ) || "Not available"
-          const size =
-            extractField(
-              content,
-              /(?:^|\n)[^\n]*(?:employees|size|people)[^\n]*:\s*([^\n]+)/i
-            ) || "Not available"
+          // Strip markdown fences if present
+          const jsonStr = content
+            .replace(/^```(?:json)?\s*/i, "")
+            .replace(/\s*```\s*$/, "")
+            .trim()
 
-          const descMatch = content.match(
-            /(?:^|\n)[^\n]*(?:description|about|overview)[^\n]*:\s*([^\n]+(?:\n[^\n]+)?)/i
-          )
-          const description = descMatch?.[1]?.trim() || ""
-
-          const ratings = {
-            glassdoor: extractRating(
-              content,
-              /glassdoor[\s*]*(\d+\.?\d*)\s*[\/★]?[s]?/i
-            ),
-            indeed: extractRating(
-              content,
-              /indeed[\s*]*(\d+\.?\d*)\s*[\/★]?[s]?/i
-            ),
-            teamlyzer: extractRating(
-              content,
-              /teamlyzer[\s*]*(\d+\.?\d*)\s*[\/★]?[s]?/i
-            )
+          let raw: Record<string, unknown> = {}
+          try {
+            raw = JSON.parse(jsonStr)
+          } catch {
+            console.error("Failed to parse Perplexity JSON response", content)
           }
 
-          const notableProjects: string[] = []
-          const contentLines = content.split("\n")
-          const sectionIdx = contentLines.findIndex((l) =>
-            /notable\s*projects?|projects?,\s*products?|projects?,\s*products?\s*,?\s*or\s*services?/i.test(l)
-          )
-          if (sectionIdx >= 0) {
-            for (let i = sectionIdx + 1; i < contentLines.length; i++) {
-              const line = contentLines[i]
-              const trimmed = line.trim()
-              if (/^- \*\*/.test(line)) break
-              if (!trimmed) continue
-              const bulletMatch = trimmed.match(/^[-•*]\s+(.+)/)
-              if (bulletMatch) {
-                const cleaned = bulletMatch[1]
-                  .replace(/\[\d+\]/g, "")
-                  .replace(/\*\*/g, "")
-                  .trim()
-                if (cleaned.length > 3) notableProjects.push(cleaned)
-              }
+          // Case-insensitive fuzzy field lookup
+          const getField = (
+            obj: Record<string, unknown>,
+            ...keys: string[]
+          ): unknown => {
+            for (const key of keys) {
+              if (obj[key] !== undefined) return obj[key]
+              const found = Object.keys(obj).find(
+                (k) => k.toLowerCase() === key.toLowerCase()
+              )
+              if (found !== undefined) return obj[found]
             }
+            // Partial-match fallback
+            for (const key of keys) {
+              const found = Object.keys(obj).find((k) =>
+                k.toLowerCase().includes(key.toLowerCase())
+              )
+              if (found !== undefined) return obj[found]
+            }
+            return undefined
           }
+
+          const cleanStr = (v: unknown): string =>
+            typeof v === "string"
+              ? v.replace(/\[\d+\]/g, "").trim()
+              : "Not available"
+
+          const cleanRating = (v: unknown): number | undefined => {
+            const n = typeof v === "number" ? v : parseFloat(v as string)
+            return !isNaN(n) && n >= 0 && n <= 5 ? n : undefined
+          }
+
+          // Parse notableProjects — may be an array OR a bullet-point string
+          const parseProjects = (v: unknown): string[] => {
+            if (Array.isArray(v)) {
+              return v
+                .map((p) => cleanStr(p))
+                .filter((p) => p.length > 3)
+                .slice(0, 6)
+            }
+            if (typeof v === "string") {
+              return v
+                .split("\n")
+                .map((l) =>
+                  l
+                    .replace(/^[-•*]\s+/, "")
+                    .replace(/\[\d+\]/g, "")
+                    .trim()
+                )
+                .filter((l) => l.length > 3)
+                .slice(0, 6)
+            }
+            return []
+          }
+
+          const ratingsObj =
+            (getField(raw, "ratings") as Record<string, unknown> | undefined) ??
+            {}
 
           setCompanyInfo({
-            industry: cleanField(industry),
-            size: cleanField(size),
-            description: cleanField(description),
-            notableProjects,
-            ratings,
+            industry: cleanStr(
+              getField(raw, "industry", "Industry/Sector", "sector", "industry_sector")
+            ),
+            size: cleanStr(
+              getField(raw, "size", "Company size (employees)", "employees", "company_size_employees", "headcount")
+            ),
+            description: cleanStr(
+              getField(raw, "description", "Brief description", "brief_description", "about", "overview", "summary")
+            ),
+            notableProjects: parseProjects(
+              getField(raw, "notableProjects", "Notable projects, products, or services", "notable_projects_products_services", "projects", "products", "services")
+            ),
+            ratings: {
+              glassdoor: cleanRating(
+                ratingsObj.glassdoor ??
+                  getField(raw, "glassdoor", "Glassdoor Rating", "glassdoor_rating")
+              ),
+              indeed: cleanRating(
+                ratingsObj.indeed ??
+                  getField(raw, "indeed", "Indeed Rating", "indeed_rating")
+              ),
+              teamlyzer: cleanRating(
+                ratingsObj.teamlyzer ??
+                  getField(raw, "teamlyzer", "Teamlyzer Rating", "Overall Teamlyzer Rating")
+              )
+            },
             sources: []
           })
         } else {
@@ -347,33 +387,6 @@ function IndexDialog() {
 
     fetchCompanyInfo()
   }, [result, companyName, perplexityConfig])
-
-  const extractField = (content: string, regex: RegExp): string | undefined => {
-    const match = content.match(regex)
-    return match?.[1]?.trim()
-  }
-
-  const cleanField = (value: string): string => {
-    return value
-      .replace(/\*\*/g, "")
-      .replace(/\*/g, "")
-      .replace(/^[\s:,\-]+|[\s:,\-]+$/g, "")
-      .replace(/\[\d+\]/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-  }
-
-  const extractRating = (
-    content: string,
-    regex: RegExp
-  ): number | undefined => {
-    const match = content.match(regex)
-    if (match) {
-      const rating = parseFloat(match[1])
-      return rating >= 0 && rating <= 5 ? rating : undefined
-    }
-    return undefined
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

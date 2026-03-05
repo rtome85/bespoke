@@ -12,14 +12,18 @@ export interface PerplexityConfig {
   customPrompt: string
 }
 
-export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}}. Provide the following information in a structured format:
-- Industry/Sector
-- Company size (employees)
-- Notable projects, products, or services
-- Ratings on Glassdoor, Indeed, Teamlyzer (if available)
-- Brief description (2-3 sentences)
+export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}} and return ONLY a raw JSON object. No markdown, no code fences, no explanation — just the JSON.
 
-Format as concise bullet points. If information is not available, state "Not available".`
+Use EXACTLY these field names (no variations):
+{"industry":"...","size":"...","description":"...","notableProjects":["..."],"ratings":{"glassdoor":null,"indeed":null,"teamlyzer":null}}
+
+Field rules:
+- industry: the sector/industry as a short string
+- size: employee count or range as a string
+- description: 2-3 sentence summary of the company
+- notableProjects: array of up to 6 strings, each naming a distinct product, project, or service
+- ratings: number 0.0–5.0 if found on that platform, otherwise null
+- No citation brackets like [1] anywhere`
 
 export interface ModelConfig {
   id: string
