@@ -229,11 +229,14 @@ function IndexDialog() {
       !perplexityConfig?.enabled ||
       !perplexityConfig?.apiKey
     ) {
+      setCompanyInfo(null)
+      setCompanyInfoLoading(false)
       return
     }
 
     const fetchCompanyInfo = async () => {
       setCompanyInfoLoading(true)
+      setCompanyInfo(null)
       try {
         const response = await fetch(
           "https://api.perplexity.ai/chat/completions",
@@ -305,10 +308,10 @@ function IndexDialog() {
           )
           const notableProjects = projectsMatch
             ? projectsMatch[1]
-                .split(/[-•*]/)
-                .filter((p) => p.trim().length > 3)
-                .slice(0, 5)
-                .map((p) => p.trim())
+              .split(/[-•*]/)
+              .filter((p) => p.trim().length > 3)
+              .slice(0, 5)
+              .map((p) => p.trim())
             : []
 
           setCompanyInfo({
@@ -319,8 +322,11 @@ function IndexDialog() {
             ratings,
             sources: []
           })
+        } else {
+          setCompanyInfo(null)
         }
       } catch (error) {
+        setCompanyInfo(null)
         console.error("Failed to fetch company info:", error)
       } finally {
         setCompanyInfoLoading(false)
@@ -442,11 +448,11 @@ function IndexDialog() {
     const docs =
       !editingApplication && result && saveDocs
         ? {
-            resumeContent: result.resumeContent,
-            resumeFilename: result.resumeFilename,
-            coverLetterContent: result.coverLetterContent,
-            coverLetterFilename: result.coverLetterFilename
-          }
+          resumeContent: result.resumeContent,
+          resumeFilename: result.resumeFilename,
+          coverLetterContent: result.coverLetterContent,
+          coverLetterFilename: result.coverLetterFilename
+        }
         : {}
 
     const matchData =
@@ -456,25 +462,25 @@ function IndexDialog() {
 
     const updated: SavedApplication[] = editingApplication
       ? savedApplications.map((a) =>
-          a.id === editingApplication.id
-            ? {
-                ...a,
-                ...saveFormData,
-                jobUrl: saveFormData.jobUrl || undefined
-              }
-            : a
-        )
-      : [
-          ...savedApplications,
-          {
+        a.id === editingApplication.id
+          ? {
+            ...a,
             ...saveFormData,
-            jobUrl: saveFormData.jobUrl || undefined,
-            ...docs,
-            ...matchData,
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString()
+            jobUrl: saveFormData.jobUrl || undefined
           }
-        ]
+          : a
+      )
+      : [
+        ...savedApplications,
+        {
+          ...saveFormData,
+          jobUrl: saveFormData.jobUrl || undefined,
+          ...docs,
+          ...matchData,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString()
+        }
+      ]
     chrome.storage.local.set({ savedApplications: updated })
     setSavedApplications(updated)
     setView("applicationsList")
@@ -545,13 +551,12 @@ function IndexDialog() {
                 Match Score
               </span>
               <span
-                className={`text-2xl font-bold ${
-                  pct >= 70
-                    ? "text-green-600"
-                    : pct >= 50
-                      ? "text-yellow-600"
-                      : "text-red-600"
-                }`}>
+                className={`text-2xl font-bold ${pct >= 70
+                  ? "text-green-600"
+                  : pct >= 50
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                  }`}>
                 {pct}%
               </span>
             </div>
@@ -571,40 +576,40 @@ function IndexDialog() {
           {/* Strengths / Weaknesses / Improvements */}
           {((result.match.strengths?.length ?? 0) > 0 ||
             (result.match.weaknesses?.length ?? 0) > 0) && (
-            <div className=" mb-5 flex flex-row gap-2">
-              {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-green-50 border border-green-100 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
-                    Strengths
-                  </p>
-                  <ul className="space-y-1">
-                    {result.match.strengths.map((s, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-green-800">
-                        <span className="mt-0.5 shrink-0">✓</span>
-                        <span>{s}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className=" mb-5 flex flex-row gap-2">
+                {(result.match.strengths?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-green-50 border border-green-100 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
+                      Strengths
+                    </p>
+                    <ul className="space-y-1">
+                      {result.match.strengths.map((s, i) => (
+                        <li key={i} className="flex gap-2 text-xs text-green-800">
+                          <span className="mt-0.5 shrink-0">✓</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
-                    Weaknesses
-                  </p>
-                  <ul className="space-y-1">
-                    {result.match.weaknesses.map((w, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-red-800">
-                        <span className="mt-0.5 shrink-0">✗</span>
-                        <span>{w}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+                {(result.match.weaknesses?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
+                      Weaknesses
+                    </p>
+                    <ul className="space-y-1">
+                      {result.match.weaknesses.map((w, i) => (
+                        <li key={i} className="flex gap-2 text-xs text-red-800">
+                          <span className="mt-0.5 shrink-0">✗</span>
+                          <span>{w}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
           {(result.match.improvements?.length ?? 0) > 0 && (
             <div className="mb-5">
@@ -669,51 +674,64 @@ function IndexDialog() {
                       </p>
                     )}
 
+                    {companyInfo.notableProjects.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-semibold text-indigo-700 mb-1.5">
+                          Notable projects / products
+                        </p>
+                        <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5">
+                          {companyInfo.notableProjects.map((project, idx) => (
+                            <li key={`${project}-${idx}`}>{project}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {(companyInfo.ratings.glassdoor ||
                       companyInfo.ratings.indeed ||
                       companyInfo.ratings.teamlyzer) && (
-                      <div className="flex flex-wrap gap-2">
-                        {companyInfo.ratings.glassdoor && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Glassdoor</span>
-                            <span
-                              className={
-                                companyInfo.ratings.glassdoor >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.glassdoor}★
+                        <div className="flex flex-wrap gap-2">
+                          {companyInfo.ratings.glassdoor && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Glassdoor</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.glassdoor >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.glassdoor}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.indeed && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Indeed</span>
-                            <span
-                              className={
-                                companyInfo.ratings.indeed >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.indeed}★
+                          )}
+                          {companyInfo.ratings.indeed && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Indeed</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.indeed >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.indeed}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.teamlyzer && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Teamlyzer</span>
-                            <span
-                              className={
-                                companyInfo.ratings.teamlyzer >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.teamlyzer}★
+                          )}
+                          {companyInfo.ratings.teamlyzer && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Teamlyzer</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.teamlyzer >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.teamlyzer}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
                   </div>
                 )
               )}
@@ -993,44 +1011,44 @@ function IndexDialog() {
               </dl>
               {(viewingApplication.resumeContent ||
                 viewingApplication.coverLetterContent) && (
-                <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Documents
-                  </p>
-                  {viewingApplication.resumeContent &&
-                    viewingApplication.resumeFilename && (
-                      <button
-                        onClick={() =>
-                          downloadMarkdownFile(
-                            viewingApplication.resumeFilename,
-                            viewingApplication.resumeContent
-                          )
-                        }
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                  <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Documents
+                    </p>
+                    {viewingApplication.resumeContent &&
+                      viewingApplication.resumeFilename && (
+                        <button
+                          onClick={() =>
+                            downloadMarkdownFile(
+                              viewingApplication.resumeFilename,
+                              viewingApplication.resumeContent
+                            )
+                          }
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5
                                  bg-gradient-to-r from-purple-500 to-purple-600
                                  text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
-                        <Download size={14} />
-                        <span>Download CV</span>
-                      </button>
-                    )}
-                  {viewingApplication.coverLetterContent &&
-                    viewingApplication.coverLetterFilename && (
-                      <button
-                        onClick={() =>
-                          downloadMarkdownFile(
-                            viewingApplication.coverLetterFilename,
-                            viewingApplication.coverLetterContent
-                          )
-                        }
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                          <Download size={14} />
+                          <span>Download CV</span>
+                        </button>
+                      )}
+                    {viewingApplication.coverLetterContent &&
+                      viewingApplication.coverLetterFilename && (
+                        <button
+                          onClick={() =>
+                            downloadMarkdownFile(
+                              viewingApplication.coverLetterFilename,
+                              viewingApplication.coverLetterContent
+                            )
+                          }
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5
                                  bg-gradient-to-r from-indigo-500 to-indigo-600
                                  text-white text-sm rounded-lg hover:opacity-90 transition-opacity font-medium">
-                        <Download size={14} />
-                        <span>Download Cover Letter</span>
-                      </button>
-                    )}
-                </div>
-              )}
+                          <Download size={14} />
+                          <span>Download Cover Letter</span>
+                        </button>
+                      )}
+                  </div>
+                )}
             </div>
           </div>
         )}
@@ -1131,13 +1149,12 @@ function IndexDialog() {
                       <td className="px-4 py-3">
                         {app.matchPercentage != null ? (
                           <span
-                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                              app.matchPercentage >= 70
-                                ? "bg-green-100 text-green-800"
-                                : app.matchPercentage >= 50
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                            }`}>
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${app.matchPercentage >= 70
+                              ? "bg-green-100 text-green-800"
+                              : app.matchPercentage >= 50
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                              }`}>
                             {app.matchPercentage}%
                           </span>
                         ) : (
@@ -1314,13 +1331,12 @@ function IndexDialog() {
 
         {status && (
           <p
-            className={`mt-3 text-sm ${
-              status.includes("failed") ||
+            className={`mt-3 text-sm ${status.includes("failed") ||
               status.includes("error") ||
               status.includes("Error")
-                ? "text-red-600"
-                : "text-purple-600"
-            }`}>
+              ? "text-red-600"
+              : "text-purple-600"
+              }`}>
             {status}
           </p>
         )}
