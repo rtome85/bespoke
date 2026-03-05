@@ -313,7 +313,8 @@ function IndexDialog() {
             for (let i = sectionIdx + 1; i < contentLines.length; i++) {
               const line = contentLines[i]
               const trimmed = line.trim()
-              if (!trimmed || /^- \*\*/.test(line)) break
+              if (/^- \*\*/.test(line)) break
+              if (!trimmed) continue
               const bulletMatch = trimmed.match(/^[-•*]\s+(.+)/)
               if (bulletMatch) {
                 const cleaned = bulletMatch[1]
