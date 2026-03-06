@@ -16,6 +16,7 @@ import {
   AVAILABLE_MODELS,
   DEFAULT_LLM_TUNING,
   DEFAULT_PERPLEXITY_PROMPT,
+  DEFAULT_PREPARATION_PLAN_PROMPT,
   DEFAULT_PROMPTS,
   PROMPT_TEMPLATES,
   PROMPTS_VERSION,
@@ -53,7 +54,9 @@ function Options() {
     {
       apiKey: "",
       enabled: false,
-      customPrompt: DEFAULT_PERPLEXITY_PROMPT
+      customPrompt: DEFAULT_PERPLEXITY_PROMPT,
+      preparationPlanEnabled: false,
+      preparationPlanPrompt: DEFAULT_PREPARATION_PLAN_PROMPT
     }
   )
 
@@ -106,6 +109,12 @@ function Options() {
     title: string
     promptKey: keyof CustomPrompts | null
   }>({ isOpen: false, title: "", promptKey: null })
+
+  const [perplexityDialogState, setPerplexityDialogState] = useState<{
+    isOpen: boolean
+    title: string
+    promptType: "research" | "preparation" | null
+  }>({ isOpen: false, title: "", promptType: null })
 
   const handleTestOllama = async () => {
     if (!ollamaConfig.apiKey) {
@@ -235,6 +244,28 @@ function Options() {
   const savePromptFromDialog = (prompt: string) => {
     if (dialogState.promptKey) {
       setCustomPrompts({ ...customPrompts, [dialogState.promptKey]: prompt })
+    }
+  }
+
+  const openPerplexityDialog = (
+    title: string,
+    promptType: "research" | "preparation"
+  ) => {
+    setPerplexityDialogState({ isOpen: true, title, promptType })
+  }
+
+  const closePerplexityDialog = () => {
+    setPerplexityDialogState({ isOpen: false, title: "", promptType: null })
+  }
+
+  const savePerplexityPromptFromDialog = (prompt: string) => {
+    if (perplexityDialogState.promptType === "research") {
+      setPerplexityConfig({ ...perplexityConfig, customPrompt: prompt })
+    } else if (perplexityDialogState.promptType === "preparation") {
+      setPerplexityConfig({
+        ...perplexityConfig,
+        preparationPlanPrompt: prompt
+      })
     }
   }
 
@@ -582,11 +613,96 @@ function Options() {
                          focus:ring-2 focus:ring-purple-500 focus:border-transparent
                          font-mono text-sm"
               />
-              <p className="mt-2 text-sm text-gray-500">
-                Use {"{{companyName}}"} as a placeholder for the company name.
-                The prompt is sent to Perplexity Sonar to gather company
-                information.
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-gray-500">
+                  Use {"{{companyName}}"} as a placeholder for the company name.
+                  The prompt is sent to Perplexity Sonar to gather company
+                  information.
+                </p>
+                <button
+                  onClick={() =>
+                    openPerplexityDialog("Research Prompt", "research")
+                  }
+                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
+                           hover:bg-purple-200 transition-colors font-medium">
+                  Expand
+                </button>
+              </div>
+            </div>
+
+            <hr className="border-gray-200 my-6" />
+
+            {/* Preparation Plan Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Interview Preparation Plan
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Generate AI-powered technical interview preparation plans for HR
+                and technical interviews. This helps you prepare with specific
+                questions, coding challenges, and technical topics tailored to
+                the job.
               </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="preparationPlanEnabled"
+                    checked={perplexityConfig.preparationPlanEnabled}
+                    onChange={(e) =>
+                      setPerplexityConfig({
+                        ...perplexityConfig,
+                        preparationPlanEnabled: e.target.checked
+                      })
+                    }
+                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  />
+                  <label
+                    htmlFor="preparationPlanEnabled"
+                    className="text-sm font-medium text-gray-700">
+                    Enable Preparation Plan Generation
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preparation Plan Prompt
+                  </label>
+                  <textarea
+                    value={perplexityConfig.preparationPlanPrompt}
+                    onChange={(e) =>
+                      setPerplexityConfig({
+                        ...perplexityConfig,
+                        preparationPlanPrompt: e.target.value
+                      })
+                    }
+                    rows={8}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg
+                             focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                             font-mono text-sm"
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
+                      {"{{jobDescription}}"}, and {"{{interviewType}}"} as
+                      placeholders. This prompt is used to generate technical
+                      interview preparation guides.
+                    </p>
+                    <button
+                      onClick={() =>
+                        openPerplexityDialog(
+                          "Preparation Plan Prompt",
+                          "preparation"
+                        )
+                      }
+                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
+                               hover:bg-purple-200 transition-colors font-medium">
+                      Expand
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -1339,6 +1455,20 @@ function Options() {
         }
         onClose={closePromptDialog}
         onSave={savePromptFromDialog}
+      />
+
+      <PromptDialog
+        isOpen={perplexityDialogState.isOpen}
+        title={perplexityDialogState.title}
+        prompt={
+          perplexityDialogState.promptType === "research"
+            ? perplexityConfig.customPrompt
+            : perplexityDialogState.promptType === "preparation"
+              ? perplexityConfig.preparationPlanPrompt
+              : ""
+        }
+        onClose={closePerplexityDialog}
+        onSave={savePerplexityPromptFromDialog}
       />
     </>
   )

@@ -162,4 +162,69 @@ export class PerplexityClient {
       sources: []
     }
   }
+
+  async generateInterviewPrepPlan(
+    companyName: string,
+    jobTitle: string,
+    jobDescription: string,
+    interviewType: string
+  ): Promise<string> {
+    const prompt = this.buildInterviewPrepPrompt(
+      companyName,
+      jobTitle,
+      jobDescription,
+      interviewType
+    )
+
+    try {
+      const response = await fetch(
+        "https://api.perplexity.ai/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a technical interview preparation assistant. Create focused technical interview preparation materials. Always respond in English."
+              },
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 2000,
+            temperature: 0.3
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Perplexity API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content || ""
+
+      return content
+    } catch (error) {
+      console.error("Failed to generate interview preparation plan:", error)
+      throw error
+    }
+  }
+
+  private buildInterviewPrepPrompt(
+    companyName: string,
+    jobTitle: string,
+    jobDescription: string,
+    interviewType: string
+  ): string {
+    return this.config.preparationPlanPrompt
+      .replace(/\{\{companyName\}\}/g, companyName)
+      .replace(/\{\{jobTitle\}\}/g, jobTitle)
+      .replace(/\{\{jobDescription\}\}/g, jobDescription || "Not available")
+      .replace(/\{\{interviewType\}\}/g, interviewType)
+  }
 }
