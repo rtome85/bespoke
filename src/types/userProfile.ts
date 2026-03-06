@@ -89,6 +89,15 @@ export const APPLICATION_STATUSES: ApplicationStatus[] = [
   "Reject"
 ]
 
+export interface PreparationPlan {
+  content: string
+  generatedAt: string
+  interviewType:
+    | "HR Interview"
+    | "1st Technical Interview"
+    | "2nd Technical Interview"
+}
+
 export interface SavedApplication {
   id: string
   company: string
@@ -106,6 +115,9 @@ export interface SavedApplication {
   resumeFilename?: string
   coverLetterContent?: string
   coverLetterFilename?: string
+
+  // Optional — preparation plan for interview stages
+  preparationPlan?: PreparationPlan
 }
 
 export const DEFAULT_USER_PROFILE: UserProfile = {

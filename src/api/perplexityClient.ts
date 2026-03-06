@@ -162,4 +162,100 @@ export class PerplexityClient {
       sources: []
     }
   }
+
+  async generateInterviewPrepPlan(
+    companyName: string,
+    jobTitle: string,
+    jobDescription: string,
+    interviewType: string
+  ): Promise<string> {
+    const prompt = this.buildInterviewPrepPrompt(
+      companyName,
+      jobTitle,
+      jobDescription,
+      interviewType
+    )
+
+    try {
+      const response = await fetch(
+        "https://api.perplexity.ai/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a technical interview preparation assistant. Create focused technical interview preparation materials. Always respond in English."
+              },
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 2000,
+            temperature: 0.3
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Perplexity API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content || ""
+
+      return content
+    } catch (error) {
+      console.error("Failed to generate interview preparation plan:", error)
+      throw error
+    }
+  }
+
+  private buildInterviewPrepPrompt(
+    companyName: string,
+    jobTitle: string,
+    jobDescription: string,
+    interviewType: string
+  ): string {
+    return `Create a focused technical interview preparation guide for a ${interviewType} for the ${jobTitle} position at ${companyName}.
+
+Job description for context:
+${jobDescription || "Not available"}
+
+Generate a technical preparation document in Markdown format with the following structure:
+
+# Technical Interview Preparation - ${jobTitle}
+
+## 1. Key Technologies & Skills
+List the main technologies, frameworks, and tools mentioned in the job description that will likely be covered in the interview. Include expected proficiency levels.
+
+## 2. Technical Questions
+Prepare 8-12 specific technical questions covering:
+- Core programming concepts relevant to the role
+- Framework-specific questions (based on technologies in the job description)
+- System design and architecture (for senior roles)
+- Database and data structure questions
+- Problem-solving scenarios with expected solution approaches
+- Code review and debugging scenarios
+
+For each question, provide:
+- The question itself
+- Key points the interviewer expects in the answer
+- Example answer outline or code snippet where applicable
+
+## 3. Coding Challenges
+List 3-5 practical coding problems or algorithms commonly asked for this type of role, including:
+- Problem statement
+- Expected time/space complexity
+- Hints for approaching the solution
+
+## 4. Technical Deep Dive Topics
+Identify 2-3 advanced topics specific to ${companyName}'s tech stack or industry that might be discussed. Provide key concepts to review.
+
+IMPORTANT: Respond ONLY with the Markdown content. No introductory text, no explanations outside the document. Focus strictly on technical preparation content.`
+  }
 }
