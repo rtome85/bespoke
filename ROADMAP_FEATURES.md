@@ -1,7 +1,7 @@
 # JobTailor - Plano de Desenvolvimento de Features
 
 **Data:** 2026-03-06  
-**Versão:** 1.3  
+**Versão:** 1.4  
 **Estado:** Em Desenvolvimento - Fase 2 Ativa
 
 ---
@@ -153,12 +153,14 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 - Match Percentage
 - Resume/Cover Letter content (opcional)
 - Preparation Plan (para entrevistas)
+- Tags, Notas, Favorito (organização)
 
 **Operações:**
 
 - CRUD completo
 - View modal com detalhes
 - Download de documentos guardados
+- **Tags, Notas & Favoritos** (Feature 1.3) - Organização avançada
 
 ### 3. Company Research (Perplexity)
 
@@ -327,14 +329,24 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 - Sistema de favoritos (⭐)
 - Filtros por tags na lista
 
+**Implementação:**
+
+```typescript
+// Adicionar campos a SavedApplication: tags, notes, isFavorite
+// Tags preset: Dream company, Remote only, Urgente, Referral, Top priority
+// Toggle buttons para seleção de tags
+// Filter bar com All, Favourites, e tags dinâmicas
+```
+
+**Status:** ✅ IMPLEMENTADO (2026-03-06)
+
 **Esforço:** Baixo  
 **Impacto:** ⭐⭐⭐⭐ Médio-Alto
 
-**Ficheiros a Modificar:**
+**Ficheiros Modificados:**
 
-- `src/types/userProfile.ts` (adicionar campos tags/notes)
-- `src/tabs/dialog.tsx` (UI de tags no save form)
-- `src/tabs/dialog.tsx` (filtros na lista de aplicações)
+- ✅ `src/types/userProfile.ts` - Adicionados campos tags, notes, isFavorite
+- ✅ `src/tabs/dialog.tsx` - UI completa: save form, filters, display
 
 ---
 
@@ -536,18 +548,18 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 
 ## Roadmap de Implementação
 
-### Fase 1: Fundação (Sprint 1-2) 🚧 EM PROGRESSO
+### Fase 1: Fundação (Sprint 1-2) ✅ COMPLETA
 
 **Meta:** Features de maior impacto imediato
 
-- ✅ **Export PDF** - Implementado com pdfmake + marked (2026-03-06)
-- ⏳ **Tags e Notas** - Pendente
-- ⏳ **Dark Mode** - Pendente
+- ✅ **Export PDF** - Implementado com pdfmake + marked
+- ✅ **Tags e Notas** - Implementado com filtros e favoritos
+- ⏳ **Dark Mode** - Pendente (movido para Fase 4)
 
 **Deliverables:**
 
 - ✅ PDF generation funcionando
-- ⏳ Sistema de tags pendente
+- ✅ Sistema de tags com filtros
 - ⏳ Tema escuro pendente
 
 ---
@@ -649,9 +661,9 @@ O JobTailor tem uma base sólida com arquitetura extensível. As features propos
 3. **Diferenciação competitiva** (ATS Checker, Analytics)
 4. **Expansão de mercado** (Mais job boards)
 
-**Próximo Passo Recomendado:** Implementar Snippets Library para aumentar produtividade na geração de cover letters.
+**Próximo Passo Recomendado:** Implementar Cover Letter Snippets Library para aumentar produtividade na geração de documentos.
 
 ---
 
 **Documento criado por:** Claude (Opencode AI)  
-**Última atualização:** 2026-03-06 (v1.3 - LinkedIn Import implementado)
+**Última atualização:** 2026-03-06 (v1.4 - Tags e Notas implementados)
