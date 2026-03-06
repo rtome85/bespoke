@@ -4,6 +4,23 @@ import { mapTokensToPdfContent } from "./map-tokens"
 import { getDocumentDefinition } from "./styles"
 
 /**
+ * Adds " | " separators between adjacent contact-info fields on the same line.
+ * Targets lines with 2+ patterns like "Label: value Label: value".
+ */
+function preprocessMarkdown(markdown: string): string {
+  return markdown
+    .split("\n")
+    .map((line) => {
+      const labelCount = (line.match(/\b[A-Z][a-zA-Z]+:\s/g) || []).length
+      if (labelCount >= 2) {
+        return line.replace(/(\S)\s+([A-Z][a-zA-Z]+:\s)/g, "$1 | $2")
+      }
+      return line
+    })
+    .join("\n")
+}
+
+/**
  * Export markdown CV to PDF using pdfmake
  * Lazy loads pdfmake and fonts to minimize bundle impact
  *
@@ -24,7 +41,7 @@ export async function exportCvToPdf(
 
   try {
     // Step 1: Parse markdown to AST using marked lexer
-    const tokens = marked.lexer(markdown)
+    const tokens = marked.lexer(preprocessMarkdown(markdown))
 
     if (!tokens || tokens.length === 0) {
       throw new Error("Failed to parse markdown content")
@@ -55,9 +72,6 @@ export async function exportCvToPdf(
       (pdfFontsModule as { default?: Record<string, string> }).default ||
       (pdfFontsModule as Record<string, string>)
 
-    // Set the vfs on pdfMake
-    ;(pdfMake as { vfs?: Record<string, string> }).vfs = vfs
-
     // Configure fonts to use the standard vfs fonts
     const fonts = {
       Roboto: {
@@ -68,7 +82,12 @@ export async function exportCvToPdf(
       }
     }
 
-    ;(pdfMake as { fonts?: typeof fonts }).fonts = fonts
+    const pm = pdfMake as {
+      addVirtualFileSystem: (vfs: Record<string, string>) => void
+      addFonts: (fonts: typeof fonts) => void
+    }
+    pm.addVirtualFileSystem(vfs)
+    pm.addFonts(fonts)
 
     // Step 4: Create document definition
     const docDefinition = getDocumentDefinition(pdfContent, title, author)
