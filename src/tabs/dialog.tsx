@@ -33,6 +33,14 @@ import { downloadMarkdownFile } from "~utils/documentFormatter"
 
 import "../style.css"
 
+const PRESET_TAGS = [
+  "Dream company",
+  "Remote only",
+  "Urgente",
+  "Referral",
+  "Top priority"
+]
+
 const QUOTES = [
   {
     text: "The secret of getting ahead is getting started.",
@@ -150,8 +158,13 @@ function IndexDialog() {
     jobTitle: "",
     status: "Saved" as ApplicationStatus,
     date: new Date().toISOString().split("T")[0],
-    jobUrl: ""
+    jobUrl: "",
+    tags: [] as string[],
+    notes: "",
+    isFavorite: false
   })
+  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null)
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   // Track where the save form was opened from so Cancel goes back correctly
   const [saveFormOrigin, setSaveFormOrigin] = useState<
@@ -495,7 +508,10 @@ function IndexDialog() {
         jobTitle: app.jobTitle,
         status: app.status,
         date: app.date,
-        jobUrl: app.jobUrl ?? ""
+        jobUrl: app.jobUrl ?? "",
+        tags: app.tags ?? [],
+        notes: app.notes ?? "",
+        isFavorite: app.isFavorite ?? false
       })
     } else {
       setSaveFormData({
@@ -503,7 +519,10 @@ function IndexDialog() {
         jobTitle: jobTitle,
         status: "Saved",
         date: new Date().toISOString().split("T")[0],
-        jobUrl: pendingJobUrl
+        jobUrl: pendingJobUrl,
+        tags: [],
+        notes: "",
+        isFavorite: false
       })
     }
     setView("saveForm")
@@ -1141,6 +1160,109 @@ function IndexDialog() {
             </div>
           </div>
 
+          {/* Favourite toggle */}
+          <div className="mt-4">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={saveFormData.isFavorite}
+                onChange={(e) =>
+                  setSaveFormData((f) => ({ ...f, isFavorite: e.target.checked }))
+                }
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-sm text-gray-700">⭐ Mark as favourite</span>
+            </label>
+          </div>
+
+          {/* Tags selector */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tags
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {PRESET_TAGS.map((tag) => {
+                const active = saveFormData.tags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() =>
+                      setSaveFormData((f) => ({
+                        ...f,
+                        tags: active
+                          ? f.tags.filter((t) => t !== tag)
+                          : [...f.tags, tag]
+                      }))
+                    }
+                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                      active
+                        ? "bg-purple-100 border-purple-400 text-purple-800"
+                        : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
+                    }`}>
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+            {/* Custom tags */}
+            <div className="flex flex-wrap gap-1 mb-2">
+              {saveFormData.tags
+                .filter((t) => !PRESET_TAGS.includes(t))
+                .map((t) => (
+                  <span
+                    key={t}
+                    className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSaveFormData((f) => ({
+                          ...f,
+                          tags: f.tags.filter((x) => x !== t)
+                        }))
+                      }
+                      className="ml-0.5 hover:text-purple-600">
+                      ×
+                    </button>
+                  </span>
+                ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Add custom tag, press Enter"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  const val = (e.target as HTMLInputElement).value.trim()
+                  if (val && !saveFormData.tags.includes(val)) {
+                    setSaveFormData((f) => ({ ...f, tags: [...f.tags, val] }))
+                  }
+                  ;(e.target as HTMLInputElement).value = ""
+                }
+              }}
+            />
+          </div>
+
+          {/* Notes textarea */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              rows={3}
+              value={saveFormData.notes}
+              onChange={(e) =>
+                setSaveFormData((f) => ({ ...f, notes: e.target.value }))
+              }
+              placeholder="Interview notes, contacts, reminders…"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm
+                         focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            />
+          </div>
+
           {saveFormOrigin === "success" && result && (
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mt-4">
               <input
@@ -1229,6 +1351,16 @@ function IndexDialog() {
 
   // Applications list screen
   if (view === "applicationsList") {
+    const allTags = [
+      ...new Set(savedApplications.flatMap((a) => a.tags ?? []))
+    ]
+    const filteredApplications = savedApplications.filter((app) => {
+      if (showFavoritesOnly && !app.isFavorite) return false
+      if (activeTagFilter && !(app.tags ?? []).includes(activeTagFilter))
+        return false
+      return true
+    })
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
         <PreparationPlanModal
@@ -1317,6 +1449,43 @@ function IndexDialog() {
                   </div>
                 )}
               </dl>
+
+              {/* Feature 1.3 — Favourite / Tags / Notes */}
+              {viewingApplication.isFavorite && (
+                <div className="mt-3">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Favourite
+                  </span>
+                  <p className="text-sm text-gray-900 mt-0.5">⭐ Yes</p>
+                </div>
+              )}
+              {(viewingApplication.tags ?? []).length > 0 && (
+                <div className="mt-3">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Tags
+                  </span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {viewingApplication.tags!.map((t) => (
+                      <span
+                        key={t}
+                        className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewingApplication.notes && (
+                <div className="mt-3">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Notes
+                  </span>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">
+                    {viewingApplication.notes}
+                  </p>
+                </div>
+              )}
+
               {(viewingApplication.resumeContent ||
                 viewingApplication.coverLetterContent) && (
                   <div className="mt-5 pt-4 border-t border-gray-100 space-y-3">
@@ -1496,6 +1665,51 @@ function IndexDialog() {
             </div>
           </div>
 
+          {/* Filter bar */}
+          {savedApplications.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                onClick={() => {
+                  setActiveTagFilter(null)
+                  setShowFavoritesOnly(false)
+                }}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                  !activeTagFilter && !showFavoritesOnly
+                    ? "bg-gray-800 border-gray-800 text-white"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}>
+                All
+              </button>
+              <button
+                onClick={() => {
+                  setShowFavoritesOnly((v) => !v)
+                  setActiveTagFilter(null)
+                }}
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                  showFavoritesOnly
+                    ? "bg-amber-100 border-amber-400 text-amber-800"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}>
+                ⭐ Favourites
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    setActiveTagFilter(activeTagFilter === tag ? null : tag)
+                    setShowFavoritesOnly(false)
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                    activeTagFilter === tag
+                      ? "bg-purple-100 border-purple-400 text-purple-800"
+                      : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  }`}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
           {savedApplications.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
               <div className="flex justify-center mb-4">
@@ -1508,6 +1722,10 @@ function IndexDialog() {
                 Save your first application after generating documents.
               </p>
             </div>
+          ) : filteredApplications.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-6">
+              No applications match the current filter.
+            </p>
           ) : (
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <table className="w-full text-sm">
@@ -1535,13 +1753,20 @@ function IndexDialog() {
                   </tr>
                 </thead>
                 <tbody>
-                  {savedApplications.map((app, idx) => (
+                  {filteredApplications.map((app, idx) => (
                     <tr
                       key={app.id}
                       className={`border-b border-gray-50 ${idx % 2 === 0 ? "" : "bg-gray-50/40"}`}>
-                      <td className="px-4 py-3 font-medium text-gray-900">
-                        <div className="flex items-center gap-1.5">
-                          {app.company}
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1">
+                          {app.isFavorite && (
+                            <span title="Favourite" className="text-amber-400">
+                              ★
+                            </span>
+                          )}
+                          <span className="font-medium text-gray-900">
+                            {app.company}
+                          </span>
                           {app.jobUrl && (
                             <a
                               href={app.jobUrl}
@@ -1550,10 +1775,21 @@ function IndexDialog() {
                               title="Open job posting"
                               className="text-gray-300 hover:text-purple-500 transition-colors shrink-0"
                               onClick={(e) => e.stopPropagation()}>
-                              <ExternalLink size={12} />
+                              <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
                         </div>
+                        {(app.tags ?? []).length > 0 && (
+                          <div className="flex flex-wrap gap-0.5 mt-0.5">
+                            {app.tags!.map((t) => (
+                              <span
+                                key={t}
+                                className="px-1.5 rounded-full text-[10px] bg-purple-50 text-purple-700 border border-purple-200">
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {app.jobTitle}

@@ -118,6 +118,11 @@ export interface SavedApplication {
 
   // Optional — preparation plan for interview stages
   preparationPlan?: PreparationPlan
+
+  // Feature 1.3 — Tags, Notes & Favourites
+  tags?: string[]
+  notes?: string
+  isFavorite?: boolean
 }
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
