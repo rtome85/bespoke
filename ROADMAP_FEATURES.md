@@ -1,8 +1,8 @@
 # JobTailor - Plano de Desenvolvimento de Features
 
 **Data:** 2026-03-06  
-**Versão:** 1.2  
-**Estado:** Em Desenvolvimento - Fase 1 Ativa
+**Versão:** 1.3  
+**Estado:** Em Desenvolvimento - Fase 2 Ativa
 
 ---
 
@@ -63,6 +63,7 @@ src/
 │   ├── Education.tsx
 │   ├── ExperienceEditor.tsx
 │   ├── LanguageEditor.tsx
+│   ├── LinkedInImportButton.tsx  # Botão de import do LinkedIn
 │   ├── ModelSelector.tsx
 │   ├── PersonalInfo.tsx
 │   ├── PreparationPlanModal.tsx   # Modal de planos de preparação
@@ -71,7 +72,8 @@ src/
 │   ├── SkillEditor.tsx
 │   └── Tabs.tsx
 ├── contents/
-│   └── jobScrapper.ts              # Scraper de páginas de emprego
+│   ├── jobScrapper.ts              # Scraper de páginas de emprego
+│   └── linkedin-profile.ts        # Scraper de perfil LinkedIn
 ├── lib/
 │   └── pdf/
 │       ├── index.ts                # Exports principais
@@ -277,23 +279,40 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 - Elimina erros de digitação
 - Dados sempre atualizados
 
-**Implementação Proposta:**
+**Implementação:**
 
 ```typescript
 // Content script para linkedin.com/in/*
-// Scraper de JSON-LD (LinkedIn expõe dados estruturados)
+// Scraper de JSON-LD + DOM
 // Botão "Import from LinkedIn" no Personal Info
 // Mapeamento automático de campos
 ```
 
+**Status:** ✅ IMPLEMENTADO (2026-03-06)
+
 **Esforço:** Médio  
 **Impacto:** ⭐⭐⭐⭐⭐ Muito Alto
 
-**Ficheiros a Criar/Modificar:**
+**Ficheiros Criados:**
 
-- `src/contents/linkedin-profile.ts` (novo content script)
-- `src/components/LinkedInImportButton.tsx` (novo)
-- `src/options.tsx` (integrar no Personal Info)
+- ✅ `src/contents/linkedin-profile.ts` - Content script com scraping
+- ✅ `src/components/LinkedInImportButton.tsx` - Componente de UI
+- ✅ `src/options.tsx` - Integrado na secção Personal Info
+
+**Funcionalidades Implementadas:**
+
+- Extração dual: JSON-LD (dados estruturados) + DOM scraping
+- Parsing de secções: Personal Info, Work Experience, Education, Skills, Languages
+- Date parsing: suporta "Jan 2020", "Present", year-only
+- Merge strategy: prefere dados detalhados do DOM
+- Estados de erro: no tab, extração falhou, sucesso
+- Integração direta no formulário de Personal Info
+
+**Fluxo:**
+
+1. Utilizador abre linkedin.com/in/ no separador
+2. Clica "Import" no JobTailor
+3. Dados são extraídos e preenchidos automaticamente
 
 ---
 
@@ -533,19 +552,19 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 
 ---
 
-### Fase 2: Engajamento (Sprint 3-4)
+### Fase 2: Engajamento (Sprint 3-4) 🚧 EM PROGRESSO
 
 **Meta:** Reduzir fricção e aumentar retenção
 
-4. **LinkedIn Import** - Onboarding simplificado
-5. **Snippets Library** - Produtividade
-6. **Salary Tracking** - Dados valiosos
+- ✅ **LinkedIn Import** - Implementado (2026-03-06)
+- ⏳ **Snippets Library** - Pendente
+- ⏳ **Salary Tracking** - Pendente
 
 **Deliverables:**
 
-- Importação de perfil funcionando
-- Biblioteca de snippets com 5+ exemplos
-- Tracking salarial básico
+- ✅ Importação de perfil LinkedIn funcionando
+- ⏳ Biblioteca de snippets pendente
+- ⏳ Tracking salarial pendente
 
 ---
 
@@ -630,9 +649,9 @@ O JobTailor tem uma base sólida com arquitetura extensível. As features propos
 3. **Diferenciação competitiva** (ATS Checker, Analytics)
 4. **Expansão de mercado** (Mais job boards)
 
-**Próximo Passo Recomendado:** Começar pela Fase 1 com Export PDF, pois resolve uma necessidade crítica imediata.
+**Próximo Passo Recomendado:** Implementar Snippets Library para aumentar produtividade na geração de cover letters.
 
 ---
 
 **Documento criado por:** Claude (Opencode AI)  
-**Última atualização:** 2026-03-06 (v1.2 - Atualização após análise do codebase)
+**Última atualização:** 2026-03-06 (v1.3 - LinkedIn Import implementado)
