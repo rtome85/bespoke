@@ -10,7 +10,7 @@ export function generateFilename(
   const sanitizedCompany = sanitizeFilename(companyName)
   const sanitizedTitle = sanitizeFilename(jobTitle)
 
-  return `${type}-${sanitizedCompany}-${sanitizedTitle}-${dateStr}.md`
+  return `roberto-tome-${type}-${sanitizedCompany}.md`
 }
 
 function sanitizeFilename(str: string): string {
