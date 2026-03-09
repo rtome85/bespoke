@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Briefcase, ChevronRight, Loader2, Settings, Sparkles } from "lucide-react"
+import { BarChart3, Briefcase, ChevronRight, Loader2, Settings, Sparkles } from "lucide-react"
 
 import iconUrl from "url:../assets/icon.png"
 
@@ -75,6 +75,17 @@ function IndexPopup() {
     }
   }
 
+  const openAnalytics = () => {
+    chrome.windows.create({
+      url: chrome.runtime.getURL("tabs/analytics.html"),
+      type: "popup",
+      width: 900,
+      height: 600,
+      focused: true
+    })
+    window.close()
+  }
+
   const openOptions = () => {
     chrome.runtime.openOptionsPage()
   }
@@ -116,6 +127,15 @@ function IndexPopup() {
           <span className="flex items-center gap-2.5">
             <Briefcase className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
             My Applications
+          </span>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
+        </button>
+        <button
+          onClick={openAnalytics}
+          className="w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-inset">
+          <span className="flex items-center gap-2.5">
+            <BarChart3 className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+            Analytics
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
         </button>
