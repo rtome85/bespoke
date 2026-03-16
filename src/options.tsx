@@ -36,7 +36,7 @@ import {
 
 import "./style.css"
 
-const EXTENSION_VERSION = "0.4.1"
+const EXTENSION_VERSION = "0.4.2"
 
 function mergeWorkExperience(
   existing: UserProfile["workExperience"],

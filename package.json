@@ -1,7 +1,7 @@
 {
   "name": "jobtailor",
   "displayName": "JobTailor",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Tailor your CV to every job",
   "author": "Roberto Tomé <contact@robtome.com>",
   "plasmo": {
