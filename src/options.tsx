@@ -11,7 +11,6 @@ import { PersonalInfo } from "~components/PersonalInfo"
 import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
 import { SkillEditor } from "~components/SkillEditor"
-import { Tabs } from "~components/Tabs"
 import {
   AVAILABLE_MODELS,
   DEFAULT_LLM_TUNING,
@@ -37,6 +36,40 @@ import "./style.css"
 
 const EXTENSION_VERSION = "0.4.2"
 
+const NAV_GROUPS = [
+  {
+    label: "AI PROVIDERS",
+    items: [
+      { label: "OLLAMA", value: "ai-settings", subtitle: "Configure API access and select your model" },
+      { label: "PERPLEXITY", value: "perplexity", subtitle: "Configure company research and interview preparation" }
+    ]
+  },
+  {
+    label: "CONTENT",
+    items: [
+      { label: "PROMPTS", value: "prompts", subtitle: "Fine-tune model behaviour and custom prompts" },
+      { label: "TEMPLATES", value: "templates", subtitle: "Apply preset prompt configurations" }
+    ]
+  },
+  {
+    label: "PROFILE",
+    items: [
+      { label: "PERSONAL INFO", value: "personal-info", subtitle: "Your contact and personal details" },
+      { label: "EDUCATION", value: "education", subtitle: "Degrees, certificates, and training" },
+      { label: "SKILLS", value: "skills", subtitle: "Technical and soft skills" },
+      { label: "EXPERIENCE", value: "experience", subtitle: "Work history and achievements" },
+      { label: "PROJECTS", value: "projects", subtitle: "Personal and open-source projects" },
+      { label: "LANGUAGES", value: "languages", subtitle: "Languages you speak" }
+    ]
+  },
+  {
+    label: "SYSTEM",
+    items: [
+      { label: "BACKUP & SYNC", value: "backup-sync", subtitle: "Export, import, and Google Drive sync" }
+    ]
+  }
+]
+
 /**
  * Wraps useStorage with local state so text inputs don't lose cursor position.
  * Edits are immediate in local state and flushed to chrome.storage after a delay.
@@ -52,15 +85,11 @@ function useDebouncedStorage<T>(
   const pendingWriteId = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  // Sync storage → local: accept on first load and external changes.
-  // Skip when the stored value is just echoing back our own pending write.
   useEffect(() => {
     if (stored === undefined) return
     if (lastWriteId.current === pendingWriteId.current) {
-      // No pending local write — this is an external change (or initial load)
       setLocal(stored)
     } else {
-      // Our write landed in storage — mark it acknowledged
       lastWriteId.current = pendingWriteId.current
     }
   }, [stored])
@@ -83,6 +112,47 @@ function useDebouncedStorage<T>(
 
   return [local, setValue]
 }
+
+// ── Style helpers ──────────────────────────────────────────────────────────────
+const card: React.CSSProperties = {
+  background: "#fff",
+  border: "2px solid #1a1a1a",
+  padding: "32px"
+}
+
+const inputCls =
+  "w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+
+const textareaCls =
+  "w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm font-mono focus:outline-none focus:border-ink transition-colors"
+
+const labelCls =
+  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+
+const hintCls = "text-[11px] text-ink-secondary mt-1"
+
+const sectionHeadCls =
+  "text-[11px] font-bold uppercase tracking-widest text-ink mb-4"
+
+const btnOutline =
+  "px-5 py-2.5 bg-white border-2 border-ink text-ink text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-colors hover:bg-canvas"
+
+const btnAccent =
+  "px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-opacity hover:opacity-90"
+
+const btnSecondary =
+  "px-5 py-2.5 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-colors hover:border-ink"
+
+const successMsg =
+  "bg-[#f0fdf4] border border-[#86efac] text-[#166534] px-4 py-3 text-sm"
+
+const errorMsg =
+  "bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3 text-sm"
+
+const infoMsg =
+  "bg-[#eff6ff] border border-[#93c5fd] text-[#1e40af] px-4 py-3 text-sm"
+
+const divider = "border-0 border-t border-canvas-divide my-6"
 
 function Options() {
   const [activeTab, setActiveTab] = useState("ai-settings")
@@ -127,7 +197,6 @@ function Options() {
 
   useEffect(() => {
     if (!isVersionLoading && storedPromptsVersion !== PROMPTS_VERSION) {
-      // Write both atomically to avoid inconsistency if page closes mid-debounce
       chrome.storage.local.set({
         customPrompts: DEFAULT_PROMPTS,
         promptsVersion: PROMPTS_VERSION
@@ -478,516 +547,434 @@ function Options() {
     }
   }
 
-  const tabs = [
-    {
-      label: "Ollama",
-      value: "ai-settings",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Ollama Configuration
-          </h2>
+  // ── Active nav info ──────────────────────────────────────────────────────────
+  const allNavItems = NAV_GROUPS.flatMap((g) => g.items)
+  const activeNav = allNavItems.find((i) => i.value === activeTab)
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                API Key *
-              </label>
-              <input
-                type="password"
-                value={ollamaConfig.apiKey}
-                onChange={(e) =>
-                  setOllamaConfig({ ...ollamaConfig, apiKey: e.target.value })
-                }
-                placeholder="oll-..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                Get your API key from{" "}
-                <a
-                  href="https://ollama.com/settings/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-purple-600 hover:underline">
-                  ollama.com/settings/keys
-                </a>
-              </p>
-            </div>
+  // ── Tab content ──────────────────────────────────────────────────────────────
+  const tabContent: Record<string, React.ReactNode> = {
+    "ai-settings": (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Ollama Configuration</h2>
+        <hr className={divider} />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Base URL
-              </label>
-              <input
-                type="text"
-                value={ollamaConfig.baseUrl}
-                onChange={(e) =>
-                  setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })
-                }
-                placeholder="https://ollama.com/api"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                Default is fine for most users.
-              </p>
-            </div>
+        <div className="space-y-6">
+          <div>
+            <label className={labelCls}>API Key *</label>
+            <input
+              type="password"
+              value={ollamaConfig.apiKey}
+              onChange={(e) =>
+                setOllamaConfig({ ...ollamaConfig, apiKey: e.target.value })
+              }
+              placeholder="oll-..."
+              className={inputCls}
+            />
+            <p className={hintCls}>
+              Get your API key from{" "}
+              <a
+                href="https://ollama.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sidebar-accent hover:underline">
+                ollama.com/settings/keys
+              </a>
+            </p>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Available Models
-              </label>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="space-y-2">
-                  {AVAILABLE_MODELS.map((model) => (
-                    <div
-                      key={model.id}
-                      className="flex items-center justify-between text-sm">
-                      <div className="flex items-center">
-                        <span className="font-medium">{model.name}</span>
-                        {model.recommended && (
-                          <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                            Recommended
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-gray-500">{model.size}</span>
+          <div>
+            <label className={labelCls}>Base URL</label>
+            <input
+              type="text"
+              value={ollamaConfig.baseUrl}
+              onChange={(e) =>
+                setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })
+              }
+              placeholder="https://ollama.com/api"
+              className={inputCls}
+            />
+            <p className={hintCls}>Default is fine for most users.</p>
+          </div>
+
+          <div>
+            <label className={labelCls}>Available Models</label>
+            <div className="bg-canvas border border-canvas-input-border p-4">
+              <div className="space-y-3">
+                {AVAILABLE_MODELS.map((model) => (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-ink">{model.name}</span>
+                      {model.recommended && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-sidebar-accent text-white px-2 py-0.5">
+                          Recommended
+                        </span>
+                      )}
                     </div>
-                  ))}
+                    <span className="text-ink-muted text-xs">{model.size}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleTestOllama}
+              disabled={testStatus.type === "loading"}
+              className={btnOutline}>
+              {testStatus.type === "loading" ? "Testing..." : "Test Connection"}
+            </button>
+          </div>
+
+          {testStatus.type === "success" && (
+            <div className={successMsg}>{testStatus.message}</div>
+          )}
+          {testStatus.type === "error" && (
+            <div className={errorMsg}>{testStatus.message}</div>
+          )}
+        </div>
+      </div>
+    ),
+
+    perplexity: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Perplexity Sonar Configuration</h2>
+        <p className="text-sm text-ink-secondary mb-6">
+          Configure Perplexity Sonar to research companies and display
+          information in the results. This enables the "About Company" section
+          with industry, size, projects, and ratings from Glassdoor, Indeed, and
+          Teamlyzer.
+        </p>
+        <hr className={divider} />
+
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="perplexityEnabled"
+              checked={perplexityConfig.enabled}
+              onChange={(e) =>
+                setPerplexityConfig({
+                  ...perplexityConfig,
+                  enabled: e.target.checked
+                })
+              }
+              className="w-4 h-4 accent-sidebar-accent"
+            />
+            <label
+              htmlFor="perplexityEnabled"
+              className="text-sm font-medium text-ink">
+              Enable Company Research
+            </label>
+          </div>
+
+          <div>
+            <label className={labelCls}>API Key *</label>
+            <input
+              type="password"
+              value={perplexityConfig.apiKey}
+              onChange={(e) =>
+                setPerplexityConfig({
+                  ...perplexityConfig,
+                  apiKey: e.target.value
+                })
+              }
+              placeholder="pplx-..."
+              className={inputCls}
+            />
+            <p className={hintCls}>
+              Get your API key from{" "}
+              <a
+                href="https://www.perplexity.ai/settings/api"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sidebar-accent hover:underline">
+                perplexity.ai/settings/api
+              </a>
+            </p>
+          </div>
+
+          <div>
+            <label className={labelCls}>Research Prompt</label>
+            <textarea
+              value={perplexityConfig.customPrompt}
+              onChange={(e) =>
+                setPerplexityConfig({
+                  ...perplexityConfig,
+                  customPrompt: e.target.value
+                })
+              }
+              rows={6}
+              className={textareaCls}
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className={hintCls}>
+                Use {"{{companyName}}"} as a placeholder for the company name.
+              </p>
+              <button
+                onClick={() => openPerplexityDialog("Research Prompt", "research")}
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-canvas border border-canvas-input-border text-ink hover:border-ink transition-colors">
+                Expand
+              </button>
+            </div>
+          </div>
+
+          <hr className={divider} />
+
+          <div>
+            <h3 className={sectionHeadCls}>Interview Preparation Plan</h3>
+            <p className="text-sm text-ink-secondary mb-4">
+              Generate AI-powered technical interview preparation plans for HR
+              and technical interviews.
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="preparationPlanEnabled"
+                  checked={perplexityConfig.preparationPlanEnabled}
+                  onChange={(e) =>
+                    setPerplexityConfig({
+                      ...perplexityConfig,
+                      preparationPlanEnabled: e.target.checked
+                    })
+                  }
+                  className="w-4 h-4 accent-sidebar-accent"
+                />
+                <label
+                  htmlFor="preparationPlanEnabled"
+                  className="text-sm font-medium text-ink">
+                  Enable Preparation Plan Generation
+                </label>
+              </div>
+
+              <div>
+                <label className={labelCls}>Preparation Plan Prompt</label>
+                <textarea
+                  value={perplexityConfig.preparationPlanPrompt}
+                  onChange={(e) =>
+                    setPerplexityConfig({
+                      ...perplexityConfig,
+                      preparationPlanPrompt: e.target.value
+                    })
+                  }
+                  rows={8}
+                  className={textareaCls}
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className={hintCls}>
+                    Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
+                    {"{{jobDescription}}"}, and {"{{interviewType}}"} as placeholders.
+                  </p>
+                  <button
+                    onClick={() =>
+                      openPerplexityDialog("Preparation Plan Prompt", "preparation")
+                    }
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-canvas border border-canvas-input-border text-ink hover:border-ink transition-colors">
+                    Expand
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={handleTestOllama}
-                disabled={testStatus.type === "loading"}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg
-                         hover:bg-gray-200 transition-colors font-medium
-                         disabled:opacity-50">
-                {testStatus.type === "loading"
-                  ? "Testing..."
-                  : "Test Connection"}
-              </button>
-            </div>
-
-            {testStatus.type === "success" && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-                {testStatus.message}
-              </div>
-            )}
-            {testStatus.type === "error" && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                {testStatus.message}
-              </div>
-            )}
           </div>
+
+          <div className={infoMsg}>
+            <h3 className="text-[11px] font-bold uppercase tracking-widest mb-1">
+              Pricing
+            </h3>
+            <p className="text-xs">
+              Perplexity Sonar costs $1 per 1M input tokens and $1 per 1M output
+              tokens. A typical company research query costs approximately $0.0008.
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleTestPerplexity}
+              disabled={perplexityTestStatus.type === "loading"}
+              className={btnOutline}>
+              {perplexityTestStatus.type === "loading"
+                ? "Testing..."
+                : "Test Connection"}
+            </button>
+          </div>
+
+          {perplexityTestStatus.type === "success" && (
+            <div className={successMsg}>{perplexityTestStatus.message}</div>
+          )}
+          {perplexityTestStatus.type === "error" && (
+            <div className={errorMsg}>{perplexityTestStatus.message}</div>
+          )}
         </div>
-      )
-    },
-    {
-      label: "Perplexity",
-      value: "perplexity",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Perplexity Sonar Configuration
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">
-            Configure Perplexity Sonar to research companies and display
-            information in the results. This enables the "About Company" section
-            with industry, size, projects, and ratings from Glassdoor, Indeed,
-            and Teamlyzer.
+      </div>
+    ),
+
+    prompts: (
+      <div className="flex flex-row gap-6">
+        {/* LLM Fine-tuning */}
+        <div style={{ ...card, width: "33%" }}>
+          <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
+          <p className="text-sm text-ink-secondary mb-6">
+            Adjust model behaviour and document generation style. Changes apply
+            to the next generation.
           </p>
+          <hr className={divider} />
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="perplexityEnabled"
-                checked={perplexityConfig.enabled}
-                onChange={(e) =>
-                  setPerplexityConfig({
-                    ...perplexityConfig,
-                    enabled: e.target.checked
-                  })
-                }
-                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-              />
-              <label
-                htmlFor="perplexityEnabled"
-                className="text-sm font-medium text-gray-700">
-                Enable Company Research
-              </label>
-            </div>
-
+          <div className="space-y-8">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                API Key *
-              </label>
-              <input
-                type="password"
-                value={perplexityConfig.apiKey}
-                onChange={(e) =>
-                  setPerplexityConfig({
-                    ...perplexityConfig,
-                    apiKey: e.target.value
-                  })
-                }
-                placeholder="pplx-..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                Get your API key from{" "}
-                <a
-                  href="https://www.perplexity.ai/settings/api"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-purple-600 hover:underline">
-                  perplexity.ai/settings/api
-                </a>
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Research Prompt
-              </label>
-              <textarea
-                value={perplexityConfig.customPrompt}
-                onChange={(e) =>
-                  setPerplexityConfig({
-                    ...perplexityConfig,
-                    customPrompt: e.target.value
-                  })
-                }
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                         font-mono text-sm"
-              />
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-gray-500">
-                  Use {"{{companyName}}"} as a placeholder for the company name.
-                  The prompt is sent to Perplexity Sonar to gather company
-                  information.
-                </p>
-                <button
-                  onClick={() =>
-                    openPerplexityDialog("Research Prompt", "research")
-                  }
-                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
-                           hover:bg-purple-200 transition-colors font-medium">
-                  Expand
-                </button>
-              </div>
-            </div>
-
-            <hr className="border-gray-200 my-6" />
-
-            {/* Preparation Plan Section */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Interview Preparation Plan
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Generate AI-powered technical interview preparation plans for HR
-                and technical interviews. This helps you prepare with specific
-                questions, coding challenges, and technical topics tailored to
-                the job.
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
+              <h3 className={sectionHeadCls}>Generation Parameters</h3>
+              <div className="space-y-5">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium text-ink">
+                      Temperature
+                    </label>
+                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-10 text-right">
+                      {(llmTuning ?? DEFAULT_LLM_TUNING).temperature.toFixed(1)}
+                    </span>
+                  </div>
                   <input
-                    type="checkbox"
-                    id="preparationPlanEnabled"
-                    checked={perplexityConfig.preparationPlanEnabled}
+                    type="range"
+                    min="0.1"
+                    max="1.5"
+                    step="0.1"
+                    value={(llmTuning ?? DEFAULT_LLM_TUNING).temperature}
                     onChange={(e) =>
-                      setPerplexityConfig({
-                        ...perplexityConfig,
-                        preparationPlanEnabled: e.target.checked
+                      setLlmTuning({
+                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
+                        temperature: parseFloat(e.target.value)
                       })
                     }
-                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                    className="w-full accent-sidebar-accent"
                   />
-                  <label
-                    htmlFor="preparationPlanEnabled"
-                    className="text-sm font-medium text-gray-700">
-                    Enable Preparation Plan Generation
-                  </label>
+                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                    <span>0.1 — Precise</span>
+                    <span>1.5 — Creative</span>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preparation Plan Prompt
-                  </label>
-                  <textarea
-                    value={perplexityConfig.preparationPlanPrompt}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium text-ink">
+                      Top P
+                    </label>
+                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-10 text-right">
+                      {(llmTuning ?? DEFAULT_LLM_TUNING).topP.toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.0"
+                    step="0.05"
+                    value={(llmTuning ?? DEFAULT_LLM_TUNING).topP}
                     onChange={(e) =>
-                      setPerplexityConfig({
-                        ...perplexityConfig,
-                        preparationPlanPrompt: e.target.value
+                      setLlmTuning({
+                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
+                        topP: parseFloat(e.target.value)
                       })
                     }
-                    rows={8}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                             focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                             font-mono text-sm"
+                    className="w-full accent-sidebar-accent"
                   />
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">
-                      Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
-                      {"{{jobDescription}}"}, and {"{{interviewType}}"} as
-                      placeholders. This prompt is used to generate technical
-                      interview preparation guides.
-                    </p>
-                    <button
-                      onClick={() =>
-                        openPerplexityDialog(
-                          "Preparation Plan Prompt",
-                          "preparation"
-                        )
-                      }
-                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
-                               hover:bg-purple-200 transition-colors font-medium">
-                      Expand
-                    </button>
+                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                    <span>0.5 — Conservative</span>
+                    <span>1.0 — Full diversity</span>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-800 mb-2">
-                Pricing
-              </h3>
-              <p className="text-xs text-blue-700">
-                Perplexity Sonar costs $1 per 1M input tokens and $1 per 1M
-                output tokens. A typical company research query costs
-                approximately $0.0008.
-              </p>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={handleTestPerplexity}
-                disabled={perplexityTestStatus.type === "loading"}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg
-                         hover:bg-gray-200 transition-colors font-medium
-                         disabled:opacity-50">
-                {perplexityTestStatus.type === "loading"
-                  ? "Testing..."
-                  : "Test Connection"}
-              </button>
-            </div>
-
-            {perplexityTestStatus.type === "success" && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-                {perplexityTestStatus.message}
-              </div>
-            )}
-            {perplexityTestStatus.type === "error" && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                {perplexityTestStatus.message}
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    },
-    {
-      label: "Prompts",
-      value: "prompts",
-      content: (
-        <div className="flex flex-row gap-4">
-          {/* ── LLM Fine-tuning ─────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-lg p-6 w-1/3">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                LLM Fine-tuning
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Adjust model behaviour and document generation style. Changes
-                apply to the next generation.
-              </p>
-            </div>
-
-            <div className="space-y-8">
-              {/* ── Generation Parameters ── */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-                  Generation Parameters
-                </h3>
-                <div className="space-y-5">
-                  {/* Temperature */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">
-                        Temperature
-                      </label>
-                      <span className="text-sm font-mono font-semibold text-purple-600 w-10 text-right">
-                        {(llmTuning ?? DEFAULT_LLM_TUNING).temperature.toFixed(
-                          1
-                        )}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="1.5"
-                      step="0.1"
-                      value={(llmTuning ?? DEFAULT_LLM_TUNING).temperature}
-                      onChange={(e) =>
-                        setLlmTuning({
-                          ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                          temperature: parseFloat(e.target.value)
-                        })
-                      }
-                      className="w-full accent-purple-600"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-                      <span>0.1 — Precise &amp; deterministic</span>
-                      <span>1.5 — Creative &amp; varied</span>
-                    </div>
-                  </div>
-
-                  {/* Top P */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">
-                        Top P
-                      </label>
-                      <span className="text-sm font-mono font-semibold text-purple-600 w-10 text-right">
-                        {(llmTuning ?? DEFAULT_LLM_TUNING).topP.toFixed(2)}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="1.0"
-                      step="0.05"
-                      value={(llmTuning ?? DEFAULT_LLM_TUNING).topP}
-                      onChange={(e) =>
-                        setLlmTuning({
-                          ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                          topP: parseFloat(e.target.value)
-                        })
-                      }
-                      className="w-full accent-purple-600"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-                      <span>0.5 — Conservative vocabulary</span>
-                      <span>1.0 — Full diversity</span>
-                    </div>
-                  </div>
-
-                  {/* Max Tokens */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">
-                        Max Output Tokens
-                      </label>
-                      <span className="text-sm font-mono font-semibold text-purple-600 w-16 text-right">
-                        {(
-                          llmTuning ?? DEFAULT_LLM_TUNING
-                        ).maxTokens.toLocaleString()}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="1024"
-                      max="8192"
-                      step="256"
-                      value={(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens}
-                      onChange={(e) =>
-                        setLlmTuning({
-                          ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                          maxTokens: parseInt(e.target.value)
-                        })
-                      }
-                      className="w-full accent-purple-600"
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-                      <span>1 024 — Concise</span>
-                      <span>8 192 — Detailed &amp; long</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <hr className="border-gray-100" />
-
-              {/* ── Analysis & Style ── */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
-                  Analysis &amp; Style
-                </h3>
-                <div className="space-y-5">
-                  {/* Match Strictness */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Profile Match Strictness
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium text-ink">
+                      Max Output Tokens
                     </label>
-                    <p className="text-xs text-gray-400 mb-2">
-                      How rigorously the AI scores your profile against the job
-                      requirements.
-                    </p>
-                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-                      {(["strict", "balanced", "generous"] as const).map(
-                        (opt) => (
-                          <button
-                            key={opt}
-                            onClick={() =>
-                              setLlmTuning({
-                                ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                                matchStrictness: opt
-                              })
-                            }
-                            className={`px-4 py-2 font-medium capitalize transition-colors
-                            ${
-                              (llmTuning ?? DEFAULT_LLM_TUNING)
-                                .matchStrictness === opt
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-600 hover:bg-gray-50"
-                            }`}>
-                            {opt === "strict"
-                              ? "Strict"
-                              : opt === "balanced"
-                                ? "Balanced"
-                                : "Generous"}
-                          </button>
-                        )
-                      )}
-                    </div>
-                    <p className="mt-2 text-xs text-gray-400">
+                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-16 text-right">
+                      {(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens.toLocaleString()}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1024"
+                    max="8192"
+                    step="256"
+                    value={(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens}
+                    onChange={(e) =>
+                      setLlmTuning({
+                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
+                        maxTokens: parseInt(e.target.value)
+                      })
+                    }
+                    className="w-full accent-sidebar-accent"
+                  />
+                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                    <span>1 024 — Concise</span>
+                    <span>8 192 — Detailed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr className={divider} />
+
+            <div>
+              <h3 className={sectionHeadCls}>Analysis &amp; Style</h3>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1">
+                    Profile Match Strictness
+                  </label>
+                  <p className="text-[11px] text-ink-muted mb-2">
+                    How rigorously the AI scores your profile against requirements.
+                  </p>
+                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                    {(["strict", "balanced", "generous"] as const).map(
+                      (opt) => (
+                        <button
+                          key={opt}
+                          onClick={() =>
+                            setLlmTuning({
+                              ...(llmTuning ?? DEFAULT_LLM_TUNING),
+                              matchStrictness: opt
+                            })
+                          }
+                          className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
+                          ${
+                            (llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness === opt
+                              ? "bg-ink text-white"
+                              : "bg-white text-ink hover:bg-canvas"
+                          }`}>
+                          {opt === "strict"
+                            ? "Strict"
+                            : opt === "balanced"
+                              ? "Balanced"
+                              : "Generous"}
+                        </button>
+                      )
+                    )}
+                  </div>
+                  <p className="mt-2 text-[11px] text-ink-muted">
+                    {
                       {
-                        {
-                          strict:
-                            "Gaps and missing skills are weighted heavily. Scores tend lower.",
-                          balanced:
-                            "Fair assessment — explicit requirements and transferable skills weighed equally.",
-                          generous:
-                            "Transferable skills and potential count. Scores tend higher."
-                        }[(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness]
-                      }
-                    </p>
-                  </div>
+                        strict: "Gaps and missing skills are weighted heavily.",
+                        balanced: "Explicit requirements and transferable skills weighed equally.",
+                        generous: "Transferable skills and potential count."
+                      }[(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness]
+                    }
+                  </p>
+                </div>
 
-                  {/* Writing Tone */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Writing Tone
-                    </label>
-                    <p className="text-xs text-gray-400 mb-2">
-                      Applies to both resumes and cover letters.
-                    </p>
-                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-                      {(
-                        ["formal", "professional", "conversational"] as const
-                      ).map((opt) => (
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1">
+                    Writing Tone
+                  </label>
+                  <p className="text-[11px] text-ink-muted mb-2">
+                    Applies to both resumes and cover letters.
+                  </p>
+                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                    {(["formal", "professional", "conversational"] as const).map(
+                      (opt) => (
                         <button
                           key={opt}
                           onClick={() =>
@@ -996,508 +983,568 @@ function Options() {
                               writingTone: opt
                             })
                           }
-                          className={`px-4 py-2 font-medium capitalize transition-colors
-                            ${
-                              (llmTuning ?? DEFAULT_LLM_TUNING).writingTone ===
-                              opt
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-600 hover:bg-gray-50"
-                            }`}>
+                          className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
+                          ${
+                            (llmTuning ?? DEFAULT_LLM_TUNING).writingTone === opt
+                              ? "bg-ink text-white"
+                              : "bg-white text-ink hover:bg-canvas"
+                          }`}>
                           {opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Resume Focus */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Resume Focus
-                    </label>
-                    <p className="text-xs text-gray-400 mb-2">
-                      Which section the model leads with and emphasises most.
-                    </p>
-                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-                      {(["skills", "balanced", "experience"] as const).map(
-                        (opt) => (
-                          <button
-                            key={opt}
-                            onClick={() =>
-                              setLlmTuning({
-                                ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                                resumeFocus: opt
-                              })
-                            }
-                            className={`px-4 py-2 font-medium transition-colors
-                            ${
-                              (llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus ===
-                              opt
-                                ? "bg-purple-600 text-white"
-                                : "bg-white text-gray-600 hover:bg-gray-50"
-                            }`}>
-                            {opt === "skills"
-                              ? "Skills-first"
-                              : opt === "balanced"
-                                ? "Balanced"
-                                : "Experience-first"}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Reset tuning */}
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors underline-offset-2 hover:underline">
-                  Reset to defaults
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Custom Prompts ─────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-lg p-6 w-2/3">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Custom Prompts
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Override the system and user prompts sent to the model.
-                </p>
-              </div>
-              <button
-                onClick={handleResetPrompts}
-                className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg
-                         hover:bg-gray-200 transition-colors">
-                Reset to Defaults
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {(
-                [
-                  {
-                    key: "resumeSystemPrompt" as keyof CustomPrompts,
-                    label: "Resume System Prompt",
-                    hint: "Defines how the AI behaves when generating resumes."
-                  },
-                  {
-                    key: "resumeUserPromptTemplate" as keyof CustomPrompts,
-                    label: "Resume User Prompt Template",
-                    hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
-                  },
-                  {
-                    key: "coverLetterSystemPrompt" as keyof CustomPrompts,
-                    label: "Cover Letter System Prompt",
-                    hint: "Defines how the AI behaves when generating cover letters."
-                  },
-                  {
-                    key: "coverLetterUserPromptTemplate" as keyof CustomPrompts,
-                    label: "Cover Letter User Prompt Template",
-                    hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
-                  }
-                ] as const
-              ).map(({ key, label, hint }) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {label}
-                  </label>
-                  <textarea
-                    value={customPrompts[key]}
-                    onChange={(e) => handlePromptChange(key, e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                             focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                             font-mono text-sm"
-                  />
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">{hint}</p>
-                    <button
-                      onClick={() => openPromptDialog(label, key)}
-                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded
-                               hover:bg-purple-200 transition-colors font-medium">
-                      Expand
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      label: "Templates",
-      value: "templates",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Prompt Templates
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Apply a preset to instantly configure your Custom Prompts for a
-              specific role type.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {PROMPT_TEMPLATES.map((template) => {
-              const isActive = activeTemplateName === template.name
-              return (
-                <div
-                  key={template.id}
-                  className={`flex flex-col rounded-xl border-2 p-5 transition-all
-                    ${
-                      isActive
-                        ? "border-purple-400 bg-purple-50"
-                        : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                    }`}>
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900 text-sm">
-                      {template.name}
-                    </h3>
-                    {isActive && (
-                      <span
-                        className="text-xs font-medium bg-emerald-100 text-emerald-700
-                                       border border-emerald-200 rounded-full px-2 py-0.5 shrink-0 ml-2">
-                        Active
-                      </span>
+                      )
                     )}
                   </div>
-
-                  {/* Tag line */}
-                  <p className="text-xs text-gray-500 mb-4">
-                    {template.tagLine}
-                  </p>
-
-                  {/* Bullets */}
-                  <ul className="space-y-1.5 flex-1 mb-5">
-                    {template.bullets.map((b) => (
-                      <li
-                        key={b}
-                        className="flex items-start gap-2 text-xs text-gray-600">
-                        <span className="text-purple-400 mt-0.5 shrink-0">
-                          •
-                        </span>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Apply button */}
-                  <button
-                    onClick={() => handleApplyTemplate(template)}
-                    disabled={isActive}
-                    className={`w-full py-2 rounded-lg text-sm font-medium transition-colors
-                      ${
-                        isActive
-                          ? "bg-gray-100 text-gray-400 cursor-default"
-                          : "bg-purple-600 text-white hover:bg-purple-700"
-                      }`}>
-                    {isActive ? "Applied" : "Apply Template"}
-                  </button>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      )
-    },
-    {
-      label: "Personal Info",
-      value: "personal-info",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Personal Information
-          </h2>
-          <PersonalInfo
-            personalInfo={userProfile.personalInfo}
-            onChange={(personalInfo) =>
-              setUserProfile({ ...userProfile, personalInfo })
-            }
-          />
-        </div>
-      )
-    },
-    {
-      label: "Education",
-      value: "education",
-      content: (
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Education
-            </h2>
-            <EducationEditor
-              education={userProfile.education}
-              onChange={(education) =>
-                setUserProfile({ ...userProfile, education })
-              }
-            />
-          </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">
-              Certificates
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Certifications, online courses, bootcamps and professional
-              training.
-            </p>
-            <CertificateEditor
-              certificates={userProfile.certificates ?? []}
-              onChange={(certificates) =>
-                setUserProfile({ ...userProfile, certificates })
-              }
-            />
-          </div>
-        </div>
-      )
-    },
-    {
-      label: "Skills",
-      value: "skills",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Skills & Expertise
-          </h2>
-          <SkillEditor
-            skills={userProfile.skills}
-            onChange={(skills) => setUserProfile({ ...userProfile, skills })}
-          />
-        </div>
-      )
-    },
-    {
-      label: "Experience",
-      value: "experience",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Work Experience
-          </h2>
-          <ExperienceEditor
-            experiences={userProfile.workExperience}
-            onChange={(workExperience) =>
-              setUserProfile({ ...userProfile, workExperience })
-            }
-          />
-        </div>
-      )
-    },
-    {
-      label: "Projects",
-      value: "projects",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Personal Projects
-          </h2>
-          <ProjectEditor
-            projects={userProfile.personalProjects}
-            onChange={(personalProjects) =>
-              setUserProfile({ ...userProfile, personalProjects })
-            }
-          />
-        </div>
-      )
-    },
-    {
-      label: "Languages",
-      value: "languages",
-      content: (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Languages
-          </h2>
-          <LanguageEditor
-            languages={userProfile.languages}
-            onChange={(languages) =>
-              setUserProfile({ ...userProfile, languages })
-            }
-          />
-        </div>
-      )
-    },
-    {
-      label: "Backup & Sync",
-      value: "backup-sync",
-      content: (
-        <div className="space-y-6">
-          {/* Google Drive Sync */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Google Drive Sync
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Sync your profile, settings, and saved applications across
-                computers. Data is stored privately in your Google Drive app
-                folder — only JobTailor can access it.
-              </p>
-            </div>
-
-            {!syncConfig?.token ? (
-              <div className="flex flex-col gap-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                  <p className="font-medium mb-1">How it works</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-700">
-                    <li>Connect once per device with your Google account</li>
-                    <li>Changes sync automatically after 2 seconds</li>
-                    <li>
-                      On a new device, connect and use Force Pull to restore
-                    </li>
-                    <li>
-                      Your data is stored in a private app folder, not visible
-                      in Drive
-                    </li>
-                  </ul>
-                </div>
                 <div>
-                  <button
-                    onClick={handleConnectDrive}
-                    disabled={syncStatus.type === "loading"}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-                             transition-colors font-medium disabled:opacity-50 flex items-center gap-2">
-                    {syncStatus.type === "loading"
-                      ? "Connecting..."
-                      : "Connect Google Drive"}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-sm font-medium text-green-800">
-                      Connected
-                    </span>
+                  <label className="block text-sm font-medium text-ink mb-1">
+                    Resume Focus
+                  </label>
+                  <p className="text-[11px] text-ink-muted mb-2">
+                    Which section the model leads with and emphasises most.
+                  </p>
+                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                    {(["skills", "balanced", "experience"] as const).map(
+                      (opt) => (
+                        <button
+                          key={opt}
+                          onClick={() =>
+                            setLlmTuning({
+                              ...(llmTuning ?? DEFAULT_LLM_TUNING),
+                              resumeFocus: opt
+                            })
+                          }
+                          className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
+                          ${
+                            (llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus === opt
+                              ? "bg-ink text-white"
+                              : "bg-white text-ink hover:bg-canvas"
+                          }`}>
+                          {opt === "skills"
+                            ? "Skills-first"
+                            : opt === "balanced"
+                              ? "Balanced"
+                              : "Experience-first"}
+                        </button>
+                      )
+                    )}
                   </div>
-                  {syncConfig.lastSynced && (
-                    <p className="text-xs text-green-700">
-                      Last synced:{" "}
-                      {new Date(syncConfig.lastSynced).toLocaleString()}
-                    </p>
-                  )}
-                  {!syncConfig.lastSynced && (
-                    <p className="text-xs text-green-700">
-                      Sync will happen automatically when you make changes.
-                    </p>
-                  )}
-                  {syncConfig.error && (
-                    <p className="text-xs text-red-600 mt-1">
-                      Last sync error: {syncConfig.error}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex gap-3 flex-wrap">
-                  <button
-                    onClick={handleForcePull}
-                    disabled={syncStatus.type === "loading"}
-                    className="px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700
-                             transition-colors font-medium text-sm disabled:opacity-50">
-                    {syncStatus.type === "loading"
-                      ? "Restoring..."
-                      : "Force Pull from Drive"}
-                  </button>
-                  <button
-                    onClick={handleDisconnectDrive}
-                    disabled={syncStatus.type === "loading"}
-                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200
-                             transition-colors font-medium text-sm disabled:opacity-50">
-                    Disconnect
-                  </button>
                 </div>
               </div>
-            )}
-
-            {syncStatus.type === "success" && (
-              <div className="mt-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">
-                {syncStatus.message}
-              </div>
-            )}
-            {syncStatus.type === "error" && (
-              <div className="mt-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                {syncStatus.message}
-              </div>
-            )}
-          </div>
-
-          {/* Manual Export/Import */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Manual Export / Import
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Download a full backup or restore from a previously exported
-                file. Includes profile, settings, and all saved applications
-                with generated CVs and cover letters.
-              </p>
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex justify-end pt-2">
               <button
-                onClick={handleExportData}
-                className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700
-                         transition-colors font-medium text-sm">
-                Export Data
-              </button>
-              <button
-                onClick={handleImportData}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-                         transition-colors font-medium text-sm">
-                Import Data
+                onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
+                className="text-[11px] text-ink-muted hover:text-ink transition-colors underline-offset-2 hover:underline">
+                Reset to defaults
               </button>
             </div>
           </div>
         </div>
-      )
-    }
-  ]
 
-  return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
-        <div className="w-full max-w-none lg:px-16 px-8 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              JobTailor Settings
-            </h1>
-            <p className="text-gray-600">
-              Configure Ollama, customize prompts, and manage your profile
-            </p>
-          </div>
-
-          <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-
-          <div className="flex gap-4 mb-6 mt-8">
+        {/* Custom Prompts */}
+        <div style={{ ...card, flex: 1 }}>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className={sectionHeadCls}>Custom Prompts</h2>
+              <p className="text-sm text-ink-secondary">
+                Override the system and user prompts sent to the model.
+              </p>
+            </div>
             <button
-              onClick={handleSaveSettings}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg
-                       hover:bg-purple-700 transition-colors font-medium">
-              Save Settings
+              onClick={handleResetPrompts}
+              className={btnSecondary}>
+              Reset to Defaults
             </button>
           </div>
 
-          {saveStatus && (
-            <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-              {saveStatus}
+          <div className="space-y-6">
+            {(
+              [
+                {
+                  key: "resumeSystemPrompt" as keyof CustomPrompts,
+                  label: "Resume System Prompt",
+                  hint: "Defines how the AI behaves when generating resumes."
+                },
+                {
+                  key: "resumeUserPromptTemplate" as keyof CustomPrompts,
+                  label: "Resume User Prompt Template",
+                  hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
+                },
+                {
+                  key: "coverLetterSystemPrompt" as keyof CustomPrompts,
+                  label: "Cover Letter System Prompt",
+                  hint: "Defines how the AI behaves when generating cover letters."
+                },
+                {
+                  key: "coverLetterUserPromptTemplate" as keyof CustomPrompts,
+                  label: "Cover Letter User Prompt Template",
+                  hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
+                }
+              ] as const
+            ).map(({ key, label, hint }) => (
+              <div key={key}>
+                <label className={labelCls}>{label}</label>
+                <textarea
+                  value={customPrompts[key]}
+                  onChange={(e) => handlePromptChange(key, e.target.value)}
+                  rows={4}
+                  className={textareaCls}
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className={hintCls}>{hint}</p>
+                  <button
+                    onClick={() => openPromptDialog(label, key)}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-canvas border border-canvas-input-border text-ink hover:border-ink transition-colors">
+                    Expand
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+
+    templates: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Prompt Templates</h2>
+        <p className="text-sm text-ink-secondary mb-6">
+          Apply a preset to instantly configure your Custom Prompts for a
+          specific role type.
+        </p>
+        <hr className={divider} />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {PROMPT_TEMPLATES.map((template) => {
+            const isActive = activeTemplateName === template.name
+            return (
+              <div
+                key={template.id}
+                className={`flex flex-col border-2 p-5 transition-all
+                  ${isActive ? "border-sidebar-accent bg-[#fdf5f2]" : "border-canvas-input-border bg-white hover:border-ink"}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-ink text-sm">
+                    {template.name}
+                  </h3>
+                  {isActive && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#f0fdf4] text-[#166534] border border-[#86efac] px-2 py-0.5 shrink-0 ml-2">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs text-ink-secondary mb-4">
+                  {template.tagLine}
+                </p>
+
+                <ul className="space-y-1.5 flex-1 mb-5">
+                  {template.bullets.map((b) => (
+                    <li
+                      key={b}
+                      className="flex items-start gap-2 text-xs text-ink-secondary">
+                      <span className="text-sidebar-accent mt-0.5 shrink-0">
+                        •
+                      </span>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleApplyTemplate(template)}
+                  disabled={isActive}
+                  className={`w-full py-2 text-[11px] font-bold uppercase tracking-widest transition-colors
+                    ${isActive
+                      ? "bg-canvas text-ink-muted cursor-default border border-canvas-input-border"
+                      : "bg-sidebar-accent text-white border-0 hover:opacity-90"
+                    }`}>
+                  {isActive ? "Applied" : "Apply Template"}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    ),
+
+    "personal-info": (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Personal Information</h2>
+        <hr className={divider} />
+        <PersonalInfo
+          personalInfo={userProfile.personalInfo}
+          onChange={(personalInfo) =>
+            setUserProfile({ ...userProfile, personalInfo })
+          }
+        />
+      </div>
+    ),
+
+    education: (
+      <div className="space-y-6">
+        <div style={card}>
+          <h2 className={sectionHeadCls}>Education</h2>
+          <hr className={divider} />
+          <EducationEditor
+            education={userProfile.education}
+            onChange={(education) =>
+              setUserProfile({ ...userProfile, education })
+            }
+          />
+        </div>
+
+        <div style={card}>
+          <h2 className={sectionHeadCls}>Certificates</h2>
+          <p className="text-sm text-ink-secondary mb-4">
+            Certifications, online courses, bootcamps and professional training.
+          </p>
+          <CertificateEditor
+            certificates={userProfile.certificates ?? []}
+            onChange={(certificates) =>
+              setUserProfile({ ...userProfile, certificates })
+            }
+          />
+        </div>
+      </div>
+    ),
+
+    skills: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Skills &amp; Expertise</h2>
+        <hr className={divider} />
+        <SkillEditor
+          skills={userProfile.skills}
+          onChange={(skills) => setUserProfile({ ...userProfile, skills })}
+        />
+      </div>
+    ),
+
+    experience: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Work Experience</h2>
+        <hr className={divider} />
+        <ExperienceEditor
+          experiences={userProfile.workExperience}
+          onChange={(workExperience) =>
+            setUserProfile({ ...userProfile, workExperience })
+          }
+        />
+      </div>
+    ),
+
+    projects: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Personal Projects</h2>
+        <hr className={divider} />
+        <ProjectEditor
+          projects={userProfile.personalProjects}
+          onChange={(personalProjects) =>
+            setUserProfile({ ...userProfile, personalProjects })
+          }
+        />
+      </div>
+    ),
+
+    languages: (
+      <div style={card}>
+        <h2 className={sectionHeadCls}>Languages</h2>
+        <hr className={divider} />
+        <LanguageEditor
+          languages={userProfile.languages}
+          onChange={(languages) =>
+            setUserProfile({ ...userProfile, languages })
+          }
+        />
+      </div>
+    ),
+
+    "backup-sync": (
+      <div className="space-y-6">
+        <div style={card}>
+          <h2 className={sectionHeadCls}>Google Drive Sync</h2>
+          <p className="text-sm text-ink-secondary mb-6">
+            Sync your profile, settings, and saved applications across
+            computers. Data is stored privately in your Google Drive app
+            folder — only JobTailor can access it.
+          </p>
+          <hr className={divider} />
+
+          {!syncConfig?.token ? (
+            <div className="flex flex-col gap-4">
+              <div className={infoMsg}>
+                <p className="font-semibold text-[11px] uppercase tracking-widest mb-2">
+                  How it works
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>Connect once per device with your Google account</li>
+                  <li>Changes sync automatically after 2 seconds</li>
+                  <li>On a new device, connect and use Force Pull to restore</li>
+                  <li>
+                    Your data is stored in a private app folder, not visible in
+                    Drive
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <button
+                  onClick={handleConnectDrive}
+                  disabled={syncStatus.type === "loading"}
+                  className="px-6 py-3 bg-[#1d4ed8] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 hover:bg-[#1e40af] transition-colors">
+                  {syncStatus.type === "loading"
+                    ? "Connecting..."
+                    : "Connect Google Drive"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="bg-[#f0fdf4] border border-[#86efac] p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#166534]">
+                    Connected
+                  </span>
+                </div>
+                {syncConfig.lastSynced && (
+                  <p className="text-xs text-[#166534]">
+                    Last synced:{" "}
+                    {new Date(syncConfig.lastSynced).toLocaleString()}
+                  </p>
+                )}
+                {!syncConfig.lastSynced && (
+                  <p className="text-xs text-[#166534]">
+                    Sync will happen automatically when you make changes.
+                  </p>
+                )}
+                {syncConfig.error && (
+                  <p className="text-xs text-[#991b1b] mt-1">
+                    Last sync error: {syncConfig.error}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 flex-wrap">
+                <button
+                  onClick={handleForcePull}
+                  disabled={syncStatus.type === "loading"}
+                  className={btnAccent}>
+                  {syncStatus.type === "loading"
+                    ? "Restoring..."
+                    : "Force Pull from Drive"}
+                </button>
+                <button
+                  onClick={handleDisconnectDrive}
+                  disabled={syncStatus.type === "loading"}
+                  className={btnSecondary}>
+                  Disconnect
+                </button>
+              </div>
             </div>
           )}
 
-          <div className="mt-8 text-sm text-gray-500">
-            <p>JobTailor v{EXTENSION_VERSION} — Built with Plasmo Framework</p>
+          {syncStatus.type === "success" && (
+            <div className={`mt-4 ${successMsg}`}>{syncStatus.message}</div>
+          )}
+          {syncStatus.type === "error" && (
+            <div className={`mt-4 ${errorMsg}`}>{syncStatus.message}</div>
+          )}
+        </div>
+
+        <div style={card}>
+          <h2 className={sectionHeadCls}>Manual Export / Import</h2>
+          <p className="text-sm text-ink-secondary mb-6">
+            Download a full backup or restore from a previously exported file.
+            Includes profile, settings, and all saved applications with
+            generated CVs and cover letters.
+          </p>
+          <hr className={divider} />
+          <div className="flex gap-3">
+            <button
+              onClick={handleExportData}
+              className="px-5 py-2.5 bg-[#16a34a] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#15803d] transition-colors">
+              Export Data
+            </button>
+            <button
+              onClick={handleImportData}
+              className="px-5 py-2.5 bg-[#1d4ed8] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#1e40af] transition-colors">
+              Import Data
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  return (
+    <>
+      <div className="flex" style={{ minHeight: "100vh", background: "#F5F3EF" }}>
+        {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+        <aside
+          className="flex-shrink-0 flex flex-col overflow-y-auto"
+          style={{
+            width: 240,
+            minHeight: "100vh",
+            background: "#1F1C19",
+            position: "sticky",
+            top: 0,
+            height: "100vh"
+          }}>
+          {/* Logo */}
+          <div style={{ padding: "28px 20px 0" }}>
+            <div className="flex items-baseline gap-2">
+              <span
+                style={{
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  letterSpacing: "0.12em"
+                }}>
+                JOBTAILOR
+              </span>
+              <span style={{ color: "#C05A3C", fontSize: 11 }}>
+                v{EXTENSION_VERSION}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              height: 1,
+              background: "#333333",
+              margin: "20px 0"
+            }}
+          />
+
+          {/* Nav */}
+          <nav style={{ flex: 1, paddingBottom: 24 }}>
+            {NAV_GROUPS.map((group, gi) => (
+              <div key={group.label}>
+                {gi > 0 && (
+                  <div
+                    style={{
+                      height: 1,
+                      background: "#2C2825",
+                      margin: "8px 0"
+                    }}
+                  />
+                )}
+                <div
+                  style={{
+                    color: "#555555",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    letterSpacing: "0.1em",
+                    padding: "12px 20px 4px"
+                  }}>
+                  {group.label}
+                </div>
+                {group.items.map((item) => {
+                  const isActive = activeTab === item.value
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setActiveTab(item.value)}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "10px 20px 10px 17px",
+                        background: isActive ? "#2C2825" : "transparent",
+                        color: isActive ? "#FFFFFF" : "#777777",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: "0.08em",
+                        cursor: "pointer",
+                        border: "none",
+                        borderLeft: isActive
+                          ? "3px solid #C05A3C"
+                          : "3px solid transparent",
+                        outline: "none"
+                      }}>
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* ── Main area ───────────────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col" style={{ minHeight: "100vh" }}>
+          {/* Top bar */}
+          <div
+            style={{
+              background: "#F5F3EF",
+              borderBottom: "2px solid #1a1a1a",
+              padding: "20px 48px"
+            }}>
+            <h1
+              style={{
+                color: "#1a1a1a",
+                fontSize: 16,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                margin: 0,
+                textTransform: "uppercase"
+              }}>
+              {activeNav?.label ?? ""}
+            </h1>
+            <p
+              style={{
+                color: "#888888",
+                fontSize: 12,
+                margin: "3px 0 0"
+              }}>
+              {activeNav?.subtitle ?? ""}
+            </p>
+          </div>
+
+          {/* Scrollable content */}
+          <div
+            className="flex-1 overflow-y-auto"
+            style={{ padding: "40px 48px" }}>
+            {tabContent[activeTab]}
+          </div>
+
+          {/* Bottom bar */}
+          <div
+            style={{
+              background: "#F5F3EF",
+              borderTop: "2px solid #1a1a1a",
+              padding: "16px 48px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleSaveSettings}
+                style={{
+                  background: "#C05A3C",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "13px 24px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  cursor: "pointer"
+                }}>
+                Save Settings
+              </button>
+              {saveStatus && (
+                <span className="text-[#166534] text-xs font-semibold">
+                  {saveStatus}
+                </span>
+              )}
+            </div>
+            <span style={{ color: "#888888", fontSize: 11 }}>
+              JobTailor v{EXTENSION_VERSION} — Built with Plasmo Framework
+            </span>
           </div>
         </div>
       </div>

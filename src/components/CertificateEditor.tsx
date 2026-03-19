@@ -27,6 +27,15 @@ const formatDate = (iso: string | null | undefined): string => {
   return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+m - 1]} ${y}`
 }
 
+const labelCls =
+  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+
+const inputCls =
+  "w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+
+const inputErrorCls =
+  "w-full px-4 py-3 bg-canvas border border-[#fca5a5] text-ink text-sm focus:outline-none focus:border-[#991b1b] transition-colors"
+
 export function CertificateEditor({ certificates, onChange }: CertificateEditorProps) {
   const safeCerts = certificates || []
   const [editingCert, setEditingCert] = useState<Certificate | null>(null)
@@ -74,32 +83,24 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Certificate / Course Name *
-            </label>
+            <label className={labelCls}>Certificate / Course Name *</label>
             <input
               type="text"
               value={cert.name}
               onChange={(e) => onUpdate({ ...cert, name: e.target.value })}
               placeholder="e.g. AWS Certified Developer"
-              className={`w-full px-4 py-3 border rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                         ${hasErrors && !cert.name ? "border-red-300" : "border-gray-300"}`}
+              className={hasErrors && !cert.name ? inputErrorCls : inputCls}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Issuing Organisation *
-            </label>
+            <label className={labelCls}>Issuing Organisation *</label>
             <input
               type="text"
               value={cert.issuer}
               onChange={(e) => onUpdate({ ...cert, issuer: e.target.value })}
               placeholder="e.g. Amazon Web Services"
-              className={`w-full px-4 py-3 border rounded-lg
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                         ${hasErrors && !cert.issuer ? "border-red-300" : "border-gray-300"}`}
+              className={hasErrors && !cert.issuer ? inputErrorCls : inputCls}
             />
           </div>
         </div>
@@ -125,21 +126,18 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Credential URL
-          </label>
+          <label className={labelCls}>Credential URL</label>
           <input
             type="url"
             value={cert.credentialUrl || ""}
             onChange={(e) => onUpdate({ ...cert, credentialUrl: e.target.value })}
             placeholder="https://www.credential.net/..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className={inputCls}
           />
         </div>
 
         {hasErrors && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          <div className="bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3">
             {errors.map((e, i) => <p key={i} className="text-sm">• {e}</p>)}
           </div>
         )}
@@ -150,22 +148,20 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
   return (
     <div>
       {editingCert && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-purple-900 mb-4">
+        <div className="bg-canvas border-2 border-ink p-4 mb-6">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-ink mb-4">
             Add New Certificate
           </h3>
           {renderCertificateItem(editingCert, 0, setEditingCert)}
           <div className="flex gap-3 mt-4">
             <button
               onClick={saveEditingCert}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg
-                         hover:bg-purple-700 transition-colors font-medium">
+              className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
               Save Certificate
             </button>
             <button
               onClick={() => setEditingCert(null)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg
-                         hover:bg-gray-300 transition-colors font-medium">
+              className="px-4 py-2 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest cursor-pointer hover:border-ink transition-colors">
               Cancel
             </button>
           </div>
@@ -181,15 +177,15 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
         renderSummary={(cert) => (
           <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate leading-tight">
-                {cert.name || <span className="italic text-gray-400">Untitled certificate</span>}
+              <p className="text-sm font-medium text-ink truncate leading-tight">
+                {cert.name || <span className="italic text-ink-muted">Untitled certificate</span>}
               </p>
-              <p className="text-xs text-gray-500 truncate mt-0.5">
+              <p className="text-xs text-ink-secondary truncate mt-0.5">
                 {cert.issuer || "—"}
               </p>
             </div>
             {cert.issueDate && (
-              <span className="ml-4 shrink-0 text-xs text-gray-400">
+              <span className="ml-4 shrink-0 text-xs text-ink-muted">
                 {formatDate(cert.issueDate)}
                 {cert.expiryDate !== undefined && (
                   <> – {cert.expiryDate ? formatDate(cert.expiryDate) : "No expiry"}</>

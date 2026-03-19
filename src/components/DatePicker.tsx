@@ -36,9 +36,9 @@ export function DatePicker({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-[#991b1b] ml-1">*</span>}
       </label>
 
       <input
@@ -47,21 +47,20 @@ export function DatePicker({
         onChange={handleDateChange}
         disabled={currentPosition}
         required={required && !currentPosition}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                 focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                 focus:outline-none focus:border-ink transition-colors
+                 disabled:bg-canvas-divide disabled:text-ink-muted disabled:cursor-not-allowed"
       />
 
       {showCurrentPosition && (
-        <label className="flex items-center mt-2">
+        <label className="flex items-center mt-2 gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={currentPosition}
             onChange={handleCurrentPositionChange}
-            className="mr-2 rounded border-gray-300 text-purple-600
-                     focus:ring-purple-500"
+            className="w-4 h-4 accent-sidebar-accent"
           />
-          <span className="text-sm text-gray-700">Current Position</span>
+          <span className="text-sm text-ink">Current Position</span>
         </label>
       )}
     </div>

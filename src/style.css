@@ -2,7 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Brand colors */
+  --color-brand-500: #667eea;
+  --color-brand-600: #5464d6;
+
+  /* Accent colors */
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+
+  /* Surface colors */
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f9fafb;
+  --color-surface-muted: #f3f4f6;
+
+  /* Border colors */
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f3f4f6;
+
+  /* Text colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #9ca3af;
+
+  /* Error colors */
+  --color-error: #ef4444;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fca5a5;
+
+  /* Focus */
+  --color-focus-ring: #818cf8;
+
+  /* Options page — Pencil design system */
+  --color-sidebar: #1F1C19;
+  --color-sidebar-hover: #2C2825;
+  --color-sidebar-divide: #333333;
+  --color-sidebar-label: #555555;
+  --color-sidebar-item: #777777;
+  --color-sidebar-active: #FFFFFF;
+  --color-sidebar-accent: #C05A3C;
+  --color-canvas: #F5F3EF;
+  --color-canvas-divide: #E8E4DC;
+  --color-canvas-input-border: #C8C3BB;
+  --color-ink: #1a1a1a;
+  --color-ink-secondary: #888888;
+  --color-ink-muted: #AAAAAA;
+
+  /* Typography */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  /* Border radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-family-base);
 }

@@ -41,32 +41,33 @@ export function ArrayInput<T>({
     <div className="space-y-4">
       {items.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">{emptyMessage}</p>
+          <p className="text-ink-secondary text-sm mb-4">{emptyMessage}</p>
           <button
             onClick={onAdd}
-            className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg
-                     hover:bg-purple-200 transition-colors font-medium">
+            className="px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
             + {addButtonText}
           </button>
         </div>
       ) : (
         <>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {items.map((item, index) => (
               <div
                 key={index}
-                className={`bg-white border rounded-lg transition-all
+                className={`bg-white border-2 transition-colors
                   ${expandedItems.has(index)
-                    ? "border-purple-300 shadow-sm"
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm"}`}>
+                    ? "border-ink"
+                    : "border-canvas-input-border hover:border-ink-secondary"}`}>
                 {/* Accordion header */}
                 <div className="flex items-center gap-2 px-4 py-3">
                   <button
                     onClick={() => toggleExpanded(index)}
                     className="flex-1 flex items-center gap-3 min-w-0 text-left group">
                     <svg
-                      className={`w-4 h-4 shrink-0 text-gray-400 transition-transform duration-150
-                        ${expandedItems.has(index) ? "rotate-90 text-purple-500" : "group-hover:text-gray-600"}`}
+                      className={`w-4 h-4 shrink-0 transition-transform duration-150
+                        ${expandedItems.has(index)
+                          ? "rotate-90 text-ink"
+                          : "text-ink-muted group-hover:text-ink-secondary"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24">
@@ -80,7 +81,7 @@ export function ArrayInput<T>({
                     {renderSummary ? (
                       renderSummary(item, index)
                     ) : (
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-ink-secondary">
                         {expandedItems.has(index) ? "Collapse" : "Expand"}
                       </span>
                     )}
@@ -88,8 +89,7 @@ export function ArrayInput<T>({
 
                   <button
                     onClick={() => onRemove(index)}
-                    className="shrink-0 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50
-                               rounded-md transition-colors"
+                    className="shrink-0 p-1.5 text-ink-muted hover:text-[#991b1b] hover:bg-[#fef2f2] transition-colors"
                     title="Delete item">
                     <svg
                       className="w-4 h-4"
@@ -107,7 +107,7 @@ export function ArrayInput<T>({
                 </div>
 
                 {expandedItems.has(index) && (
-                  <div className="px-4 pb-4 border-t border-gray-100 pt-4">
+                  <div className="px-4 pb-4 border-t border-canvas-divide pt-4">
                     {renderItem(item, index, (updatedItem) =>
                       onUpdate(index, updatedItem)
                     )}
@@ -119,9 +119,9 @@ export function ArrayInput<T>({
 
           <button
             onClick={onAdd}
-            className="w-full py-3 border-2 border-dashed border-gray-300
-                     rounded-lg text-gray-600 hover:border-purple-400
-                     hover:text-purple-600 transition-colors font-medium">
+            className="w-full py-3 border-2 border-dashed border-canvas-input-border
+                     text-ink-secondary text-[11px] font-semibold uppercase tracking-widest
+                     hover:border-ink hover:text-ink transition-colors">
             + Add {addButtonText}
           </button>
         </>
