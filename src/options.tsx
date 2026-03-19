@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 import { useStorage } from "@plasmohq/storage/hook"
@@ -37,21 +37,68 @@ import "./style.css"
 
 const EXTENSION_VERSION = "0.4.2"
 
+/**
+ * Wraps useStorage with local state so text inputs don't lose cursor position.
+ * Edits are immediate in local state and flushed to chrome.storage after a delay.
+ */
+function useDebouncedStorage<T>(
+  key: string,
+  defaultValue: T,
+  delay = 400
+): [T, (value: T | ((prev: T) => T)) => void] {
+  const [stored, setStored] = useStorage<T>(key, defaultValue)
+  const [local, setLocal] = useState<T>(stored)
+  const lastWriteId = useRef(0)
+  const pendingWriteId = useRef(0)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  // Sync storage → local: accept on first load and external changes.
+  // Skip when the stored value is just echoing back our own pending write.
+  useEffect(() => {
+    if (stored === undefined) return
+    if (lastWriteId.current === pendingWriteId.current) {
+      // No pending local write — this is an external change (or initial load)
+      setLocal(stored)
+    } else {
+      // Our write landed in storage — mark it acknowledged
+      lastWriteId.current = pendingWriteId.current
+    }
+  }, [stored])
+
+  const setValue = useCallback(
+    (value: T | ((prev: T) => T)) => {
+      setLocal((prev) => {
+        const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value
+        if (timer.current) clearTimeout(timer.current)
+        pendingWriteId.current += 1
+        const writeId = pendingWriteId.current
+        timer.current = setTimeout(() => {
+          setStored(next)
+        }, delay)
+        return next
+      })
+    },
+    [setStored, delay]
+  )
+
+  return [local, setValue]
+}
+
 function Options() {
   const [activeTab, setActiveTab] = useState("ai-settings")
 
-  const [userProfile, setUserProfile] = useStorage<UserProfile>(
+  const [userProfile, setUserProfile] = useDebouncedStorage<UserProfile>(
     "userProfile",
     DEFAULT_USER_PROFILE
   )
 
-  const [ollamaConfig, setOllamaConfig] = useStorage("ollamaConfig", {
+  const [ollamaConfig, setOllamaConfig] = useDebouncedStorage("ollamaConfig", {
     apiKey: "",
     baseUrl: "https://ollama.com/api",
     enabled: false
   })
 
-  const [perplexityConfig, setPerplexityConfig] = useStorage<PerplexityConfig>(
+  const [perplexityConfig, setPerplexityConfig] = useDebouncedStorage<PerplexityConfig>(
     "perplexityConfig",
     {
       apiKey: "",
@@ -62,12 +109,12 @@ function Options() {
     }
   )
 
-  const [customPrompts, setCustomPrompts] = useStorage<CustomPrompts>(
+  const [customPrompts, setCustomPrompts] = useDebouncedStorage<CustomPrompts>(
     "customPrompts",
     DEFAULT_PROMPTS
   )
 
-  const [llmTuning, setLlmTuning] = useStorage<LLMTuningConfig>(
+  const [llmTuning, setLlmTuning] = useDebouncedStorage<LLMTuningConfig>(
     "llmTuning",
     DEFAULT_LLM_TUNING
   )
@@ -80,6 +127,11 @@ function Options() {
 
   useEffect(() => {
     if (!isVersionLoading && storedPromptsVersion !== PROMPTS_VERSION) {
+      // Write both atomically to avoid inconsistency if page closes mid-debounce
+      chrome.storage.local.set({
+        customPrompts: DEFAULT_PROMPTS,
+        promptsVersion: PROMPTS_VERSION
+      })
       setCustomPrompts(DEFAULT_PROMPTS)
       setStoredPromptsVersion(PROMPTS_VERSION)
     }
@@ -217,7 +269,8 @@ function Options() {
       ollamaConfig,
       perplexityConfig,
       customPrompts,
-      userProfile
+      userProfile,
+      llmTuning
     })
     setSaveStatus("Settings saved successfully!")
     setTimeout(() => setSaveStatus(""), 3000)
