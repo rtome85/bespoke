@@ -1,3 +1,4 @@
+import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { AnalyticsDashboard } from "~components/AnalyticsDashboard"
@@ -16,21 +17,24 @@ function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <header className="bg-canvas border-b-2 border-ink px-12 py-5">
-        <div className="max-w-[1320px] mx-auto">
-          <h1 className="font-heading text-xl font-bold tracking-widest text-ink uppercase">
+      <header className="bg-canvas border-b border-canvas-divide px-12 h-[72px] flex items-center justify-between">
+        <div className="flex flex-col gap-[3px]">
+          <h1 className="text-3xl font-bold tracking-[0.1em] text-ink leading-none uppercase">
             Analytics
           </h1>
-          <p className="font-body text-[13px] text-ink-muted mt-1">
+          <p className="text-[13px] text-ink-secondary leading-none">
             Application tracking and insights
           </p>
         </div>
+        <button
+          onClick={() => window.close()}
+          className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
+          <X size={18} />
+        </button>
       </header>
 
       <main className="bg-canvas px-12 py-10">
-        <div className="max-w-[1320px] mx-auto">
-          <AnalyticsDashboard applications={applications} />
-        </div>
+        <AnalyticsDashboard applications={applications} />
       </main>
     </div>
   )

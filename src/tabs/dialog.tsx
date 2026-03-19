@@ -105,18 +105,22 @@ interface GenerationResult {
 
 type View = "form" | "loading" | "success" | "saveForm" | "applicationsList"
 
-function statusBadgeClass(status: ApplicationStatus): string {
+function statusTextClass(status: ApplicationStatus): string {
   switch (status) {
     case "Saved":
-      return "bg-gray-100 text-gray-800"
+      return "text-ink-secondary"
     case "Offer":
-      return "bg-green-100 text-green-800"
+      return "text-green-600"
     case "Reject":
-      return "bg-red-100 text-red-800"
+      return "text-red-500"
     case "Applied":
-      return "bg-blue-100 text-blue-800"
+      return "text-ink"
+    case "HR Interview":
+    case "1st Technical Interview":
+    case "2nd Technical Interview":
+      return "text-sidebar-accent"
     default:
-      return "bg-yellow-100 text-yellow-800"
+      return "text-ink-secondary"
   }
 }
 
@@ -1055,7 +1059,7 @@ function IndexDialog() {
   // Save form screen
   if (view === "saveForm") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
+      <div className="min-h-screen bg-canvas flex flex-col">
         <PreparationPlanModal
           isOpen={preparationPlanModalOpen}
           onClose={() => setPreparationPlanModalOpen(false)}
@@ -1065,284 +1069,306 @@ function IndexDialog() {
           onSave={editingApplication ? savePreparationPlan : undefined}
         />
 
-        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
-              {editingApplication ? "Edit Application" : "Save Application"}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
+        {/* Top Bar */}
+        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
+          <div className="flex flex-col gap-[3px]">
+            <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none">
+              {editingApplication ? "EDIT APPLICATION" : "TRACK APPLICATION"}
+            </h1>
+            <p className="text-[13px] text-ink-secondary leading-none">
               Track your job application
             </p>
           </div>
+          <button
+            onClick={() => setView(saveFormOrigin)}
+            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
+            <X size={18} />
+          </button>
+        </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Company
-              </label>
-              <input
-                type="text"
-                value={saveFormData.company}
-                onChange={(e) =>
-                  setSaveFormData((d) => ({ ...d, company: e.target.value }))
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+        {/* Form Content */}
+        <div className="flex-1 px-12 py-10 overflow-auto flex justify-center">
+          <div className="w-full max-w-lg space-y-5">
+
+            {/* Fields */}
+            <div className="space-y-4">
+              {/* Company */}
+              <div>
+                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                  Company *
+                </label>
+                <input
+                  type="text"
+                  value={saveFormData.company}
+                  onChange={(e) =>
+                    setSaveFormData((d) => ({ ...d, company: e.target.value }))
+                  }
+                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                             focus:outline-none focus:border-ink-secondary transition-colors"
+                />
+              </div>
+
+              {/* Job Title */}
+              <div>
+                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                  Job Title *
+                </label>
+                <input
+                  type="text"
+                  value={saveFormData.jobTitle}
+                  onChange={(e) =>
+                    setSaveFormData((d) => ({ ...d, jobTitle: e.target.value }))
+                  }
+                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                             focus:outline-none focus:border-ink-secondary transition-colors"
+                />
+              </div>
+
+              {/* Status + Date (2 columns) */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                    Status
+                  </label>
+                  <select
+                    value={saveFormData.status}
+                    onChange={(e) =>
+                      setSaveFormData((d) => ({
+                        ...d,
+                        status: e.target.value as ApplicationStatus
+                      }))
+                    }
+                    className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                               focus:outline-none focus:border-ink-secondary transition-colors">
+                    {APPLICATION_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                    Date Applied *
+                  </label>
+                  <input
+                    type="date"
+                    value={saveFormData.date}
+                    onChange={(e) =>
+                      setSaveFormData((d) => ({ ...d, date: e.target.value }))
+                    }
+                    className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                               focus:outline-none focus:border-ink-secondary transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Job URL */}
+              <div>
+                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                  Job Posting URL
+                </label>
+                <input
+                  type="url"
+                  value={saveFormData.jobUrl}
+                  onChange={(e) =>
+                    setSaveFormData((d) => ({ ...d, jobUrl: e.target.value }))
+                  }
+                  placeholder="https://..."
+                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                             placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Job Title
-              </label>
-              <input
-                type="text"
-                value={saveFormData.jobTitle}
-                onChange={(e) =>
-                  setSaveFormData((d) => ({ ...d, jobTitle: e.target.value }))
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
+            {/* Divider */}
+            <div className="border-t border-canvas-divide" />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={saveFormData.status}
-                onChange={(e) =>
-                  setSaveFormData((d) => ({
-                    ...d,
-                    status: e.target.value as ApplicationStatus
-                  }))
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white">
-                {APPLICATION_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date Applied
-              </label>
-              <input
-                type="date"
-                value={saveFormData.date}
-                onChange={(e) =>
-                  setSaveFormData((d) => ({ ...d, date: e.target.value }))
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Job Posting URL
-              </label>
-              <input
-                type="url"
-                value={saveFormData.jobUrl}
-                onChange={(e) =>
-                  setSaveFormData((d) => ({ ...d, jobUrl: e.target.value }))
-                }
-                placeholder="https://..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                           focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Favourite toggle */}
-          <div className="mt-4">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
+            {/* Favourite toggle */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={saveFormData.isFavorite}
                 onChange={(e) =>
                   setSaveFormData((f) => ({ ...f, isFavorite: e.target.checked }))
                 }
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                className="border-canvas-input-border text-sidebar-accent focus:ring-sidebar-accent"
               />
-              <span className="text-sm text-gray-700">⭐ Mark as favourite</span>
+              <span className="text-[13px] text-ink">
+                <span className="text-sidebar-accent">★</span> Mark as favourite
+              </span>
             </label>
-          </div>
 
-          {/* Tags selector */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {PRESET_TAGS.map((tag) => {
-                const active = saveFormData.tags.includes(tag)
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() =>
-                      setSaveFormData((f) => ({
-                        ...f,
-                        tags: active
-                          ? f.tags.filter((t) => t !== tag)
-                          : [...f.tags, tag]
-                      }))
-                    }
-                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
-                      active
-                        ? "bg-purple-100 border-purple-400 text-purple-800"
-                        : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
-                    }`}>
-                    {tag}
-                  </button>
-                )
-              })}
-            </div>
-            {/* Custom tags */}
-            <div className="flex flex-wrap gap-1 mb-2">
-              {saveFormData.tags
-                .filter((t) => !PRESET_TAGS.includes(t))
-                .map((t) => (
-                  <span
-                    key={t}
-                    className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
-                    {t}
+            {/* Tags */}
+            <div>
+              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-2">
+                Tags
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {PRESET_TAGS.map((tag) => {
+                  const active = saveFormData.tags.includes(tag)
+                  return (
                     <button
+                      key={tag}
                       type="button"
                       onClick={() =>
                         setSaveFormData((f) => ({
                           ...f,
-                          tags: f.tags.filter((x) => x !== t)
+                          tags: active
+                            ? f.tags.filter((t) => t !== tag)
+                            : [...f.tags, tag]
                         }))
                       }
-                      className="ml-0.5 hover:text-purple-600">
-                      ×
+                      className={`px-3 py-1 text-[11px] font-medium tracking-[0.05em] border transition-colors ${active
+                        ? "bg-ink text-white border-ink"
+                        : "border-canvas-input-border text-ink-secondary hover:text-ink hover:border-ink-secondary"
+                        }`}>
+                      {tag}
                     </button>
-                  </span>
-                ))}
-            </div>
-            <input
-              type="text"
-              placeholder="Add custom tag, press Enter"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  const val = (e.target as HTMLInputElement).value.trim()
-                  if (val && !saveFormData.tags.includes(val)) {
-                    setSaveFormData((f) => ({ ...f, tags: [...f.tags, val] }))
-                  }
-                  ;(e.target as HTMLInputElement).value = ""
-                }
-              }}
-            />
-          </div>
-
-          {/* Notes textarea */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes
-            </label>
-            <textarea
-              rows={3}
-              value={saveFormData.notes}
-              onChange={(e) =>
-                setSaveFormData((f) => ({ ...f, notes: e.target.value }))
-              }
-              placeholder="Interview notes, contacts, reminders…"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            />
-          </div>
-
-          {saveFormOrigin === "success" && result && (
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mt-4">
-              <input
-                type="checkbox"
-                checked={saveDocs}
-                onChange={(e) => setSaveDocs(e.target.checked)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-              />
-              Save resume and cover letter
-            </label>
-          )}
-
-          {saveFormError && (
-            <p className="mt-4 text-sm text-red-600">{saveFormError}</p>
-          )}
-
-          {/* Preparation Plan Button - Show for interview stages */}
-          {isInterviewStage(saveFormData.status) &&
-            editingApplication &&
-            perplexityConfig?.preparationPlanEnabled && (
-              <div className="mt-6">
-                {editingApplication.preparationPlan &&
-                  editingApplication.preparationPlan.interviewType ===
-                  saveFormData.status ? (
-                  <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <Lightbulb size={18} className="text-green-600" />
-                    <span className="text-sm text-green-800 flex-1">
-                      Preparation plan already generated
-                    </span>
-                    <button
-                      onClick={() => {
-                        setPreparationPlanContent(
-                          editingApplication.preparationPlan!.content
-                        )
-                        setPreparationPlanModalOpen(true)
-                      }}
-                      className="text-sm text-purple-600 hover:text-purple-800 font-medium">
-                      View plan
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => generatePreparationPlan()}
-                    disabled={generatingPlan}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3
-                             bg-gradient-to-r from-amber-500 to-orange-500
-                             text-white rounded-lg hover:opacity-90 transition-opacity font-medium
-                             disabled:opacity-50 disabled:cursor-not-allowed">
-                    {generatingPlan ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Generating plan...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={18} />
-                        <span>Generate Preparation Plan</span>
-                      </>
-                    )}
-                  </button>
-                )}
-                {planError && (
-                  <p className="mt-2 text-sm text-red-600">{planError}</p>
-                )}
+                  )
+                })}
               </div>
+              {/* Custom tags */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {saveFormData.tags
+                  .filter((t) => !PRESET_TAGS.includes(t))
+                  .map((t) => (
+                    <span
+                      key={t}
+                      className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-sidebar-accent border border-canvas-divide">
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSaveFormData((f) => ({
+                            ...f,
+                            tags: f.tags.filter((x) => x !== t)
+                          }))
+                        }
+                        className="hover:text-ink transition-colors leading-none">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Add custom tag, press Enter"
+                className="w-full px-4 py-2.5 bg-canvas border border-canvas-input-border text-ink text-sm
+                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    const val = (e.target as HTMLInputElement).value.trim()
+                    if (val && !saveFormData.tags.includes(val)) {
+                      setSaveFormData((f) => ({ ...f, tags: [...f.tags, val] }))
+                    }
+                    ; (e.target as HTMLInputElement).value = ""
+                  }
+                }}
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                Notes
+              </label>
+              <textarea
+                rows={3}
+                value={saveFormData.notes}
+                onChange={(e) =>
+                  setSaveFormData((f) => ({ ...f, notes: e.target.value }))
+                }
+                placeholder="Interview notes, contacts, reminders…"
+                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors resize-none"
+              />
+            </div>
+
+            {/* Save docs checkbox (only from success flow) */}
+            {saveFormOrigin === "success" && result && (
+              <label className="flex items-center gap-2.5 text-[13px] text-ink cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveDocs}
+                  onChange={(e) => setSaveDocs(e.target.checked)}
+                  className="border-canvas-input-border text-sidebar-accent focus:ring-sidebar-accent"
+                />
+                Save resume and cover letter
+              </label>
             )}
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handleSaveApplication}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600
-                         text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
-              Save
-            </button>
-            <button
-              onClick={() => setView(saveFormOrigin)}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg
-                         text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-              Cancel
-            </button>
+            {saveFormError && (
+              <p className="text-sm text-red-500">{saveFormError}</p>
+            )}
+
+            {/* Preparation Plan */}
+            {isInterviewStage(saveFormData.status) &&
+              editingApplication &&
+              perplexityConfig?.preparationPlanEnabled && (
+                <div className="border-t border-canvas-divide pt-5">
+                  {editingApplication.preparationPlan &&
+                    editingApplication.preparationPlan.interviewType ===
+                    saveFormData.status ? (
+                    <div className="flex items-center gap-3 p-3 bg-canvas border border-canvas-divide">
+                      <Lightbulb size={16} className="text-sidebar-accent shrink-0" />
+                      <span className="text-[13px] text-ink flex-1">
+                        Preparation plan already generated
+                      </span>
+                      <button
+                        onClick={() => {
+                          setPreparationPlanContent(
+                            editingApplication.preparationPlan!.content
+                          )
+                          setPreparationPlanModalOpen(true)
+                        }}
+                        className="text-[11px] font-semibold tracking-[0.05em] text-sidebar-accent hover:text-ink transition-colors">
+                        VIEW PLAN
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => generatePreparationPlan()}
+                      disabled={generatingPlan}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3
+                               bg-sidebar-accent text-white text-[11px] font-semibold tracking-[0.1em]
+                               hover:opacity-90 transition-opacity
+                               disabled:opacity-50 disabled:cursor-not-allowed">
+                      {generatingPlan ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>GENERATING PLAN...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={15} />
+                          <span>GENERATE PREPARATION PLAN</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {planError && (
+                    <p className="mt-2 text-sm text-red-500">{planError}</p>
+                  )}
+                </div>
+              )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleSaveApplication}
+                className="flex-1 px-4 py-3 bg-ink text-white text-[11px] font-semibold tracking-[0.1em]
+                           hover:opacity-80 transition-opacity">
+                SAVE
+              </button>
+              <button
+                onClick={() => setView(saveFormOrigin)}
+                className="flex-1 px-4 py-3 border border-canvas-input-border text-ink-secondary text-[11px] font-semibold tracking-[0.1em]
+                           hover:text-ink hover:border-ink-secondary transition-colors">
+                CANCEL
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1362,7 +1388,7 @@ function IndexDialog() {
     })
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
+      <div className="min-h-screen bg-canvas flex flex-col">
         <PreparationPlanModal
           isOpen={preparationPlanModalOpen}
           onClose={() => setPreparationPlanModalOpen(false)}
@@ -1377,64 +1403,64 @@ function IndexDialog() {
         {/* Detail modal overlay */}
         {viewingApplication && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
+            <div className="w-full max-w-sm bg-white shadow-xl p-6">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-[13px] font-bold text-ink uppercase tracking-[0.1em]">
                   Application Details
                 </h3>
                 <button
                   onClick={() => setViewingApplication(null)}
-                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                  className="w-8 h-8 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
                   <X size={16} />
                 </button>
               </div>
               <dl className="space-y-3">
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Company
                   </dt>
-                  <dd className="text-sm text-gray-900 mt-0.5">
+                  <dd className="text-sm text-ink mt-0.5 font-semibold">
                     {viewingApplication.company}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Job Title
                   </dt>
-                  <dd className="text-sm text-gray-900 mt-0.5">
+                  <dd className="text-sm text-ink mt-0.5">
                     {viewingApplication.jobTitle}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Status
                   </dt>
                   <dd className="mt-0.5">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(viewingApplication.status)}`}>
-                      {viewingApplication.status}
+                      className={`text-[11px] font-semibold tracking-[0.05em] ${statusTextClass(viewingApplication.status)}`}>
+                      {viewingApplication.status.toUpperCase()}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Date Applied
                   </dt>
-                  <dd className="text-sm text-gray-900 mt-0.5">
+                  <dd className="text-sm text-ink mt-0.5">
                     {viewingApplication.date}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Saved At
                   </dt>
-                  <dd className="text-sm text-gray-900 mt-0.5">
+                  <dd className="text-sm text-ink-secondary mt-0.5">
                     {new Date(viewingApplication.createdAt).toLocaleString()}
                   </dd>
                 </div>
                 {viewingApplication.jobUrl && (
                   <div>
-                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                       Job Posting
                     </dt>
                     <dd className="text-sm mt-0.5">
@@ -1442,7 +1468,7 @@ function IndexDialog() {
                         href={viewingApplication.jobUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-purple-600 hover:underline break-all">
+                        className="text-sidebar-accent hover:underline break-all">
                         {viewingApplication.jobUrl}
                       </a>
                     </dd>
@@ -1450,25 +1476,24 @@ function IndexDialog() {
                 )}
               </dl>
 
-              {/* Feature 1.3 — Favourite / Tags / Notes */}
               {viewingApplication.isFavorite && (
                 <div className="mt-3">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Favourite
                   </span>
-                  <p className="text-sm text-gray-900 mt-0.5">⭐ Yes</p>
+                  <p className="text-sm text-sidebar-accent mt-0.5">★ Yes</p>
                 </div>
               )}
               {(viewingApplication.tags ?? []).length > 0 && (
                 <div className="mt-3">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Tags
                   </span>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <div className="flex flex-wrap gap-1.5 mt-1">
                     {viewingApplication.tags!.map((t) => (
                       <span
                         key={t}
-                        className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
+                        className="text-[10px] text-sidebar-accent font-medium">
                         {t}
                       </span>
                     ))}
@@ -1477,10 +1502,10 @@ function IndexDialog() {
               )}
               {viewingApplication.notes && (
                 <div className="mt-3">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                     Notes
                   </span>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">
+                  <p className="text-sm text-ink whitespace-pre-wrap mt-0.5">
                     {viewingApplication.notes}
                   </p>
                 </div>
@@ -1488,16 +1513,15 @@ function IndexDialog() {
 
               {(viewingApplication.resumeContent ||
                 viewingApplication.coverLetterContent) && (
-                  <div className="mt-5 pt-4 border-t border-gray-100 space-y-3">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  <div className="mt-5 pt-4 border-t border-canvas-divide space-y-3">
+                    <p className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-2">
                       Documents
                     </p>
 
-                    {/* Resume Download */}
                     {viewingApplication.resumeContent &&
                       viewingApplication.resumeFilename && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+                          <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.15em] mb-1.5">
                             Resume
                           </p>
                           <div className="flex gap-2">
@@ -1509,10 +1533,9 @@ function IndexDialog() {
                                 )
                               }
                               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-white border border-slate-200 text-slate-500 rounded-lg
-                                       hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
-                                       active:scale-[0.97] transition-all text-xs font-medium
-                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                                       bg-canvas border border-canvas-divide text-ink-secondary
+                                       hover:bg-canvas-divide hover:text-ink
+                                       active:scale-[0.97] transition-all text-xs font-medium">
                               <FileText size={12} />
                               <span>MD</span>
                             </button>
@@ -1531,10 +1554,9 @@ function IndexDialog() {
                                 }
                               }}
                               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-violet-600 text-white rounded-lg shadow-sm
-                                       hover:bg-violet-700 active:scale-[0.97]
-                                       transition-all text-xs font-medium
-                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                                       bg-sidebar-accent text-white
+                                       hover:opacity-90 active:scale-[0.97]
+                                       transition-all text-xs font-semibold">
                               <Download size={12} />
                               <span>PDF</span>
                             </button>
@@ -1542,11 +1564,10 @@ function IndexDialog() {
                         </div>
                       )}
 
-                    {/* Cover Letter Download */}
                     {viewingApplication.coverLetterContent &&
                       viewingApplication.coverLetterFilename && (
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+                          <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.15em] mb-1.5">
                             Cover Letter
                           </p>
                           <div className="flex gap-2">
@@ -1558,10 +1579,9 @@ function IndexDialog() {
                                 )
                               }
                               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-white border border-slate-200 text-slate-500 rounded-lg
-                                       hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
-                                       active:scale-[0.97] transition-all text-xs font-medium
-                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
+                                       bg-canvas border border-canvas-divide text-ink-secondary
+                                       hover:bg-canvas-divide hover:text-ink
+                                       active:scale-[0.97] transition-all text-xs font-medium">
                               <FileText size={12} />
                               <span>MD</span>
                             </button>
@@ -1580,10 +1600,9 @@ function IndexDialog() {
                                 }
                               }}
                               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-indigo-600 text-white rounded-lg shadow-sm
-                                       hover:bg-indigo-700 active:scale-[0.97]
-                                       transition-all text-xs font-medium
-                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
+                                       bg-sidebar-accent text-white
+                                       hover:opacity-90 active:scale-[0.97]
+                                       transition-all text-xs font-semibold">
                               <Download size={12} />
                               <span>PDF</span>
                             </button>
@@ -1593,22 +1612,21 @@ function IndexDialog() {
                   </div>
                 )}
 
-              {/* Preparation Plan Section */}
               {viewingApplication.preparationPlan && (
-                <div className="mt-5 pt-4 border-t border-gray-100">
+                <div className="mt-5 pt-4 border-t border-canvas-divide">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb size={16} className="text-amber-500" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <Lightbulb size={14} className="text-sidebar-accent" />
+                    <p className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
                       Preparation Plan
                     </p>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-canvas border border-canvas-divide">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-[11px] font-semibold text-ink uppercase tracking-[0.05em]">
                         {viewingApplication.preparationPlan.interviewType}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        Generated on{" "}
+                      <p className="text-xs text-ink-secondary mt-0.5">
+                        Generated{" "}
                         {new Date(
                           viewingApplication.preparationPlan.generatedAt
                         ).toLocaleDateString()}
@@ -1621,11 +1639,10 @@ function IndexDialog() {
                         )
                         setPreparationPlanModalOpen(true)
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm
-                                 bg-gradient-to-r from-amber-500 to-orange-500
-                                 text-white rounded-lg hover:opacity-90 transition-opacity">
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold
+                                 text-sidebar-accent hover:text-ink transition-colors">
                       <Eye size={14} />
-                      <span>View</span>
+                      <span>VIEW</span>
                     </button>
                   </div>
                 </div>
@@ -1634,228 +1651,217 @@ function IndexDialog() {
           </div>
         )}
 
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-6 pt-2">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Saved Applications
-              </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {savedApplications.length} application
-                {savedApplications.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {result && (
-                <button
-                  onClick={() => setView("success")}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
-                             text-gray-600 hover:bg-gray-50 transition-colors">
-                  ← Back
-                </button>
-              )}
-              {!result && (
-                <button
-                  onClick={() => window.close()}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
-                             text-gray-600 hover:bg-gray-50 transition-colors">
-                  Close
-                </button>
-              )}
-            </div>
+        {/* Top Bar */}
+        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
+          <div className="flex flex-col gap-[3px]">
+            <h1 className="text-3xl font-bold tracking-[0.1em] text-ink leading-none">
+              APPLICATIONS
+            </h1>
+            <p className="text-[13px] text-ink-secondary leading-none">
+              Saved applications and pipeline status
+            </p>
           </div>
+          <button
+            onClick={result ? () => setView("success") : () => window.close()}
+            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
+            <X size={18} />
+          </button>
+        </div>
 
-          {/* Filter bar */}
-          {savedApplications.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
+        {/* Content Area */}
+        <div className="flex-1 flex flex-col gap-6 px-12 py-10 overflow-auto">
+
+          {/* Filter Row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                setActiveTagFilter(null)
+                setShowFavoritesOnly(false)
+              }}
+              className={`px-4 py-2 text-[11px] font-semibold tracking-[0.1em] transition-colors ${!activeTagFilter && !showFavoritesOnly
+                ? "bg-ink text-white"
+                : "text-sidebar-item hover:text-ink"
+                }`}>
+              ALL
+            </button>
+            <button
+              onClick={() => {
+                setShowFavoritesOnly((v) => !v)
+                setActiveTagFilter(null)
+              }}
+              className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] transition-colors ${showFavoritesOnly
+                ? "bg-ink text-white"
+                : "text-sidebar-item hover:text-ink"
+                }`}>
+              ★  FAVOURITES
+            </button>
+            {allTags.map((tag) => (
               <button
+                key={tag}
                 onClick={() => {
-                  setActiveTagFilter(null)
+                  setActiveTagFilter(activeTagFilter === tag ? null : tag)
                   setShowFavoritesOnly(false)
                 }}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  !activeTagFilter && !showFavoritesOnly
-                    ? "bg-gray-800 border-gray-800 text-white"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                }`}>
-                All
-              </button>
-              <button
-                onClick={() => {
-                  setShowFavoritesOnly((v) => !v)
-                  setActiveTagFilter(null)
-                }}
-                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                  showFavoritesOnly
-                    ? "bg-amber-100 border-amber-400 text-amber-800"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                }`}>
-                ⭐ Favourites
-              </button>
-              {allTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    setActiveTagFilter(activeTagFilter === tag ? null : tag)
-                    setShowFavoritesOnly(false)
-                  }}
-                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                    activeTagFilter === tag
-                      ? "bg-purple-100 border-purple-400 text-purple-800"
-                      : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] transition-colors ${activeTagFilter === tag
+                  ? "bg-ink text-white"
+                  : "text-sidebar-item hover:text-ink"
                   }`}>
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
+                {tag}
+              </button>
+            ))}
+            <button
+              onClick={() => openSaveForm("applicationsList")}
+              className="ml-auto px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-sidebar-accent hover:text-ink transition-colors">
+              + TRACK APPLICATION
+            </button>
+          </div>
 
+          {/* Table / Empty States */}
           {savedApplications.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-              <div className="flex justify-center mb-4">
-                <Briefcase size={36} className="text-gray-200" />
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <Briefcase size={36} className="text-canvas-divide" />
+              <div className="text-center">
+                <p className="text-[13px] font-semibold text-ink">
+                  No applications saved yet
+                </p>
+                <p className="text-[12px] text-ink-muted mt-1">
+                  Save your first application after generating documents.
+                </p>
               </div>
-              <p className="text-gray-600 text-sm font-medium">
-                No applications saved yet
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                Save your first application after generating documents.
-              </p>
+              <button
+                onClick={() => openSaveForm("applicationsList")}
+                className="mt-2 px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-sidebar-accent hover:text-ink transition-colors">
+                + TRACK APPLICATION
+              </button>
             </div>
           ) : filteredApplications.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">
+            <p className="text-[13px] text-ink-secondary text-center py-6">
               No applications match the current filter.
             </p>
           ) : (
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Company
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Job Title
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">
-                      Match %
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Date
-                    </th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Actions
-                    </th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredApplications.map((app, idx) => (
-                    <tr
-                      key={app.id}
-                      className={`border-b border-gray-50 ${idx % 2 === 0 ? "" : "bg-gray-50/40"}`}>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1">
-                          {app.isFavorite && (
-                            <span title="Favourite" className="text-amber-400">
-                              ★
-                            </span>
-                          )}
-                          <span className="font-medium text-gray-900">
-                            {app.company}
-                          </span>
-                          {app.jobUrl && (
-                            <a
-                              href={app.jobUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Open job posting"
-                              className="text-gray-300 hover:text-purple-500 transition-colors shrink-0"
-                              onClick={(e) => e.stopPropagation()}>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
-                        {(app.tags ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-0.5 mt-0.5">
-                            {app.tags!.map((t) => (
-                              <span
-                                key={t}
-                                className="px-1.5 rounded-full text-[10px] bg-purple-50 text-purple-700 border border-purple-200">
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {app.jobTitle}
-                      </td>
-                      <td className="px-4 py-3">
-                        {app.matchPercentage != null ? (
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${app.matchPercentage >= 70
-                              ? "bg-green-100 text-green-800"
-                              : app.matchPercentage >= 50
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                              }`}>
-                            {app.matchPercentage}%
-                          </span>
-                        ) : (
-                          <span className="text-gray-300 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(app.status)}`}>
-                          {app.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                        {app.date}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-0.5 justify-end">
-                          <button
-                            title="View details"
-                            onClick={() => setViewingApplication(app)}
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                            <Eye size={14} />
-                          </button>
-                          <button
-                            title="Edit"
-                            onClick={() =>
-                              openSaveForm("applicationsList", app)
-                            }
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                            <Pencil size={14} />
-                          </button>
+            <div className="bg-white border-2 border-ink">
+              {/* Table Header */}
+              <div className="flex items-center bg-canvas px-4 py-3 border-b border-canvas-divide">
+                <span className="w-40 shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  COMPANY
+                </span>
+                <span className="flex-1 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  JOB TITLE
+                </span>
+                <span className="w-[88px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  MATCH %
+                </span>
+                <span className="w-[140px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  STATUS
+                </span>
+                <span className="w-[120px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  DATE
+                </span>
+                <span className="w-[120px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
+                  ACTIONS
+                </span>
+              </div>
 
-                          <div className="w-px h-4 bg-gray-200 mx-1" />
-                          {deleteConfirmId === app.id ? (
-                            <button
-                              onClick={() => handleDeleteApplication(app.id)}
-                              className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap">
-                              Confirm
-                            </button>
-                          ) : (
-                            <button
-                              title="Delete"
-                              onClick={() => setDeleteConfirmId(app.id)}
-                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors">
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Table Rows */}
+              {filteredApplications.map((app) => (
+                <div
+                  key={app.id}
+                  className="flex items-center px-4 py-[14px] border-b border-canvas-divide last:border-b-0 hover:bg-canvas/60 transition-colors ">
+                  {/* Company */}
+                  <div className="w-40 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      {app.isFavorite && (
+                        <span className="text-sidebar-accent text-xs leading-none">★</span>
+                      )}
+                      <span className="text-[13px] font-semibold text-ink">
+                        {app.company}
+                      </span>
+                    </div>
+                    {(app.tags ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {app.tags!.map((t) => (
+                          <span
+                            key={t}
+                            className="text-[10px] text-sidebar-accent font-medium">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Job Title */}
+                  <span className="flex-1 text-[13px] text-ink">
+                    {app.jobTitle}
+                  </span>
+
+                  {/* Match % */}
+                  <span
+                    className={`w-[88px] shrink-0 text-[12px] font-semibold ${app.matchPercentage == null
+                      ? "text-ink-muted"
+                      : app.matchPercentage >= 85
+                        ? "text-sidebar-accent"
+                        : app.matchPercentage >= 70
+                          ? "text-ink"
+                          : "text-ink-secondary"
+                      }`}>
+                    {app.matchPercentage != null
+                      ? `${app.matchPercentage}%`
+                      : "—"}
+                  </span>
+
+                  {/* Status */}
+                  <span
+                    className={`w-[140px] shrink-0 text-[11px] font-semibold tracking-[0.05em] ${statusTextClass(app.status)}`}>
+                    {app.status.toUpperCase()}
+                  </span>
+
+                  {/* Date */}
+                  <span className="w-[120px] shrink-0 text-[12px] text-ink-secondary">
+                    {app.date}
+                  </span>
+
+                  {/* Actions */}
+                  <div className="w-[120px] shrink-0 flex items-center gap-2">
+                    {app.jobUrl && (
+                      <a
+                        href={app.jobUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open job posting"
+                        className="text-[#9B9490] hover:text-ink transition-colors">
+                        <ExternalLink size={16} />
+                      </a>
+                    )}
+                    <button
+                      title="View details"
+                      onClick={() => setViewingApplication(app)}
+                      className="text-[#9B9490] hover:text-ink transition-colors">
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      title="Edit"
+                      onClick={() => openSaveForm("applicationsList", app)}
+                      className="text-[#9B9490] hover:text-ink transition-colors">
+                      <Pencil size={16} />
+                    </button>
+                    {deleteConfirmId === app.id ? (
+                      <button
+                        onClick={() => handleDeleteApplication(app.id)}
+                        className="text-[10px] font-semibold text-sidebar-accent hover:text-ink transition-colors whitespace-nowrap tracking-[0.05em]">
+                        CONFIRM
+                      </button>
+                    ) : (
+                      <button
+                        title="Delete"
+                        onClick={() => setDeleteConfirmId(app.id)}
+                        className="text-sidebar-accent hover:text-ink transition-colors">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1865,103 +1871,111 @@ function IndexDialog() {
 
   // Form screen (default)
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
-      <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Generate Documents
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Confirm job details and select model
-            </p>
-          </div>
+    <div className="min-h-screen bg-canvas flex flex-col">
+      {/* Top Bar */}
+      <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
+        <div className="flex flex-col gap-[3px]">
+          <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none">
+            GENERATE DOCUMENTS
+          </h1>
+          <p className="text-[13px] text-ink-secondary leading-none">
+            Confirm job details and select model
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setView("applicationsList")}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg
-                       text-gray-500 hover:bg-gray-50 transition-colors whitespace-nowrap">
-            My Applications
+            className="text-[11px] font-semibold tracking-[0.1em] text-sidebar-accent hover:text-ink transition-colors">
+            MY APPLICATIONS
+          </button>
+          <button
+            onClick={() => window.close()}
+            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
+            <X size={18} />
           </button>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name *
-            </label>
-            <input
-              type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g., Google, Microsoft"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
+      {/* Form Content */}
+      <div className="flex-1 px-12 py-10 overflow-auto flex justify-center">
+        <div className="w-full max-w-lg">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                Company Name *
+              </label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g., Google, Microsoft"
+                required
+                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Job Title *
-            </label>
-            <input
-              type="text"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="e.g., Senior Software Engineer"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                Job Title *
+              </label>
+              <input
+                type="text"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g., Senior Software Engineer"
+                required
+                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              AI Model
-            </label>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white">
-              {AVAILABLE_MODELS.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                  {model.recommended ? " (Recommended)" : ""} —{" "}
-                  {model.description}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                AI Model
+              </label>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                           focus:outline-none focus:border-ink-secondary transition-colors">
+                {AVAILABLE_MODELS.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                    {model.recommended ? " (Recommended)" : ""} —{" "}
+                    {model.description}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs text-gray-500">
-              Profile: {userProfile.skills.length} skills,{" "}
-              {userProfile.workExperience.length} experiences,{" "}
-              {userProfile.personalProjects.length} projects,{" "}
-              {userProfile.languages?.length ?? 0} languages
+            <div className="border-t border-canvas-divide pt-4">
+              <p className="text-[12px] text-ink-muted">
+                Profile: {userProfile.skills.length} skills,{" "}
+                {userProfile.workExperience.length} experiences,{" "}
+                {userProfile.personalProjects.length} projects,{" "}
+                {userProfile.languages?.length ?? 0} languages
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full px-4 py-3 bg-ink text-white text-[11px] font-semibold tracking-[0.1em]
+                         hover:opacity-80 transition-opacity">
+              GENERATE CV + COVER LETTER
+            </button>
+          </form>
+
+          {status && (
+            <p className={`mt-3 text-sm ${
+              status.includes("failed") || status.includes("error") || status.includes("Error")
+                ? "text-red-500"
+                : "text-sidebar-accent"
+            }`}>
+              {status}
             </p>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600
-                     text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
-            Generate CV + Cover Letter
-          </button>
-        </form>
-
-        {status && (
-          <p
-            className={`mt-3 text-sm ${status.includes("failed") ||
-              status.includes("error") ||
-              status.includes("Error")
-              ? "text-red-600"
-              : "text-purple-600"
-              }`}>
-            {status}
-          </p>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
