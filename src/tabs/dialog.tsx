@@ -108,7 +108,7 @@ type View = "form" | "loading" | "success" | "saveForm" | "applicationsList"
 function statusBadgeClass(status: ApplicationStatus): string {
   switch (status) {
     case "Saved":
-      return "bg-accent-light text-ink"
+      return "bg-gray-100 text-gray-800"
     case "Offer":
       return "bg-green-100 text-green-800"
     case "Reject":
@@ -414,25 +414,25 @@ function IndexDialog() {
             ratings: {
               glassdoor: cleanRating(
                 ratingsObj.glassdoor ??
-                  getField(
-                    raw,
-                    "glassdoor",
-                    "Glassdoor Rating",
-                    "glassdoor_rating"
-                  )
+                getField(
+                  raw,
+                  "glassdoor",
+                  "Glassdoor Rating",
+                  "glassdoor_rating"
+                )
               ),
               indeed: cleanRating(
                 ratingsObj.indeed ??
-                  getField(raw, "indeed", "Indeed Rating", "indeed_rating")
+                getField(raw, "indeed", "Indeed Rating", "indeed_rating")
               ),
               teamlyzer: cleanRating(
                 ratingsObj.teamlyzer ??
-                  getField(
-                    raw,
-                    "teamlyzer",
-                    "Teamlyzer Rating",
-                    "Overall Teamlyzer Rating"
-                  )
+                getField(
+                  raw,
+                  "teamlyzer",
+                  "Teamlyzer Rating",
+                  "Overall Teamlyzer Rating"
+                )
               )
             },
             sources: []
@@ -542,11 +542,11 @@ function IndexDialog() {
     const docs =
       !editingApplication && result && saveDocs
         ? {
-            resumeContent: result.resumeContent,
-            resumeFilename: result.resumeFilename,
-            coverLetterContent: result.coverLetterContent,
-            coverLetterFilename: result.coverLetterFilename
-          }
+          resumeContent: result.resumeContent,
+          resumeFilename: result.resumeFilename,
+          coverLetterContent: result.coverLetterContent,
+          coverLetterFilename: result.coverLetterFilename
+        }
         : {}
 
     const matchData =
@@ -556,27 +556,27 @@ function IndexDialog() {
 
     const updated: SavedApplication[] = editingApplication
       ? savedApplications.map((a) =>
-          a.id === editingApplication.id
-            ? {
-                ...a,
-                ...saveFormData,
-                jobUrl: saveFormData.jobUrl || undefined,
-                // Preserve existing preparation plan
-                preparationPlan: a.preparationPlan
-              }
-            : a
-        )
-      : [
-          ...savedApplications,
-          {
+        a.id === editingApplication.id
+          ? {
+            ...a,
             ...saveFormData,
             jobUrl: saveFormData.jobUrl || undefined,
-            ...docs,
-            ...matchData,
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString()
+            // Preserve existing preparation plan
+            preparationPlan: a.preparationPlan
           }
-        ]
+          : a
+      )
+      : [
+        ...savedApplications,
+        {
+          ...saveFormData,
+          jobUrl: saveFormData.jobUrl || undefined,
+          ...docs,
+          ...matchData,
+          id: crypto.randomUUID(),
+          createdAt: new Date().toISOString()
+        }
+      ]
     chrome.storage.local.set({ savedApplications: updated })
     setSavedApplications(updated)
     setView("applicationsList")
@@ -649,16 +649,16 @@ function IndexDialog() {
     const updated: SavedApplication[] = savedApplications.map((a) =>
       a.id === editingApplication.id
         ? {
-            ...a,
-            preparationPlan: {
-              content: preparationPlanContent,
-              generatedAt: new Date().toISOString(),
-              interviewType: saveFormData.status as
-                | "HR Interview"
-                | "1st Technical Interview"
-                | "2nd Technical Interview"
-            }
+          ...a,
+          preparationPlan: {
+            content: preparationPlanContent,
+            generatedAt: new Date().toISOString(),
+            interviewType: saveFormData.status as
+              | "HR Interview"
+              | "1st Technical Interview"
+              | "2nd Technical Interview"
           }
+        }
         : a
     )
 
@@ -728,13 +728,12 @@ function IndexDialog() {
                 Match Score
               </span>
               <span
-                className={`text-2xl font-bold ${
-                  pct >= 70
-                    ? "text-green-600"
-                    : pct >= 50
-                      ? "text-yellow-600"
-                      : "text-red-600"
-                }`}>
+                className={`text-2xl font-bold ${pct >= 70
+                  ? "text-green-600"
+                  : pct >= 50
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                  }`}>
                 {pct}%
               </span>
             </div>
@@ -754,40 +753,40 @@ function IndexDialog() {
           {/* Strengths / Weaknesses / Improvements */}
           {((result.match.strengths?.length ?? 0) > 0 ||
             (result.match.weaknesses?.length ?? 0) > 0) && (
-            <div className=" mb-5 flex flex-row gap-2">
-              {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-green-50 border border-green-100 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
-                    Strengths
-                  </p>
-                  <ul className="space-y-1">
-                    {result.match.strengths.map((s, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-green-800">
-                        <span className="mt-0.5 shrink-0">✓</span>
-                        <span>{s}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className=" mb-5 flex flex-row gap-2">
+                {(result.match.strengths?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-green-50 border border-green-100 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
+                      Strengths
+                    </p>
+                    <ul className="space-y-1">
+                      {result.match.strengths.map((s, i) => (
+                        <li key={i} className="flex gap-2 text-xs text-green-800">
+                          <span className="mt-0.5 shrink-0">✓</span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
-                    Weaknesses
-                  </p>
-                  <ul className="space-y-1">
-                    {result.match.weaknesses.map((w, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-red-800">
-                        <span className="mt-0.5 shrink-0">✗</span>
-                        <span>{w}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+                {(result.match.weaknesses?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
+                      Weaknesses
+                    </p>
+                    <ul className="space-y-1">
+                      {result.match.weaknesses.map((w, i) => (
+                        <li key={i} className="flex gap-2 text-xs text-red-800">
+                          <span className="mt-0.5 shrink-0">✗</span>
+                          <span>{w}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
           {(result.match.improvements?.length ?? 0) > 0 && (
             <div className="mb-5">
@@ -883,48 +882,48 @@ function IndexDialog() {
                     {(companyInfo.ratings.glassdoor ||
                       companyInfo.ratings.indeed ||
                       companyInfo.ratings.teamlyzer) && (
-                      <div className="flex flex-wrap gap-2">
-                        {companyInfo.ratings.glassdoor && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Glassdoor</span>
-                            <span
-                              className={
-                                companyInfo.ratings.glassdoor >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.glassdoor}★
+                        <div className="flex flex-wrap gap-2">
+                          {companyInfo.ratings.glassdoor && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Glassdoor</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.glassdoor >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.glassdoor}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.indeed && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Indeed</span>
-                            <span
-                              className={
-                                companyInfo.ratings.indeed >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.indeed}★
+                          )}
+                          {companyInfo.ratings.indeed && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Indeed</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.indeed >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.indeed}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.teamlyzer && (
-                          <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                            <span className="text-gray-500">Teamlyzer</span>
-                            <span
-                              className={
-                                companyInfo.ratings.teamlyzer >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }>
-                              {companyInfo.ratings.teamlyzer}★
+                          )}
+                          {companyInfo.ratings.teamlyzer && (
+                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
+                              <span className="text-gray-500">Teamlyzer</span>
+                              <span
+                                className={
+                                  companyInfo.ratings.teamlyzer >= 3.5
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }>
+                                {companyInfo.ratings.teamlyzer}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
                   </div>
                 )
               )}
@@ -1168,16 +1167,11 @@ function IndexDialog() {
                 type="checkbox"
                 checked={saveFormData.isFavorite}
                 onChange={(e) =>
-                  setSaveFormData((f) => ({
-                    ...f,
-                    isFavorite: e.target.checked
-                  }))
+                  setSaveFormData((f) => ({ ...f, isFavorite: e.target.checked }))
                 }
                 className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
               />
-              <span className="text-sm text-gray-700">
-                ⭐ Mark as favourite
-              </span>
+              <span className="text-sm text-gray-700">⭐ Mark as favourite</span>
             </label>
           </div>
 
@@ -1291,7 +1285,7 @@ function IndexDialog() {
             perplexityConfig?.preparationPlanEnabled && (
               <div className="mt-6">
                 {editingApplication.preparationPlan &&
-                editingApplication.preparationPlan.interviewType ===
+                  editingApplication.preparationPlan.interviewType ===
                   saveFormData.status ? (
                   <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <Lightbulb size={18} className="text-green-600" />
@@ -1357,7 +1351,9 @@ function IndexDialog() {
 
   // Applications list screen
   if (view === "applicationsList") {
-    const allTags = [...new Set(savedApplications.flatMap((a) => a.tags ?? []))]
+    const allTags = [
+      ...new Set(savedApplications.flatMap((a) => a.tags ?? []))
+    ]
     const filteredApplications = savedApplications.filter((app) => {
       if (showFavoritesOnly && !app.isFavorite) return false
       if (activeTagFilter && !(app.tags ?? []).includes(activeTagFilter))
@@ -1366,7 +1362,7 @@ function IndexDialog() {
     })
 
     return (
-      <div className="min-h-screen bg-canvas px-12 py-10">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
         <PreparationPlanModal
           isOpen={preparationPlanModalOpen}
           onClose={() => setPreparationPlanModalOpen(false)}
@@ -1381,72 +1377,72 @@ function IndexDialog() {
         {/* Detail modal overlay */}
         {viewingApplication && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-sm bg-surface border-2 border-ink p-6">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6">
               <div className="flex items-center justify-between mb-5">
-                <h3 className="font-heading text-lg font-bold text-ink">
+                <h3 className="text-lg font-bold text-gray-900">
                   Application Details
                 </h3>
                 <button
                   onClick={() => setViewingApplication(null)}
-                  className="p-1 rounded-md text-ink-muted hover:text-ink hover:bg-canvas transition-colors">
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                   <X size={16} />
                 </button>
               </div>
               <dl className="space-y-3">
                 <div>
-                  <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Company
                   </dt>
-                  <dd className="font-body text-sm text-ink mt-0.5">
+                  <dd className="text-sm text-gray-900 mt-0.5">
                     {viewingApplication.company}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Job Title
                   </dt>
-                  <dd className="font-body text-sm text-ink mt-0.5">
+                  <dd className="text-sm text-gray-900 mt-0.5">
                     {viewingApplication.jobTitle}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Status
                   </dt>
                   <dd className="mt-0.5">
                     <span
-                      className={`inline-block px-2 py-0.5 text-xs font-medium ${statusBadgeClass(viewingApplication.status)}`}>
+                      className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(viewingApplication.status)}`}>
                       {viewingApplication.status}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Date Applied
                   </dt>
-                  <dd className="font-body text-sm text-ink mt-0.5">
+                  <dd className="text-sm text-gray-900 mt-0.5">
                     {viewingApplication.date}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Saved At
                   </dt>
-                  <dd className="font-body text-sm text-ink mt-0.5">
+                  <dd className="text-sm text-gray-900 mt-0.5">
                     {new Date(viewingApplication.createdAt).toLocaleString()}
                   </dd>
                 </div>
                 {viewingApplication.jobUrl && (
                   <div>
-                    <dt className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                       Job Posting
                     </dt>
-                    <dd className="font-body text-sm mt-0.5">
+                    <dd className="text-sm mt-0.5">
                       <a
                         href={viewingApplication.jobUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-accent hover:underline break-all">
+                        className="text-purple-600 hover:underline break-all">
                         {viewingApplication.jobUrl}
                       </a>
                     </dd>
@@ -1457,22 +1453,22 @@ function IndexDialog() {
               {/* Feature 1.3 — Favourite / Tags / Notes */}
               {viewingApplication.isFavorite && (
                 <div className="mt-3">
-                  <span className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Favourite
                   </span>
-                  <p className="font-body text-sm text-ink mt-0.5">Yes</p>
+                  <p className="text-sm text-gray-900 mt-0.5">⭐ Yes</p>
                 </div>
               )}
               {(viewingApplication.tags ?? []).length > 0 && (
                 <div className="mt-3">
-                  <span className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Tags
                   </span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {viewingApplication.tags!.map((t) => (
                       <span
                         key={t}
-                        className="px-2 py-0.5 text-xs bg-accent-light text-ink border border-border-muted">
+                        className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800 border border-purple-200">
                         {t}
                       </span>
                     ))}
@@ -1481,10 +1477,10 @@ function IndexDialog() {
               )}
               {viewingApplication.notes && (
                 <div className="mt-3">
-                  <span className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                     Notes
                   </span>
-                  <p className="font-body text-sm text-ink whitespace-pre-wrap mt-0.5">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">
                     {viewingApplication.notes}
                   </p>
                 </div>
@@ -1492,118 +1488,126 @@ function IndexDialog() {
 
               {(viewingApplication.resumeContent ||
                 viewingApplication.coverLetterContent) && (
-                <div className="mt-5 pt-4 border-t border-border-muted space-y-3">
-                  <p className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase mb-2">
-                    Documents
-                  </p>
+                  <div className="mt-5 pt-4 border-t border-gray-100 space-y-3">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                      Documents
+                    </p>
 
-                  {/* Resume Download */}
-                  {viewingApplication.resumeContent &&
-                    viewingApplication.resumeFilename && (
-                      <div>
-                        <p className="font-heading text-[10px] font-semibold uppercase tracking-widest text-ink-muted mb-1.5">
-                          Resume
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              downloadMarkdownFile(
-                                viewingApplication.resumeFilename,
-                                viewingApplication.resumeContent
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-surface border-2 border-ink text-ink
-                                       hover:bg-canvas transition-all text-xs font-medium">
-                            <FileText size={12} />
-                            <span>MD</span>
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await downloadMarkdownAsPdf(
-                                  viewingApplication.resumeContent,
-                                  viewingApplication.resumeFilename
-                                )
-                              } catch (error) {
-                                console.error("PDF export failed:", error)
-                                alert(
-                                  "Failed to generate PDF. Please try again."
+                    {/* Resume Download */}
+                    {viewingApplication.resumeContent &&
+                      viewingApplication.resumeFilename && (
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+                            Resume
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                downloadMarkdownFile(
+                                  viewingApplication.resumeFilename,
+                                  viewingApplication.resumeContent
                                 )
                               }
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-ink text-surface hover:bg-ink/90
-                                       transition-all text-xs font-medium">
-                            <Download size={12} />
-                            <span>PDF</span>
-                          </button>
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
+                                       bg-white border border-slate-200 text-slate-500 rounded-lg
+                                       hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
+                                       active:scale-[0.97] transition-all text-xs font-medium
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                              <FileText size={12} />
+                              <span>MD</span>
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await downloadMarkdownAsPdf(
+                                    viewingApplication.resumeContent,
+                                    viewingApplication.resumeFilename
+                                  )
+                                } catch (error) {
+                                  console.error("PDF export failed:", error)
+                                  alert(
+                                    "Failed to generate PDF. Please try again."
+                                  )
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
+                                       bg-violet-600 text-white rounded-lg shadow-sm
+                                       hover:bg-violet-700 active:scale-[0.97]
+                                       transition-all text-xs font-medium
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
+                              <Download size={12} />
+                              <span>PDF</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                  {/* Cover Letter Download */}
-                  {viewingApplication.coverLetterContent &&
-                    viewingApplication.coverLetterFilename && (
-                      <div>
-                        <p className="font-heading text-[10px] font-semibold uppercase tracking-widest text-ink-muted mb-1.5">
-                          Cover Letter
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              downloadMarkdownFile(
-                                viewingApplication.coverLetterFilename,
-                                viewingApplication.coverLetterContent
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-surface border-2 border-ink text-ink
-                                       hover:bg-canvas transition-all text-xs font-medium">
-                            <FileText size={12} />
-                            <span>MD</span>
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await downloadMarkdownAsPdf(
-                                  viewingApplication.coverLetterContent,
-                                  viewingApplication.coverLetterFilename
-                                )
-                              } catch (error) {
-                                console.error("PDF export failed:", error)
-                                alert(
-                                  "Failed to generate PDF. Please try again."
+                    {/* Cover Letter Download */}
+                    {viewingApplication.coverLetterContent &&
+                      viewingApplication.coverLetterFilename && (
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+                            Cover Letter
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                downloadMarkdownFile(
+                                  viewingApplication.coverLetterFilename,
+                                  viewingApplication.coverLetterContent
                                 )
                               }
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-ink text-surface hover:bg-ink/90
-                                       transition-all text-xs font-medium">
-                            <Download size={12} />
-                            <span>PDF</span>
-                          </button>
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
+                                       bg-white border border-slate-200 text-slate-500 rounded-lg
+                                       hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
+                                       active:scale-[0.97] transition-all text-xs font-medium
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
+                              <FileText size={12} />
+                              <span>MD</span>
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await downloadMarkdownAsPdf(
+                                    viewingApplication.coverLetterContent,
+                                    viewingApplication.coverLetterFilename
+                                  )
+                                } catch (error) {
+                                  console.error("PDF export failed:", error)
+                                  alert(
+                                    "Failed to generate PDF. Please try again."
+                                  )
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
+                                       bg-indigo-600 text-white rounded-lg shadow-sm
+                                       hover:bg-indigo-700 active:scale-[0.97]
+                                       transition-all text-xs font-medium
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
+                              <Download size={12} />
+                              <span>PDF</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                </div>
-              )}
+                      )}
+                  </div>
+                )}
 
               {/* Preparation Plan Section */}
               {viewingApplication.preparationPlan && (
-                <div className="mt-5 pt-4 border-t border-border-muted">
+                <div className="mt-5 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2 mb-3">
                     <Lightbulb size={16} className="text-amber-500" />
-                    <p className="font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                       Preparation Plan
                     </p>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200">
+                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <div>
-                      <p className="font-body text-sm font-medium text-ink">
+                      <p className="text-sm font-medium text-gray-900">
                         {viewingApplication.preparationPlan.interviewType}
                       </p>
-                      <p className="font-body text-xs text-ink-muted">
+                      <p className="text-xs text-gray-500">
                         Generated on{" "}
                         {new Date(
                           viewingApplication.preparationPlan.generatedAt
@@ -1619,7 +1623,7 @@ function IndexDialog() {
                       }}
                       className="flex items-center gap-1.5 px-3 py-1.5 text-sm
                                  bg-gradient-to-r from-amber-500 to-orange-500
-                                 text-surface hover:opacity-90 transition-opacity">
+                                 text-white rounded-lg hover:opacity-90 transition-opacity">
                       <Eye size={14} />
                       <span>View</span>
                     </button>
@@ -1630,7 +1634,37 @@ function IndexDialog() {
           </div>
         )}
 
-        <div className="max-w-[1320px] mx-auto">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center justify-between mb-6 pt-2">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Saved Applications
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {savedApplications.length} application
+                {savedApplications.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {result && (
+                <button
+                  onClick={() => setView("success")}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
+                             text-gray-600 hover:bg-gray-50 transition-colors">
+                  ← Back
+                </button>
+              )}
+              {!result && (
+                <button
+                  onClick={() => window.close()}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg
+                             text-gray-600 hover:bg-gray-50 transition-colors">
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Filter bar */}
           {savedApplications.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
@@ -1639,10 +1673,10 @@ function IndexDialog() {
                   setActiveTagFilter(null)
                   setShowFavoritesOnly(false)
                 }}
-                className={`px-3 py-1 text-xs border transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                   !activeTagFilter && !showFavoritesOnly
-                    ? "bg-ink border-ink text-surface"
-                    : "bg-surface border-border-muted text-ink-muted hover:bg-canvas"
+                    ? "bg-gray-800 border-gray-800 text-white"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                 }`}>
                 All
               </button>
@@ -1651,12 +1685,12 @@ function IndexDialog() {
                   setShowFavoritesOnly((v) => !v)
                   setActiveTagFilter(null)
                 }}
-                className={`px-3 py-1 text-xs border transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                   showFavoritesOnly
                     ? "bg-amber-100 border-amber-400 text-amber-800"
-                    : "bg-surface border-border-muted text-ink-muted hover:bg-canvas"
+                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                 }`}>
-                Favorites
+                ⭐ Favourites
               </button>
               {allTags.map((tag) => (
                 <button
@@ -1665,10 +1699,10 @@ function IndexDialog() {
                     setActiveTagFilter(activeTagFilter === tag ? null : tag)
                     setShowFavoritesOnly(false)
                   }}
-                  className={`px-3 py-1 text-xs border transition-colors ${
+                  className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                     activeTagFilter === tag
-                      ? "bg-accent-light border-accent text-ink"
-                      : "bg-surface border-border-muted text-ink-muted hover:bg-canvas"
+                      ? "bg-purple-100 border-purple-400 text-purple-800"
+                      : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                   }`}>
                   {tag}
                 </button>
@@ -1677,42 +1711,42 @@ function IndexDialog() {
           )}
 
           {savedApplications.length === 0 ? (
-            <div className="bg-surface border-2 border-ink p-12 text-center">
+            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
               <div className="flex justify-center mb-4">
-                <Briefcase size={36} className="text-ink-muted" />
+                <Briefcase size={36} className="text-gray-200" />
               </div>
-              <p className="font-heading text-sm font-medium text-ink">
+              <p className="text-gray-600 text-sm font-medium">
                 No applications saved yet
               </p>
-              <p className="font-body text-xs text-ink-muted mt-1">
+              <p className="text-gray-400 text-xs mt-1">
                 Save your first application after generating documents.
               </p>
             </div>
           ) : filteredApplications.length === 0 ? (
-            <p className="font-body text-sm text-ink-muted text-center py-6">
+            <p className="text-sm text-gray-500 text-center py-6">
               No applications match the current filter.
             </p>
           ) : (
-            <div className="bg-surface border-2 border-ink overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border-muted bg-canvas">
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       Company
                     </th>
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       Job Title
                     </th>
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase w-24">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">
                       Match %
                     </th>
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       Status
                     </th>
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       Date
                     </th>
-                    <th className="text-left px-4 py-3 font-heading text-[10px] font-semibold tracking-widest text-ink-muted uppercase">
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       Actions
                     </th>
                     <th className="px-4 py-3"></th>
@@ -1722,15 +1756,15 @@ function IndexDialog() {
                   {filteredApplications.map((app, idx) => (
                     <tr
                       key={app.id}
-                      className={`border-b border-border-muted ${idx % 2 === 0 ? "" : "bg-canvas/50"}`}>
+                      className={`border-b border-gray-50 ${idx % 2 === 0 ? "" : "bg-gray-50/40"}`}>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
                           {app.isFavorite && (
                             <span title="Favourite" className="text-amber-400">
-                              *
+                              ★
                             </span>
                           )}
-                          <span className="font-medium text-ink">
+                          <span className="font-medium text-gray-900">
                             {app.company}
                           </span>
                           {app.jobUrl && (
@@ -1739,7 +1773,7 @@ function IndexDialog() {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="Open job posting"
-                              className="text-ink-muted hover:text-accent transition-colors shrink-0"
+                              className="text-gray-300 hover:text-purple-500 transition-colors shrink-0"
                               onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="w-3 h-3" />
                             </a>
@@ -1750,41 +1784,38 @@ function IndexDialog() {
                             {app.tags!.map((t) => (
                               <span
                                 key={t}
-                                className="px-1.5 text-[10px] bg-accent-light text-ink border border-border-muted">
+                                className="px-1.5 rounded-full text-[10px] bg-purple-50 text-purple-700 border border-purple-200">
                                 {t}
                               </span>
                             ))}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-body text-ink-muted">
+                      <td className="px-4 py-3 text-gray-600">
                         {app.jobTitle}
                       </td>
                       <td className="px-4 py-3">
                         {app.matchPercentage != null ? (
                           <span
-                            className={`inline-block px-2 py-0.5 text-xs font-medium ${
-                              app.matchPercentage >= 70
-                                ? "bg-green-100 text-green-800"
-                                : app.matchPercentage >= 50
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                            }`}>
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${app.matchPercentage >= 70
+                              ? "bg-green-100 text-green-800"
+                              : app.matchPercentage >= 50
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                              }`}>
                             {app.matchPercentage}%
                           </span>
                         ) : (
-                          <span className="font-body text-xs text-ink-muted">
-                            -
-                          </span>
+                          <span className="text-gray-300 text-xs">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-block px-2 py-0.5 text-xs font-medium ${statusBadgeClass(app.status)}`}>
+                          className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-body text-ink-muted whitespace-nowrap">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {app.date}
                       </td>
                       <td className="px-4 py-3">
@@ -1792,7 +1823,7 @@ function IndexDialog() {
                           <button
                             title="View details"
                             onClick={() => setViewingApplication(app)}
-                            className="p-1.5 hover:bg-canvas text-ink-muted hover:text-ink transition-colors">
+                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                             <Eye size={14} />
                           </button>
                           <button
@@ -1800,22 +1831,22 @@ function IndexDialog() {
                             onClick={() =>
                               openSaveForm("applicationsList", app)
                             }
-                            className="p-1.5 hover:bg-canvas text-ink-muted hover:text-ink transition-colors">
+                            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                             <Pencil size={14} />
                           </button>
 
-                          <div className="w-px h-4 bg-border-muted mx-1" />
+                          <div className="w-px h-4 bg-gray-200 mx-1" />
                           {deleteConfirmId === app.id ? (
                             <button
                               onClick={() => handleDeleteApplication(app.id)}
-                              className="px-2.5 py-1 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap">
+                              className="px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap">
                               Confirm
                             </button>
                           ) : (
                             <button
                               title="Delete"
                               onClick={() => setDeleteConfirmId(app.id)}
-                              className="p-1.5 hover:bg-canvas text-ink-muted hover:text-red-500 transition-colors">
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors">
                               <Trash2 size={14} />
                             </button>
                           )}
@@ -1922,13 +1953,12 @@ function IndexDialog() {
 
         {status && (
           <p
-            className={`mt-3 text-sm ${
-              status.includes("failed") ||
+            className={`mt-3 text-sm ${status.includes("failed") ||
               status.includes("error") ||
               status.includes("Error")
-                ? "text-red-600"
-                : "text-purple-600"
-            }`}>
+              ? "text-red-600"
+              : "text-purple-600"
+              }`}>
             {status}
           </p>
         )}
