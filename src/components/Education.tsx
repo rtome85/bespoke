@@ -19,6 +19,15 @@ const validateEducation = (edu: Education): string[] => {
   return errors
 }
 
+const labelCls =
+  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+
+const inputCls =
+  "w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+
+const inputErrorCls =
+  "w-full px-4 py-3 bg-canvas border border-[#fca5a5] text-ink text-sm focus:outline-none focus:border-[#991b1b] transition-colors"
+
 export function EducationEditor({ education, onChange }: EducationEditorProps) {
   const [editingEducation, setEditingEducation] = useState<Education | null>(
     null
@@ -74,27 +83,18 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Degree *
-            </label>
+            <label className={labelCls}>Degree *</label>
             <input
               type="text"
               value={edu.degree}
               onChange={(e) => onUpdate({ ...edu, degree: e.target.value })}
               placeholder="e.g., Bachelor of Science"
-              className={`w-full px-4 py-3 border rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                         hasErrors && !edu.degree
-                           ? "border-red-300"
-                           : "border-gray-300"
-                       }`}
+              className={hasErrors && !edu.degree ? inputErrorCls : inputCls}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Institution *
-            </label>
+            <label className={labelCls}>Institution *</label>
             <input
               type="text"
               value={edu.institution}
@@ -102,27 +102,21 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
                 onUpdate({ ...edu, institution: e.target.value })
               }
               placeholder="e.g., University of California"
-              className={`w-full px-4 py-3 border rounded-lg
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                         hasErrors && !edu.institution
-                           ? "border-red-300"
-                           : "border-gray-300"
-                       }`}
+              className={
+                hasErrors && !edu.institution ? inputErrorCls : inputCls
+              }
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Field of Study
-          </label>
+          <label className={labelCls}>Field of Study</label>
           <input
             type="text"
             value={edu.fieldOfStudy || ""}
             onChange={(e) => onUpdate({ ...edu, fieldOfStudy: e.target.value })}
             placeholder="e.g., Computer Science"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                     focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className={inputCls}
           />
         </div>
 
@@ -147,26 +141,22 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
+          <label className={labelCls}>Description</label>
           <textarea
             value={edu.description || ""}
             onChange={(e) => onUpdate({ ...edu, description: e.target.value })}
             placeholder="Describe your coursework, achievements, or relevant projects..."
             rows={3}
             maxLength={300}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg
-                     focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                     resize-none"
+            className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors resize-none"
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-[11px] text-ink-secondary">
             {(edu.description || "").length}/300 characters
           </p>
         </div>
 
         {hasErrors && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          <div className="bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3">
             {errors.map((error, i) => (
               <p key={i} className="text-sm">
                 • {error}
@@ -181,22 +171,20 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
   return (
     <div>
       {editingEducation && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-purple-900 mb-4">
+        <div className="bg-canvas border-2 border-ink p-4 mb-6">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-ink mb-4">
             Add New Education
           </h3>
           {renderEducationItem(editingEducation, 0, setEditingEducation)}
           <div className="flex gap-3 mt-4">
             <button
               onClick={saveEditingEducation}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg
-                       hover:bg-purple-700 transition-colors font-medium">
+              className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
               Save Education
             </button>
             <button
               onClick={() => setEditingEducation(null)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg
-                       hover:bg-gray-300 transition-colors font-medium">
+              className="px-4 py-2 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest cursor-pointer hover:border-ink transition-colors">
               Cancel
             </button>
           </div>
@@ -218,17 +206,17 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
           return (
             <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate leading-tight">
+                <p className="text-sm font-medium text-ink truncate leading-tight">
                   {edu.degree
-                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-gray-500"> · {edu.fieldOfStudy}</span>}</>
-                    : <span className="italic text-gray-400">Untitled degree</span>}
+                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-ink-secondary"> · {edu.fieldOfStudy}</span>}</>
+                    : <span className="italic text-ink-muted">Untitled degree</span>}
                 </p>
-                <p className="text-xs text-gray-500 truncate mt-0.5">
+                <p className="text-xs text-ink-secondary truncate mt-0.5">
                   {edu.institution || "—"}
                 </p>
               </div>
               {edu.startDate && (
-                <span className="ml-4 shrink-0 text-xs text-gray-400">
+                <span className="ml-4 shrink-0 text-xs text-ink-muted">
                   {fmt(edu.startDate)} – {fmt(edu.endDate)}
                 </span>
               )}

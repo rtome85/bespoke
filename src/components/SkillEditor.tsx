@@ -10,10 +10,8 @@ interface SkillEditorProps {
 const validateSkill = (skill: Skill): string[] => {
   const errors = []
   if (!skill.name.trim()) errors.push("Skill name is required")
-  if (skill.yearsOfExperience <= 0)
-    errors.push("Years of experience must be greater than 0")
-  if (skill.yearsOfExperience > 50)
-    errors.push("Years of experience seems unrealistic")
+  if (skill.yearsOfExperience <= 0) errors.push("Years of experience must be greater than 0")
+  if (skill.yearsOfExperience > 50) errors.push("Years of experience seems unrealistic")
   return errors
 }
 
@@ -36,12 +34,10 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
     const trimmed = formName.trim()
     if (!trimmed) { setFormError("Skill name is required"); return }
     if (formYears <= 0 || formYears > 50) { setFormError("Years must be 1–50"); return }
-
     const isDuplicate = skills.some(
       (s) => s.name.toLowerCase() === trimmed.toLowerCase() && s.id !== editingId
     )
     if (isDuplicate) { setFormError(`"${trimmed}" is already in your skills`); return }
-
     if (editingId) {
       updateSkill(editingId, { name: trimmed, yearsOfExperience: formYears })
     } else {
@@ -69,22 +65,16 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
     }
   }
 
-  const handleAddFirstSkill = () => {
-    nameInputRef.current?.focus()
-  }
-
   return (
     <div className="space-y-3">
       {skills.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-          <p className="text-gray-600 mb-4 text-sm">
+        <div className="border-2 border-dashed border-canvas-input-border p-8 text-center">
+          <p className="text-ink-secondary text-sm mb-4">
             No skills added yet. Add your skills to showcase your expertise!
           </p>
           <button
-            onClick={handleAddFirstSkill}
-            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg
-                     hover:bg-purple-700 transition-all hover:shadow-md
-                     font-medium">
+            onClick={() => nameInputRef.current?.focus()}
+            className="px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
             Add Your First Skill
           </button>
         </div>
@@ -93,16 +83,15 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
           {skills.map((skill) => (
             <span
               key={skill.id}
-              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-sm font-medium
-                          border transition-colors cursor-default
-                          ${editingId === skill.id
-                            ? "bg-purple-100 border-purple-400 text-purple-800"
-                            : "bg-gray-100 border-gray-200 text-gray-800 hover:border-purple-300"}`}>
+              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-sm font-medium border transition-colors cursor-default
+                ${editingId === skill.id
+                  ? "bg-[#fdf5f2] border-sidebar-accent text-ink"
+                  : "bg-canvas border-canvas-input-border text-ink hover:border-ink-secondary"}`}>
               <span>{skill.name}</span>
-              <span className="text-xs text-gray-500">· {skill.yearsOfExperience}y</span>
+              <span className="text-xs text-ink-muted">· {skill.yearsOfExperience}y</span>
               <button
                 onClick={() => handleEditSkill(skill)}
-                className="ml-0.5 p-0.5 rounded-full hover:bg-purple-200 text-gray-400 hover:text-purple-700 transition-colors"
+                className="ml-0.5 p-0.5 hover:bg-canvas-divide text-ink-muted hover:text-ink transition-colors"
                 title="Edit skill">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -111,7 +100,7 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
               </button>
               <button
                 onClick={() => handleRemoveSkill(skill.id)}
-                className="p-0.5 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+                className="p-0.5 hover:bg-[#fef2f2] text-ink-muted hover:text-[#991b1b] transition-colors"
                 title="Remove skill">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -131,33 +120,32 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
             onChange={(e) => { setFormName(e.target.value); setFormError("") }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Skill name (e.g. React, Python)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            className="w-full px-3 py-2 bg-surface border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+          />
         </div>
         <div className="w-20">
           <input
             type="number" min="1" max="50"
             value={formYears}
             onChange={(e) => setFormYears(parseInt(e.target.value) || 1)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-center
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-          <p className="text-xs text-gray-400 text-center mt-0.5">yrs</p>
+            className="w-full px-3 py-2 bg-surface border border-canvas-input-border text-ink text-sm text-center focus:outline-none focus:border-ink transition-colors"
+          />
+          <p className="text-[11px] text-ink-muted text-center mt-0.5">yrs</p>
         </div>
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium
-                     hover:bg-purple-700 transition-colors whitespace-nowrap">
+          className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap">
           {editingId ? "Update" : "+ Add Skill"}
         </button>
         {editingId && (
           <button
             onClick={handleCancelEdit}
-            className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            className="px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-ink-secondary hover:text-ink transition-colors">
             Cancel
           </button>
         )}
       </div>
-      {formError && <p className="mt-1.5 text-xs text-red-600">{formError}</p>}
+      {formError && <p className="mt-1.5 text-xs text-[#991b1b]">{formError}</p>}
     </div>
   )
 }

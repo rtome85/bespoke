@@ -10,11 +10,17 @@ interface LanguageEditorProps {
 const LEVELS = ["Native", "A1", "A2", "B1", "B2", "C1", "C2"]
 
 const levelBadgeClass = (level: string) => {
-  if (level === "Native") return "bg-purple-50 border-purple-200 text-purple-800"
-  if (level === "C1" || level === "C2") return "bg-emerald-50 border-emerald-200 text-emerald-800"
-  if (level === "B1" || level === "B2") return "bg-blue-50 border-blue-200 text-blue-800"
-  return "bg-gray-100 border-gray-200 text-gray-700"
+  if (level === "Native") return "bg-canvas border-canvas-input-border text-ink"
+  if (level === "C1" || level === "C2") return "bg-canvas border-canvas-input-border text-ink"
+  if (level === "B1" || level === "B2") return "bg-canvas border-canvas-input-border text-ink"
+  return "bg-canvas border-canvas-input-border text-ink-secondary"
 }
+
+const labelCls =
+  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+
+const inputCls =
+  "w-full px-4 py-3 bg-surface border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
 
 export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
   const safeLanguages = languages || []
@@ -67,14 +73,13 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
     <div className="space-y-3">
       {/* Tag cloud */}
       {safeLanguages.length === 0 ? (
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-          <p className="text-gray-600 mb-4 text-sm">
+        <div className="bg-canvas border-2 border-dashed border-canvas-input-border p-8 text-center">
+          <p className="text-ink-secondary mb-4 text-sm">
             No languages added yet. Add the languages you speak to strengthen your profile!
           </p>
           <button
             onClick={() => nameInputRef.current?.focus()}
-            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg
-                       hover:bg-purple-700 transition-all hover:shadow-md font-medium">
+            className="bg-sidebar-accent text-white px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
             Add Your First Language
           </button>
         </div>
@@ -83,18 +88,18 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
           {safeLanguages.map((lang) => (
             <span
               key={lang.id}
-              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-sm font-medium
+              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-sm font-medium
                           border transition-colors cursor-default
                           ${editingId === lang.id
-                            ? "bg-purple-100 border-purple-400 text-purple-800"
-                            : `${levelBadgeClass(lang.level)} hover:border-purple-300`}`}>
+                            ? "bg-canvas border-ink text-ink"
+                            : `${levelBadgeClass(lang.level)} hover:border-ink`}`}>
               <span>{lang.name}</span>
               {lang.level && (
-                <span className="text-xs opacity-70">· {lang.level}</span>
+                <span className="text-xs text-ink-muted">· {lang.level}</span>
               )}
               <button
                 onClick={() => handleEdit(lang)}
-                className="ml-0.5 p-0.5 rounded-full hover:bg-purple-200 text-current opacity-50 hover:opacity-100 transition-all"
+                className="ml-0.5 p-0.5 text-current opacity-50 hover:opacity-100 hover:text-ink transition-all"
                 title="Edit language">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -103,7 +108,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
               </button>
               <button
                 onClick={() => handleRemove(lang.id)}
-                className="p-0.5 rounded-full hover:bg-red-100 text-current opacity-50 hover:opacity-100 hover:text-red-600 transition-all"
+                className="p-0.5 text-current opacity-50 hover:opacity-100 hover:text-[#991b1b] transition-all"
                 title="Remove language">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -124,17 +129,15 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
             onChange={(e) => { setFormName(e.target.value); setFormError("") }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Language (e.g. English, French)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+            className={inputCls} />
         </div>
 
         <div className="w-32">
           <select
             value={formLevel}
             onChange={(e) => { setFormLevel(e.target.value); setFormError("") }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white
-                       focus:ring-2 focus:ring-purple-500 focus:border-transparent
-                       text-gray-700 cursor-pointer">
+            className="w-full px-3 py-3 bg-surface border border-canvas-input-border text-ink text-sm
+                       focus:outline-none focus:border-ink transition-colors cursor-pointer">
             <option value="" disabled>Level</option>
             {LEVELS.map((l) => (
               <option key={l} value={l}>{l}</option>
@@ -144,25 +147,27 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
 
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium
-                     hover:bg-purple-700 transition-colors whitespace-nowrap">
+          className="px-4 py-3 bg-sidebar-accent text-white text-[11px] font-bold uppercase tracking-widest
+                     hover:opacity-90 transition-opacity whitespace-nowrap">
           {editingId ? "Update" : "+ Add Language"}
         </button>
 
         {editingId && (
           <button
             onClick={handleCancel}
-            className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+            className="px-3 py-3 text-[11px] font-semibold uppercase tracking-widest text-ink-secondary hover:text-ink transition-colors">
             Cancel
           </button>
         )}
       </div>
 
-      {formError && <p className="mt-1.5 text-xs text-red-600">{formError}</p>}
+      {formError && (
+        <p className="mt-1.5 text-xs text-[#991b1b]">{formError}</p>
+      )}
 
       {/* Level legend */}
-      <p className="text-xs text-gray-400 pt-1">
-        <span className="font-medium text-gray-500">Levels:</span>{" "}
+      <p className="text-xs text-ink-muted pt-1">
+        <span className="font-medium text-ink-secondary">Levels:</span>{" "}
         Native · A1–A2 Beginner · B1–B2 Intermediate · C1–C2 Advanced
       </p>
     </div>
