@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react"
 
-import { BarChart3 } from "lucide-react"
-
 import { AnalyticsDashboard } from "~components/AnalyticsDashboard"
 import type { SavedApplication } from "~types/userProfile"
 
@@ -17,26 +15,22 @@ function AnalyticsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50/80">
-      {/* Compact header bar */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-3">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-purple-50">
-            <BarChart3 className="w-4 h-4 text-purple-600" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-gray-900 leading-tight">
-              Analytics
-            </h1>
-            <p className="text-[11px] text-gray-400 leading-tight">
-              {applications.length} application{applications.length !== 1 ? "s" : ""} tracked
-            </p>
-          </div>
+    <div className="min-h-screen bg-canvas">
+      <header className="bg-canvas border-b-2 border-ink px-12 py-5">
+        <div className="max-w-[1320px] mx-auto">
+          <h1 className="font-heading text-xl font-bold tracking-widest text-ink uppercase">
+            Analytics
+          </h1>
+          <p className="font-body text-[13px] text-ink-muted mt-1">
+            Application tracking and insights
+          </p>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-5">
-        <AnalyticsDashboard applications={applications} />
+      <main className="bg-canvas px-12 py-10">
+        <div className="max-w-[1320px] mx-auto">
+          <AnalyticsDashboard applications={applications} />
+        </div>
       </main>
     </div>
   )
