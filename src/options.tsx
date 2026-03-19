@@ -48,14 +48,20 @@ function useDebouncedStorage<T>(
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const [stored, setStored] = useStorage<T>(key, defaultValue)
   const [local, setLocal] = useState<T>(stored)
-  const initialized = useRef(false)
+  const lastWriteId = useRef(0)
+  const pendingWriteId = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  // Sync storage → local only on first load or external changes
+  // Sync storage → local: accept on first load and external changes.
+  // Skip when the stored value is just echoing back our own pending write.
   useEffect(() => {
-    if (!initialized.current && stored !== undefined) {
+    if (stored === undefined) return
+    if (lastWriteId.current === pendingWriteId.current) {
+      // No pending local write — this is an external change (or initial load)
       setLocal(stored)
-      initialized.current = true
+    } else {
+      // Our write landed in storage — mark it acknowledged
+      lastWriteId.current = pendingWriteId.current
     }
   }, [stored])
 
@@ -64,7 +70,11 @@ function useDebouncedStorage<T>(
       setLocal((prev) => {
         const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value
         if (timer.current) clearTimeout(timer.current)
-        timer.current = setTimeout(() => setStored(next), delay)
+        pendingWriteId.current += 1
+        const writeId = pendingWriteId.current
+        timer.current = setTimeout(() => {
+          setStored(next)
+        }, delay)
         return next
       })
     },
@@ -117,6 +127,11 @@ function Options() {
 
   useEffect(() => {
     if (!isVersionLoading && storedPromptsVersion !== PROMPTS_VERSION) {
+      // Write both atomically to avoid inconsistency if page closes mid-debounce
+      chrome.storage.local.set({
+        customPrompts: DEFAULT_PROMPTS,
+        promptsVersion: PROMPTS_VERSION
+      })
       setCustomPrompts(DEFAULT_PROMPTS)
       setStoredPromptsVersion(PROMPTS_VERSION)
     }
@@ -254,7 +269,8 @@ function Options() {
       ollamaConfig,
       perplexityConfig,
       customPrompts,
-      userProfile
+      userProfile,
+      llmTuning
     })
     setSaveStatus("Settings saved successfully!")
     setTimeout(() => setSaveStatus(""), 3000)
