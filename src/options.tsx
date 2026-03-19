@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 import { useStorage } from "@plasmohq/storage/hook"
@@ -37,21 +37,58 @@ import "./style.css"
 
 const EXTENSION_VERSION = "0.4.2"
 
+/**
+ * Wraps useStorage with local state so text inputs don't lose cursor position.
+ * Edits are immediate in local state and flushed to chrome.storage after a delay.
+ */
+function useDebouncedStorage<T>(
+  key: string,
+  defaultValue: T,
+  delay = 400
+): [T, (value: T | ((prev: T) => T)) => void] {
+  const [stored, setStored] = useStorage<T>(key, defaultValue)
+  const [local, setLocal] = useState<T>(stored)
+  const initialized = useRef(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  // Sync storage → local only on first load or external changes
+  useEffect(() => {
+    if (!initialized.current && stored !== undefined) {
+      setLocal(stored)
+      initialized.current = true
+    }
+  }, [stored])
+
+  const setValue = useCallback(
+    (value: T | ((prev: T) => T)) => {
+      setLocal((prev) => {
+        const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value
+        if (timer.current) clearTimeout(timer.current)
+        timer.current = setTimeout(() => setStored(next), delay)
+        return next
+      })
+    },
+    [setStored, delay]
+  )
+
+  return [local, setValue]
+}
+
 function Options() {
   const [activeTab, setActiveTab] = useState("ai-settings")
 
-  const [userProfile, setUserProfile] = useStorage<UserProfile>(
+  const [userProfile, setUserProfile] = useDebouncedStorage<UserProfile>(
     "userProfile",
     DEFAULT_USER_PROFILE
   )
 
-  const [ollamaConfig, setOllamaConfig] = useStorage("ollamaConfig", {
+  const [ollamaConfig, setOllamaConfig] = useDebouncedStorage("ollamaConfig", {
     apiKey: "",
     baseUrl: "https://ollama.com/api",
     enabled: false
   })
 
-  const [perplexityConfig, setPerplexityConfig] = useStorage<PerplexityConfig>(
+  const [perplexityConfig, setPerplexityConfig] = useDebouncedStorage<PerplexityConfig>(
     "perplexityConfig",
     {
       apiKey: "",
@@ -62,12 +99,12 @@ function Options() {
     }
   )
 
-  const [customPrompts, setCustomPrompts] = useStorage<CustomPrompts>(
+  const [customPrompts, setCustomPrompts] = useDebouncedStorage<CustomPrompts>(
     "customPrompts",
     DEFAULT_PROMPTS
   )
 
-  const [llmTuning, setLlmTuning] = useStorage<LLMTuningConfig>(
+  const [llmTuning, setLlmTuning] = useDebouncedStorage<LLMTuningConfig>(
     "llmTuning",
     DEFAULT_LLM_TUNING
   )
