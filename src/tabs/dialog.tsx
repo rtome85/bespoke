@@ -1,6 +1,7 @@
 import {
   Briefcase,
   Building2,
+  ChevronRight,
   Download,
   ExternalLink,
   Eye,
@@ -86,6 +87,62 @@ const QUOTES = [
   {
     text: "Your time is limited, don't waste it living someone else's life.",
     author: "Steve Jobs"
+  },
+  {
+    text: "You miss 100% of the shots you don't take.",
+    author: "Wayne Gretzky"
+  },
+  {
+    text: "Whether you think you can or you think you can't, you're right.",
+    author: "Henry Ford"
+  },
+  {
+    text: "The best time to plant a tree was 20 years ago. The second best time is now.",
+    author: "Chinese Proverb"
+  },
+  {
+    text: "Do one thing every day that scares you.",
+    author: "Eleanor Roosevelt"
+  },
+  {
+    text: "The man who has confidence in himself gains the confidence of others.",
+    author: "Hasidic Proverb"
+  },
+  {
+    text: "A year from now you may wish you had started today.",
+    author: "Karen Lamb"
+  },
+  {
+    text: "The only limit to our realization of tomorrow is our doubts of today.",
+    author: "Franklin D. Roosevelt"
+  },
+  {
+    text: "Act as if what you do makes a difference. It does.",
+    author: "William James"
+  },
+  {
+    text: "We may encounter many defeats but we must not be defeated.",
+    author: "Maya Angelou"
+  },
+  {
+    text: "I am not a product of my circumstances. I am a product of my decisions.",
+    author: "Stephen Covey"
+  },
+  {
+    text: "Opportunities don't happen. You create them.",
+    author: "Chris Grosser"
+  },
+  {
+    text: "Don't watch the clock; do what it does. Keep going.",
+    author: "Sam Levenson"
+  },
+  {
+    text: "The difference between ordinary and extraordinary is that little extra.",
+    author: "Jimmy Johnson"
+  },
+  {
+    text: "Start where you are. Use what you have. Do what you can.",
+    author: "Arthur Ashe"
   }
 ]
 
@@ -684,28 +741,30 @@ function IndexDialog() {
   if (view === "loading") {
     const quote = QUOTES[quoteIndex]
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
-        <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl text-center">
-          <div className="text-4xl mb-4">✨</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
-            Crafting your documents…
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">This may take a minute</p>
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-12">
+        <div className="w-full max-w-md bg-white border-2 border-ink p-8 flex flex-col items-center gap-6 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[36px]">✨</span>
+            <h2 className="text-[20px] font-bold tracking-[0.1em] text-ink uppercase">
+              Crafting your documents…
+            </h2>
+            <p className="text-[13px] text-ink-secondary">This may take a minute</p>
+          </div>
 
-          <div className="w-full bg-gray-100 rounded-full h-2.5 mb-8 overflow-hidden">
+          <div className="w-full bg-canvas-divide h-[10px]" style={{ borderRadius: 2 }}>
             <div
-              className="h-2.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
+              className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
+              style={{ width: `${progress}%`, borderRadius: 2 }}
             />
           </div>
 
           <div
             className="transition-opacity duration-400"
             style={{ opacity: quoteVisible ? 1 : 0 }}>
-            <p className="text-gray-600 italic text-sm leading-relaxed">
+            <p className="text-[13px] text-ink-secondary italic leading-relaxed">
               "{quote.text}"
             </p>
-            <p className="text-gray-400 text-xs mt-2">— {quote.author}</p>
+            <p className="text-[12px] text-ink-muted mt-2">— {quote.author}</p>
           </div>
         </div>
       </div>
@@ -716,94 +775,87 @@ function IndexDialog() {
   if (view === "success" && result) {
     const pct = result.match.percentage
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-indigo-100 p-4">
-        <div className="w-full max-w-2xl p-8 bg-white rounded-2xl shadow-xl">
-          <div className="text-center mb-6">
-            <div className="text-4xl mb-3">🎉</div>
-            <h2 className="text-xl font-bold text-gray-900">
+      <div className="min-h-screen bg-canvas flex flex-col">
+        {/* Top Bar */}
+        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b-2 border-ink">
+          <div className="flex flex-col gap-[3px]">
+            <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none uppercase">
+              Application Analysis
+            </h1>
+            <p className="text-[13px] text-ink-secondary leading-none">
+              Match scores, strengths, weaknesses and document downloads
+            </p>
+          </div>
+          <button
+            onClick={() => window.close()}
+            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] border border-[#D4CEC5] text-sidebar-item hover:bg-canvas-divide transition-colors"
+            style={{ borderRadius: 2 }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-12 py-10 flex flex-col gap-6">
+          {/* Hero */}
+          <div className="flex flex-col items-center gap-2 py-6">
+            <span className="text-[40px]">🎉</span>
+            <h2 className="text-[28px] font-bold tracking-[0.05em] text-ink uppercase">
               Documents Ready!
             </h2>
           </div>
 
-          {/* Match score card */}
-          <div className="bg-gray-50 rounded-xl p-5 mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-gray-700">
+          {/* Match Card */}
+          <div className="bg-white border-2 border-ink p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
                 Match Score
               </span>
-              <span
-                className={`text-2xl font-bold ${pct >= 70
-                  ? "text-green-600"
-                  : pct >= 50
-                    ? "text-yellow-600"
-                    : "text-red-600"
-                  }`}>
+              <span className={`text-[22px] font-bold ${
+                pct >= 85 ? "text-sidebar-accent" : pct >= 70 ? "text-ink" : "text-ink-secondary"
+              }`}>
                 {pct}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3 overflow-hidden">
+            <div className="w-full bg-canvas-divide h-[10px]" style={{ borderRadius: 2 }}>
               <div
-                className={`h-2.5 rounded-full transition-all duration-700 ${matchColor(pct)}`}
-                style={{ width: `${pct}%` }}
+                className="h-[10px] bg-sidebar-accent transition-all duration-700"
+                style={{ width: `${pct}%`, borderRadius: 2 }}
               />
             </div>
             {result.match.summary && (
-              <p className="text-xs text-gray-600 leading-relaxed">
+              <p className="text-[13px] text-[#555555] leading-relaxed">
                 {result.match.summary}
               </p>
             )}
           </div>
 
-          {/* Strengths / Weaknesses / Improvements */}
+          {/* Strengths / Weaknesses Row */}
           {((result.match.strengths?.length ?? 0) > 0 ||
             (result.match.weaknesses?.length ?? 0) > 0) && (
-              <div className=" mb-5 flex flex-row gap-2">
-                {(result.match.strengths?.length ?? 0) > 0 && (
-                  <div className="flex-1 bg-green-50 border border-green-100 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
-                      Strengths
-                    </p>
-                    <ul className="space-y-1">
-                      {result.match.strengths.map((s, i) => (
-                        <li key={i} className="flex gap-2 text-xs text-green-800">
-                          <span className="mt-0.5 shrink-0">✓</span>
-                          <span>{s}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {(result.match.weaknesses?.length ?? 0) > 0 && (
-                  <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
-                      Weaknesses
-                    </p>
-                    <ul className="space-y-1">
-                      {result.match.weaknesses.map((w, i) => (
-                        <li key={i} className="flex gap-2 text-xs text-red-800">
-                          <span className="mt-0.5 shrink-0">✗</span>
-                          <span>{w}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-          {(result.match.improvements?.length ?? 0) > 0 && (
-            <div className="mb-5">
-              {(result.match.improvements?.length ?? 0) > 0 && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">
-                    Improvements
+            <div className="flex gap-4">
+              {(result.match.strengths?.length ?? 0) > 0 && (
+                <div className="flex-1 bg-[#EDF5ED] border-2 border-[#2D6A2D] p-5 flex flex-col gap-[10px]">
+                  <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
+                    Strengths
                   </p>
-                  <ul className="space-y-1">
-                    {result.match.improvements.map((imp, i) => (
-                      <li key={i} className="flex gap-2 text-xs text-blue-800">
-                        <span className="mt-0.5 shrink-0">→</span>
-                        <span>{imp}</span>
+                  <ul className="flex flex-col gap-[6px]">
+                    {result.match.strengths.map((s, i) => (
+                      <li key={i} className="text-[12px] text-ink leading-[1.5]">
+                        ✓&nbsp;&nbsp;{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(result.match.weaknesses?.length ?? 0) > 0 && (
+                <div className="flex-1 bg-[#FDEAE4] border-2 border-sidebar-accent p-5 flex flex-col gap-[10px]">
+                  <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
+                    Weaknesses
+                  </p>
+                  <ul className="flex flex-col gap-[6px]">
+                    {result.match.weaknesses.map((w, i) => (
+                      <li key={i} className="text-[12px] text-ink leading-[1.5]">
+                        ×&nbsp;&nbsp;{w}
                       </li>
                     ))}
                   </ul>
@@ -812,69 +864,81 @@ function IndexDialog() {
             </div>
           )}
 
-          {/* Company About Section */}
+          {/* Improvements Card */}
+          {(result.match.improvements?.length ?? 0) > 0 && (
+            <div className="bg-[#E8EEF6] border-2 border-[#4A6FA5] px-6 py-5 flex flex-col gap-[10px]">
+              <p className="text-[10px] font-bold tracking-[0.15em] text-[#4A6FA5] uppercase">
+                Improvements
+              </p>
+              <ul className="flex flex-col gap-[6px]">
+                {result.match.improvements.map((imp, i) => (
+                  <li key={i} className="text-[12px] text-ink leading-[1.5]">
+                    →&nbsp;&nbsp;{imp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Company About Card */}
           {(companyInfo || companyInfoLoading) && (
-            <div className="mb-5">
+            <div className="bg-white border border-canvas-divide px-6 py-5 flex flex-col gap-[14px]">
               {companyInfoLoading ? (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 animate-pulse">
-                  <div className="flex items-center gap-2 text-indigo-600">
-                    <Building2 className="w-4 h-4" />
-                    <span className="text-sm font-medium">
-                      Researching {companyName}...
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 animate-pulse">
+                  <Building2 className="w-4 h-4 text-ink-secondary" />
+                  <span className="text-[14px] font-bold text-ink">
+                    Researching {companyName}...
+                  </span>
                 </div>
               ) : (
                 companyInfo && (
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Building2 className="w-4 h-4 text-indigo-600" />
-                      <h3 className="text-sm font-semibold text-indigo-700">
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-ink-secondary" />
+                      <h3 className="text-[14px] font-bold text-ink">
                         About {companyName}
                       </h3>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 mb-3 text-xs">
-                      <div className="flex items-center gap-1.5 bg-white rounded-lg px-2.5 py-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-gray-600">
-                          {companyInfo.industry}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-white rounded-lg px-2.5 py-1.5">
-                        <Users className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-gray-600">
-                          {companyInfo.size}
-                        </span>
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span
+                        className="inline-flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px] text-[#555555]"
+                        style={{ borderRadius: 2 }}>
+                        <Building2 className="w-3 h-3 text-ink-secondary" />
+                        {companyInfo.industry}
+                      </span>
+                      <span
+                        className="inline-flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px] text-[#555555]"
+                        style={{ borderRadius: 2 }}>
+                        <Users className="w-3 h-3 text-ink-secondary" />
+                        {companyInfo.size}
+                      </span>
                     </div>
 
                     {companyInfo.description && (
-                      <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+                      <p className="text-[12px] text-[#555555] leading-[1.6]">
                         {companyInfo.description}
                       </p>
                     )}
 
                     {companyInfo.notableProjects.length > 0 && (
-                      <div className="mb-3">
+                      <div>
                         <button
                           onClick={() => setProjectsExpanded((v) => !v)}
-                          className="flex items-center gap-1.5 w-full text-left text-xs font-semibold text-indigo-700 mb-1">
-                          <span
-                            className="transition-transform duration-200"
+                          className="flex items-center gap-1 text-[12px] font-semibold text-sidebar-accent">
+                          <ChevronRight
+                            className="w-3 h-3 transition-transform duration-200"
                             style={{
-                              display: "inline-block",
                               transform: projectsExpanded
                                 ? "rotate(90deg)"
                                 : "rotate(0deg)"
-                            }}>
-                            ▶
-                          </span>
+                            }}
+                          />
                           Notable projects / products (
                           {companyInfo.notableProjects.length})
                         </button>
                         {projectsExpanded && (
-                          <ul className="list-disc list-inside text-xs text-gray-600 space-y-1 pl-1 mt-1.5">
+                          <ul className="list-disc list-inside text-[12px] text-[#555555] space-y-1 pl-1 mt-2">
                             {companyInfo.notableProjects.map((project, idx) => (
                               <li key={`${project}-${idx}`}>{project}</li>
                             ))}
@@ -886,171 +950,122 @@ function IndexDialog() {
                     {(companyInfo.ratings.glassdoor ||
                       companyInfo.ratings.indeed ||
                       companyInfo.ratings.teamlyzer) && (
-                        <div className="flex flex-wrap gap-2">
-                          {companyInfo.ratings.glassdoor && (
-                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                              <span className="text-gray-500">Glassdoor</span>
-                              <span
-                                className={
-                                  companyInfo.ratings.glassdoor >= 3.5
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }>
-                                {companyInfo.ratings.glassdoor}★
-                              </span>
+                      <div className="flex flex-wrap gap-2">
+                        {companyInfo.ratings.glassdoor && (
+                          <span
+                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                            style={{ borderRadius: 2 }}>
+                            <span className="text-[#555555]">Glassdoor</span>
+                            <span className={companyInfo.ratings.glassdoor >= 3.5 ? "text-green-600" : "text-red-600"}>
+                              {companyInfo.ratings.glassdoor}★
                             </span>
-                          )}
-                          {companyInfo.ratings.indeed && (
-                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                              <span className="text-gray-500">Indeed</span>
-                              <span
-                                className={
-                                  companyInfo.ratings.indeed >= 3.5
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }>
-                                {companyInfo.ratings.indeed}★
-                              </span>
+                          </span>
+                        )}
+                        {companyInfo.ratings.indeed && (
+                          <span
+                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                            style={{ borderRadius: 2 }}>
+                            <span className="text-[#555555]">Indeed</span>
+                            <span className={companyInfo.ratings.indeed >= 3.5 ? "text-green-600" : "text-red-600"}>
+                              {companyInfo.ratings.indeed}★
                             </span>
-                          )}
-                          {companyInfo.ratings.teamlyzer && (
-                            <span className="inline-flex items-center gap-1 bg-white px-2 py-1 rounded text-xs font-medium">
-                              <span className="text-gray-500">Teamlyzer</span>
-                              <span
-                                className={
-                                  companyInfo.ratings.teamlyzer >= 3.5
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }>
-                                {companyInfo.ratings.teamlyzer}★
-                              </span>
+                          </span>
+                        )}
+                        {companyInfo.ratings.teamlyzer && (
+                          <span
+                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                            style={{ borderRadius: 2 }}>
+                            <span className="text-[#555555]">Teamlyzer</span>
+                            <span className={companyInfo.ratings.teamlyzer >= 3.5 ? "text-green-600" : "text-red-600"}>
+                              {companyInfo.ratings.teamlyzer}★
                             </span>
-                          )}
-                        </div>
-                      )}
-                  </div>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )
               )}
             </div>
           )}
 
-          {/* Download buttons */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 space-y-3">
-            {/* Resume Download */}
-            <div className="flex flex-row gap-2 items-center justify-between">
-              <p className="text-lg font-semibold uppercase tracking-widest text-slate-500 mb-2">
+          {/* Download Card */}
+          <div className="bg-white border-2 border-ink">
+            {/* Resume */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-canvas-divide">
+              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
                 Download Resume
-              </p>
-              <div className="flex gap-2">
+              </span>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    downloadMarkdownFile(
-                      result.resumeFilename,
-                      result.resumeContent
-                    )
-                  }
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                             bg-white border border-slate-200 text-slate-500 rounded-lg
-                             hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
-                             active:scale-[0.97] transition-all text-xs font-medium
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
-                  <FileText size={13} />
-                  <span>MD</span>
+                  onClick={() => downloadMarkdownFile(result.resumeFilename, result.resumeContent)}
+                  className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
+                  style={{ borderRadius: 2 }}>
+                  <FileText size={14} />
+                  MD
                 </button>
                 <button
                   onClick={async () => {
                     try {
-                      await downloadMarkdownAsPdf(
-                        result.resumeContent,
-                        result.resumeFilename
-                      )
+                      await downloadMarkdownAsPdf(result.resumeContent, result.resumeFilename)
                     } catch (error) {
                       console.error("PDF export failed:", error)
                       alert("Failed to generate PDF. Please try again.")
                     }
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                             bg-violet-600 text-white rounded-lg shadow-sm
-                             hover:bg-violet-700 active:scale-[0.97]
-                             transition-all text-xs font-medium
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40">
-                  <Download size={13} />
-                  <span>PDF</span>
+                  className="flex items-center gap-[6px] bg-sidebar-accent px-[14px] py-2 text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
+                  style={{ borderRadius: 2 }}>
+                  <Download size={14} />
+                  PDF
                 </button>
               </div>
             </div>
-
-            <div className="border-t border-slate-100" />
-
-            {/* Cover Letter Download */}
-            <div className="flex flex-row gap-2 items-center justify-between">
-              <p className="text-lg font-semibold uppercase tracking-widest text-slate-500 mb-2">
+            {/* Cover Letter */}
+            <div className="flex items-center justify-between px-6 py-5">
+              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
                 Download Cover Letter
-              </p>
-              <div className="flex gap-2">
+              </span>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    downloadMarkdownFile(
-                      result.coverLetterFilename,
-                      result.coverLetterContent
-                    )
-                  }
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                             bg-white border border-slate-200 text-slate-500 rounded-lg
-                             hover:bg-slate-50 hover:border-slate-300 hover:text-slate-700
-                             active:scale-[0.97] transition-all text-xs font-medium
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
-                  <FileText size={13} />
-                  <span>MD</span>
+                  onClick={() => downloadMarkdownFile(result.coverLetterFilename, result.coverLetterContent)}
+                  className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
+                  style={{ borderRadius: 2 }}>
+                  <FileText size={14} />
+                  MD
                 </button>
                 <button
                   onClick={async () => {
                     try {
-                      await downloadMarkdownAsPdf(
-                        result.coverLetterContent,
-                        result.coverLetterFilename
-                      )
+                      await downloadMarkdownAsPdf(result.coverLetterContent, result.coverLetterFilename)
                     } catch (error) {
                       console.error("PDF export failed:", error)
                       alert("Failed to generate PDF. Please try again.")
                     }
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                             bg-indigo-600 text-white rounded-lg shadow-sm
-                             hover:bg-indigo-700 active:scale-[0.97]
-                             transition-all text-xs font-medium
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
-                  <Download size={13} />
-                  <span>PDF</span>
+                  className="flex items-center gap-[6px] bg-sidebar-accent px-[14px] py-2 text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
+                  style={{ borderRadius: 2 }}>
+                  <Download size={14} />
+                  PDF
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-row gap-2 items-center justify-between">
+          {/* CTA Row */}
+          <div className="flex gap-4 pb-2">
             <button
               onClick={() => openSaveForm("success")}
-              className="w-full mt-3 px-4 py-3 text-sm font-medium
-                       bg-gradient-to-r from-emerald-500 to-emerald-600
-                       text-white rounded-lg hover:opacity-90 transition-opacity">
+              className="flex-1 flex items-center justify-center py-[14px] bg-ink text-canvas text-[13px] font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity"
+              style={{ borderRadius: 2 }}>
               Save Application
             </button>
-
             <button
               onClick={() => setView("applicationsList")}
-              className="w-full mt-2 px-4 py-2 text-sm text-gray-500
-                       border border-gray-200 rounded-lg hover:bg-gray-50
-                       transition-colors">
+              className="flex-1 flex items-center justify-center py-[14px] bg-canvas border-2 border-ink text-ink text-[13px] font-semibold tracking-wide uppercase hover:bg-canvas-divide transition-colors"
+              style={{ borderRadius: 2 }}>
               View Saved Applications
             </button>
           </div>
-
-          <button
-            onClick={() => window.close()}
-            className="w-full mt-2 px-4 py-2 text-sm text-gray-400
-                       hover:text-gray-600 transition-colors">
-            Close
-          </button>
         </div>
       </div>
     )
