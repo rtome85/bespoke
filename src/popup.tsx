@@ -117,7 +117,7 @@ function IndexPopup() {
       <div className="bg-surface divide-y divide-canvas-divide">
         <button
           onClick={openApplications}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none">
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
           <span className="flex items-center gap-3">
             <Briefcase className="w-[18px] h-[18px] text-sidebar-label" />
             <span className="font-heading text-[13px] font-semibold text-ink">
@@ -128,7 +128,7 @@ function IndexPopup() {
         </button>
         <button
           onClick={openAnalytics}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none">
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
           <span className="flex items-center gap-3">
             <BarChart3 className="w-[18px] h-[18px] text-sidebar-label" />
             <span className="font-heading text-[13px] font-semibold text-ink">
@@ -139,7 +139,7 @@ function IndexPopup() {
         </button>
         <button
           onClick={openOptions}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none">
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
           <span className="flex items-center gap-3">
             <Settings2 className="w-[18px] h-[18px] text-sidebar-label" />
             <span className="font-heading text-[13px] font-semibold text-ink">
