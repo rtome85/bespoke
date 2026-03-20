@@ -1416,7 +1416,7 @@ function Options() {
                       <button
                         key={item.value}
                         onClick={() => setActiveTab(item.value)}
-                        className={`block w-full text-left py-[10px] pr-5 pl-[17px] text-[11px] font-semibold tracking-[0.08em] cursor-pointer border-none outline-none border-l-[3px] transition-colors ${isActive
+                        className={`block w-full text-left py-[10px] pr-5 pl-[17px] text-[11px] font-semibold tracking-[0.08em] cursor-pointer border-0 border-solid border-l-4 outline-none transition-colors ${isActive
                           ? "bg-sidebar-hover text-white border-l-sidebar-accent"
                           : "bg-transparent text-sidebar-item border-l-transparent"
                           }`}>
