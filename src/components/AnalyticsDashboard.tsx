@@ -300,11 +300,10 @@ export function AnalyticsDashboard({ applications }: Props) {
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`font-heading text-[10px] font-semibold tracking-wide px-4 py-2 ${
-                    period === p
+                  className={`font-heading text-[10px] font-semibold tracking-wide px-4 py-2 ${period === p
                       ? "bg-ink text-surface"
                       : "text-ink-muted border border-border-muted"
-                  }`}>
+                    }`}>
                   {p.toUpperCase()}
                 </button>
               ))}

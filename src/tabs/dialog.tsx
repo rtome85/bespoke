@@ -810,9 +810,8 @@ function IndexDialog() {
               <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
                 Match Score
               </span>
-              <span className={`text-[22px] font-bold ${
-                pct >= 85 ? "text-sidebar-accent" : pct >= 70 ? "text-ink" : "text-ink-secondary"
-              }`}>
+              <span className={`text-[22px] font-bold ${pct >= 85 ? "text-sidebar-accent" : pct >= 70 ? "text-ink" : "text-ink-secondary"
+                }`}>
                 {pct}%
               </span>
             </div>
@@ -832,37 +831,37 @@ function IndexDialog() {
           {/* Strengths / Weaknesses Row */}
           {((result.match.strengths?.length ?? 0) > 0 ||
             (result.match.weaknesses?.length ?? 0) > 0) && (
-            <div className="flex gap-4">
-              {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-[#EDF5ED] border-2 border-[#2D6A2D] p-5 flex flex-col gap-[10px]">
-                  <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
-                    Strengths
-                  </p>
-                  <ul className="flex flex-col gap-[6px]">
-                    {result.match.strengths.map((s, i) => (
-                      <li key={i} className="text-[12px] text-ink leading-[1.5]">
-                        ✓&nbsp;&nbsp;{s}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-[#FDEAE4] border-2 border-sidebar-accent p-5 flex flex-col gap-[10px]">
-                  <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
-                    Weaknesses
-                  </p>
-                  <ul className="flex flex-col gap-[6px]">
-                    {result.match.weaknesses.map((w, i) => (
-                      <li key={i} className="text-[12px] text-ink leading-[1.5]">
-                        ×&nbsp;&nbsp;{w}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+              <div className="flex gap-4">
+                {(result.match.strengths?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-[#EDF5ED] border-2 border-[#2D6A2D] p-5 flex flex-col gap-[10px]">
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
+                      Strengths
+                    </p>
+                    <ul className="flex flex-col gap-[6px]">
+                      {result.match.strengths.map((s, i) => (
+                        <li key={i} className="text-[12px] text-ink leading-[1.5]">
+                          ✓&nbsp;&nbsp;{s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {(result.match.weaknesses?.length ?? 0) > 0 && (
+                  <div className="flex-1 bg-[#FDEAE4] border-2 border-sidebar-accent p-5 flex flex-col gap-[10px]">
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
+                      Weaknesses
+                    </p>
+                    <ul className="flex flex-col gap-[6px]">
+                      {result.match.weaknesses.map((w, i) => (
+                        <li key={i} className="text-[12px] text-ink leading-[1.5]">
+                          ×&nbsp;&nbsp;{w}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Improvements Card */}
           {(result.match.improvements?.length ?? 0) > 0 && (
@@ -950,39 +949,39 @@ function IndexDialog() {
                     {(companyInfo.ratings.glassdoor ||
                       companyInfo.ratings.indeed ||
                       companyInfo.ratings.teamlyzer) && (
-                      <div className="flex flex-wrap gap-2">
-                        {companyInfo.ratings.glassdoor && (
-                          <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Glassdoor</span>
-                            <span className={companyInfo.ratings.glassdoor >= 3.5 ? "text-green-600" : "text-red-600"}>
-                              {companyInfo.ratings.glassdoor}★
+                        <div className="flex flex-wrap gap-2">
+                          {companyInfo.ratings.glassdoor && (
+                            <span
+                              className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                              style={{ borderRadius: 2 }}>
+                              <span className="text-[#555555]">Glassdoor</span>
+                              <span className={companyInfo.ratings.glassdoor >= 3.5 ? "text-green-600" : "text-red-600"}>
+                                {companyInfo.ratings.glassdoor}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.indeed && (
-                          <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Indeed</span>
-                            <span className={companyInfo.ratings.indeed >= 3.5 ? "text-green-600" : "text-red-600"}>
-                              {companyInfo.ratings.indeed}★
+                          )}
+                          {companyInfo.ratings.indeed && (
+                            <span
+                              className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                              style={{ borderRadius: 2 }}>
+                              <span className="text-[#555555]">Indeed</span>
+                              <span className={companyInfo.ratings.indeed >= 3.5 ? "text-green-600" : "text-red-600"}>
+                                {companyInfo.ratings.indeed}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                        {companyInfo.ratings.teamlyzer && (
-                          <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Teamlyzer</span>
-                            <span className={companyInfo.ratings.teamlyzer >= 3.5 ? "text-green-600" : "text-red-600"}>
-                              {companyInfo.ratings.teamlyzer}★
+                          )}
+                          {companyInfo.ratings.teamlyzer && (
+                            <span
+                              className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
+                              style={{ borderRadius: 2 }}>
+                              <span className="text-[#555555]">Teamlyzer</span>
+                              <span className={companyInfo.ratings.teamlyzer >= 3.5 ? "text-green-600" : "text-red-600"}>
+                                {companyInfo.ratings.teamlyzer}★
+                              </span>
                             </span>
-                          </span>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
                   </>
                 )
               )}
@@ -1982,11 +1981,10 @@ function IndexDialog() {
           </form>
 
           {status && (
-            <p className={`mt-3 text-sm ${
-              status.includes("failed") || status.includes("error") || status.includes("Error")
+            <p className={`mt-3 text-sm ${status.includes("failed") || status.includes("error") || status.includes("Error")
                 ? "text-red-500"
                 : "text-sidebar-accent"
-            }`}>
+              }`}>
               {status}
             </p>
           )}
