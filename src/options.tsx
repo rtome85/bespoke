@@ -114,11 +114,7 @@ function useDebouncedStorage<T>(
 }
 
 // ── Style helpers ──────────────────────────────────────────────────────────────
-const card: React.CSSProperties = {
-  background: "#fff",
-  border: "2px solid #1a1a1a",
-  padding: "32px"
-}
+const card = "bg-white border-2 border-ink p-8"
 
 const inputCls =
   "w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
@@ -397,11 +393,11 @@ function Options() {
     (t) =>
       t.prompts.resumeSystemPrompt === customPrompts?.resumeSystemPrompt &&
       t.prompts.resumeUserPromptTemplate ===
-        customPrompts?.resumeUserPromptTemplate &&
+      customPrompts?.resumeUserPromptTemplate &&
       t.prompts.coverLetterSystemPrompt ===
-        customPrompts?.coverLetterSystemPrompt &&
+      customPrompts?.coverLetterSystemPrompt &&
       t.prompts.coverLetterUserPromptTemplate ===
-        customPrompts?.coverLetterUserPromptTemplate
+      customPrompts?.coverLetterUserPromptTemplate
   )?.name
 
   const handleApplyTemplate = (template: PromptTemplate) => {
@@ -554,7 +550,7 @@ function Options() {
   // ── Tab content ──────────────────────────────────────────────────────────────
   const tabContent: Record<string, React.ReactNode> = {
     "ai-settings": (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Ollama Configuration</h2>
         <hr className={divider} />
 
@@ -639,7 +635,7 @@ function Options() {
     ),
 
     perplexity: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Perplexity Sonar Configuration</h2>
         <p className="text-sm text-ink-secondary mb-6">
           Configure Perplexity Sonar to research companies and display
@@ -815,7 +811,7 @@ function Options() {
     prompts: (
       <div className="flex flex-row gap-6">
         {/* LLM Fine-tuning */}
-        <div style={{ ...card, width: "33%" }}>
+        <div className={`${card} w-1/3`}>
           <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
           <p className="text-sm text-ink-secondary mb-6">
             Adjust model behaviour and document generation style. Changes apply
@@ -940,11 +936,10 @@ function Options() {
                             })
                           }
                           className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${
-                            (llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness === opt
+                          ${(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness === opt
                               ? "bg-ink text-white"
                               : "bg-white text-ink hover:bg-canvas"
-                          }`}>
+                            }`}>
                           {opt === "strict"
                             ? "Strict"
                             : opt === "balanced"
@@ -984,11 +979,10 @@ function Options() {
                             })
                           }
                           className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${
-                            (llmTuning ?? DEFAULT_LLM_TUNING).writingTone === opt
+                          ${(llmTuning ?? DEFAULT_LLM_TUNING).writingTone === opt
                               ? "bg-ink text-white"
                               : "bg-white text-ink hover:bg-canvas"
-                          }`}>
+                            }`}>
                           {opt.charAt(0).toUpperCase() + opt.slice(1)}
                         </button>
                       )
@@ -1015,11 +1009,10 @@ function Options() {
                             })
                           }
                           className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${
-                            (llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus === opt
+                          ${(llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus === opt
                               ? "bg-ink text-white"
                               : "bg-white text-ink hover:bg-canvas"
-                          }`}>
+                            }`}>
                           {opt === "skills"
                             ? "Skills-first"
                             : opt === "balanced"
@@ -1044,7 +1037,7 @@ function Options() {
         </div>
 
         {/* Custom Prompts */}
-        <div style={{ ...card, flex: 1 }}>
+        <div className={`${card} flex-1`}>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className={sectionHeadCls}>Custom Prompts</h2>
@@ -1108,7 +1101,7 @@ function Options() {
     ),
 
     templates: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Prompt Templates</h2>
         <p className="text-sm text-ink-secondary mb-6">
           Apply a preset to instantly configure your Custom Prompts for a
@@ -1170,7 +1163,7 @@ function Options() {
     ),
 
     "personal-info": (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Personal Information</h2>
         <hr className={divider} />
         <PersonalInfo
@@ -1184,7 +1177,7 @@ function Options() {
 
     education: (
       <div className="space-y-6">
-        <div style={card}>
+        <div className={card}>
           <h2 className={sectionHeadCls}>Education</h2>
           <hr className={divider} />
           <EducationEditor
@@ -1195,7 +1188,7 @@ function Options() {
           />
         </div>
 
-        <div style={card}>
+        <div className={card}>
           <h2 className={sectionHeadCls}>Certificates</h2>
           <p className="text-sm text-ink-secondary mb-4">
             Certifications, online courses, bootcamps and professional training.
@@ -1211,7 +1204,7 @@ function Options() {
     ),
 
     skills: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Skills &amp; Expertise</h2>
         <hr className={divider} />
         <SkillEditor
@@ -1222,7 +1215,7 @@ function Options() {
     ),
 
     experience: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Work Experience</h2>
         <hr className={divider} />
         <ExperienceEditor
@@ -1235,7 +1228,7 @@ function Options() {
     ),
 
     projects: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Personal Projects</h2>
         <hr className={divider} />
         <ProjectEditor
@@ -1248,7 +1241,7 @@ function Options() {
     ),
 
     languages: (
-      <div style={card}>
+      <div className={card}>
         <h2 className={sectionHeadCls}>Languages</h2>
         <hr className={divider} />
         <LanguageEditor
@@ -1262,7 +1255,7 @@ function Options() {
 
     "backup-sync": (
       <div className="space-y-6">
-        <div style={card}>
+        <div className={card}>
           <h2 className={sectionHeadCls}>Google Drive Sync</h2>
           <p className="text-sm text-ink-secondary mb-6">
             Sync your profile, settings, and saved applications across
@@ -1352,7 +1345,7 @@ function Options() {
           )}
         </div>
 
-        <div style={card}>
+        <div className={card}>
           <h2 className={sectionHeadCls}>Manual Export / Import</h2>
           <p className="text-sm text-ink-secondary mb-6">
             Download a full backup or restore from a previously exported file.
@@ -1380,171 +1373,79 @@ function Options() {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="flex" style={{ minHeight: "100vh", background: "#F5F3EF" }}>
-        {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-        <aside
-          className="flex-shrink-0 flex flex-col overflow-y-auto"
-          style={{
-            width: 240,
-            minHeight: "100vh",
-            background: "#1F1C19",
-            position: "sticky",
-            top: 0,
-            height: "100vh"
-          }}>
-          {/* Logo */}
-          <div style={{ padding: "28px 20px 0" }}>
-            <div className="flex items-baseline gap-2">
-              <span
-                style={{
-                  color: "#FFFFFF",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  letterSpacing: "0.12em"
-                }}>
-                JOBTAILOR
-              </span>
-              <span style={{ color: "#C05A3C", fontSize: 11 }}>
-                v{EXTENSION_VERSION}
-              </span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              height: 1,
-              background: "#333333",
-              margin: "20px 0"
-            }}
-          />
-
-          {/* Nav */}
-          <nav style={{ flex: 1, paddingBottom: 24 }}>
-            {NAV_GROUPS.map((group, gi) => (
-              <div key={group.label}>
-                {gi > 0 && (
-                  <div
-                    style={{
-                      height: 1,
-                      background: "#2C2825",
-                      margin: "8px 0"
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    color: "#555555",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    padding: "12px 20px 4px"
-                  }}>
-                  {group.label}
-                </div>
-                {group.items.map((item) => {
-                  const isActive = activeTab === item.value
-                  return (
-                    <button
-                      key={item.value}
-                      onClick={() => setActiveTab(item.value)}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        textAlign: "left",
-                        padding: "10px 20px 10px 17px",
-                        background: isActive ? "#2C2825" : "transparent",
-                        color: isActive ? "#FFFFFF" : "#777777",
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                        border: "none",
-                        borderLeft: isActive
-                          ? "3px solid #C05A3C"
-                          : "3px solid transparent",
-                        outline: "none"
-                      }}>
-                      {item.label}
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        {/* ── Main area ───────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col" style={{ minHeight: "100vh" }}>
-          {/* Top bar */}
-          <div
-            style={{
-              background: "#F5F3EF",
-              borderBottom: "2px solid #1a1a1a",
-              padding: "20px 48px"
-            }}>
-            <h1
-              style={{
-                color: "#1a1a1a",
-                fontSize: 16,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                margin: 0,
-                textTransform: "uppercase"
-              }}>
-              {activeNav?.label ?? ""}
-            </h1>
-            <p
-              style={{
-                color: "#888888",
-                fontSize: 12,
-                margin: "3px 0 0"
-              }}>
-              {activeNav?.subtitle ?? ""}
-            </p>
-          </div>
-
-          {/* Scrollable content */}
-          <div
-            className="flex-1 overflow-y-auto"
-            style={{ padding: "40px 48px" }}>
-            {tabContent[activeTab]}
-          </div>
-
-          {/* Bottom bar */}
-          <div
-            style={{
-              background: "#F5F3EF",
-              borderTop: "2px solid #1a1a1a",
-              padding: "16px 48px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleSaveSettings}
-                style={{
-                  background: "#C05A3C",
-                  color: "#FFFFFF",
-                  border: "none",
-                  padding: "13px 24px",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  cursor: "pointer"
-                }}>
-                Save Settings
-              </button>
-              {saveStatus && (
-                <span className="text-[#166534] text-xs font-semibold">
-                  {saveStatus}
-                </span>
-              )}
-            </div>
-            <span style={{ color: "#888888", fontSize: 11 }}>
-              JobTailor v{EXTENSION_VERSION} — Built with Plasmo Framework
+      <div className="flex flex-col min-h-screen bg-canvas">
+        {/* ── Topbar ──────────────────────────────────────────────────────── */}
+        <div className="bg-sidebar border-b-2 border-sidebar-accent px-8 py-8 h-[52px] flex items-center justify-between shrink-0">
+          <div className="flex items-baseline gap-2">
+            <span className="text-white font-bold text-[13px] tracking-[0.12em]">
+              JOBTAILOR
             </span>
+            <span className="text-sidebar-accent text-[11px]">
+              v{EXTENSION_VERSION}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={handleSaveSettings} className={btnAccent}>
+              Save Settings
+            </button>
+            {saveStatus && (
+              <span className="text-[#166534] text-xs font-semibold">
+                {saveStatus}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Sidebar + Main ───────────────────────────────────────────────── */}
+        <div className="flex flex-1">
+          {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+          <aside className="flex-shrink-0 flex flex-col overflow-y-auto w-60 min-h-screen bg-sidebar sticky top-0 h-screen">
+            {/* Nav */}
+            <nav className="flex-1 pt-4 pb-6">
+              {NAV_GROUPS.map((group, gi) => (
+                <div key={group.label}>
+                  {gi > 0 && (
+                    <div className="h-px bg-sidebar-hover my-2" />
+                  )}
+                  <div className="text-sidebar-label text-[10px] font-semibold tracking-[0.1em] px-5 pt-3 pb-1">
+                    {group.label}
+                  </div>
+                  {group.items.map((item) => {
+                    const isActive = activeTab === item.value
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => setActiveTab(item.value)}
+                        className={`block w-full text-left py-[10px] pr-5 pl-[17px] text-[11px] font-semibold tracking-[0.08em] cursor-pointer border-0 border-solid border-l-4 outline-none transition-colors ${isActive
+                          ? "bg-sidebar-hover text-white border-l-sidebar-accent"
+                          : "bg-transparent text-sidebar-item border-l-transparent"
+                          }`}>
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </nav>
+          </aside>
+
+          {/* ── Main area ───────────────────────────────────────────────────── */}
+          <div className="flex-1 flex flex-col min-h-screen">
+            {/* Top bar */}
+            <div className="bg-canvas px-12 py-5">
+              <h1 className="text-2xl text-ink font-bold tracking-[0.1em] m-0 uppercase">
+                {activeNav?.label ?? ""}
+              </h1>
+              <p className="text-ink-secondary text-xs mt-[3px]">
+                {activeNav?.subtitle ?? ""}
+              </p>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-12 pb-12">
+              {tabContent[activeTab]}
+            </div>
+
           </div>
         </div>
       </div>
