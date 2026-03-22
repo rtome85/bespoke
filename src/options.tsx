@@ -812,11 +812,20 @@ function Options() {
       <div className="flex flex-row gap-6">
         {/* LLM Fine-tuning */}
         <div className={`${card} w-1/3`}>
-          <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
-          <p className="text-sm text-ink-secondary mb-6">
-            Adjust model behaviour and document generation style. Changes apply
-            to the next generation.
-          </p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
+              <p className="text-sm text-ink-secondary">
+                Adjust model behaviour and document generation style. Changes apply
+                to the next generation.
+              </p>
+            </div>
+            <button
+              onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
+              className={btnOutline}>
+              Reset to Defaults
+            </button>
+          </div>
           <hr className={divider} />
 
           <div className="space-y-8">
@@ -1026,13 +1035,6 @@ function Options() {
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
-                className="text-[11px] text-ink-muted hover:text-ink transition-colors underline-offset-2 hover:underline">
-                Reset to defaults
-              </button>
-            </div>
           </div>
         </div>
 
@@ -1047,7 +1049,7 @@ function Options() {
             </div>
             <button
               onClick={handleResetPrompts}
-              className={btnSecondary}>
+              className={btnOutline}>
               Reset to Defaults
             </button>
           </div>
