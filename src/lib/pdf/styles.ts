@@ -100,9 +100,9 @@ export function getDocumentDefinition(
     pageMargins: [40, 40, 40, 40],
     info: {
       title: title || "CV",
-      author: author || "JobTailor",
-      creator: "JobTailor",
-      producer: "JobTailor"
+      author: author || "Bespoke",
+      creator: "Bespoke",
+      producer: "Bespoke"
     }
   }
 }

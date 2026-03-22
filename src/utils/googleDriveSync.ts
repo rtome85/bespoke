@@ -1,7 +1,7 @@
 import { SYNC_KEYS, type SyncKey } from "~storage/keys"
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.appdata"]
-const FILE_NAME = "jobtailor-data.json"
+const FILE_NAME = "bespoke-data.json"
 const DRIVE_API = "https://www.googleapis.com/drive/v3"
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3"
 
@@ -64,7 +64,7 @@ async function push(token: string): Promise<void> {
     if (!res.ok) throw new Error(`Drive update failed: ${res.status}`)
   } else {
     // Create new file with multipart upload
-    const boundary = "jobtailor_boundary"
+    const boundary = "bespoke_boundary"
     const multipart = [
       `--${boundary}`,
       "Content-Type: application/json; charset=UTF-8",
