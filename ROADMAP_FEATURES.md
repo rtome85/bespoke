@@ -1,4 +1,4 @@
-# JobTailor - Plano de Desenvolvimento de Features
+# Bespoke - Plano de Desenvolvimento de Features
 
 **Data:** 2026-03-06  
 **Versão:** 1.4  
@@ -18,9 +18,9 @@
 
 ## Visão Geral do Produto
 
-### O que é o JobTailor?
+### O que é o Bespoke?
 
-O JobTailor é uma extensão de browser (Chrome/Firefox) construída com o framework Plasmo que ajuda candidatos a emprego a:
+O Bespoke é uma extensão de browser (Chrome/Firefox) construída com o framework Plasmo que ajuda candidatos a emprego a:
 
 - Gerar CVs e cartas de apresentação personalizadas usando IA
 - Fazer tracking de candidaturas ao longo do pipeline
@@ -313,7 +313,7 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 **Fluxo:**
 
 1. Utilizador abre linkedin.com/in/ no separador
-2. Clica "Import" no JobTailor
+2. Clica "Import" no Bespoke
 3. Dados são extraídos e preenchidos automaticamente
 
 ---
@@ -654,7 +654,7 @@ Saved → Applied → HR Interview → 1st Technical Interview →
 
 ## Conclusão
 
-O JobTailor tem uma base sólida com arquitetura extensível. As features propostas seguem uma ordem de prioridade baseada em:
+O Bespoke tem uma base sólida com arquitetura extensível. As features propostas seguem uma ordem de prioridade baseada em:
 
 1. **Impacto imediato no utilizador** (PDF export, LinkedIn import)
 2. **Redução de fricção** (Tags, Snippets)

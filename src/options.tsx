@@ -432,7 +432,7 @@ function Options() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `jobtailor-export-${new Date().toISOString().split("T")[0]}.json`
+      a.download = `bespoke-export-${new Date().toISOString().split("T")[0]}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -1260,7 +1260,7 @@ function Options() {
           <p className="text-sm text-ink-secondary mb-6">
             Sync your profile, settings, and saved applications across
             computers. Data is stored privately in your Google Drive app
-            folder — only JobTailor can access it.
+            folder — only Bespoke can access it.
           </p>
           <hr className={divider} />
 
@@ -1378,7 +1378,7 @@ function Options() {
         <div className="bg-sidebar border-b-2 border-sidebar-accent px-8 py-8 h-[52px] flex items-center justify-between shrink-0">
           <div className="flex items-baseline gap-2">
             <span className="text-white font-bold text-[13px] tracking-[0.12em]">
-              JOBTAILOR
+              BESPOKE
             </span>
             <span className="text-sidebar-accent text-[11px]">
               v{EXTENSION_VERSION}

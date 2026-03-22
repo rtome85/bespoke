@@ -1,8 +1,8 @@
-# JobTailor
+# Bespoke
 
 > A browser extension that automatically tailors your CV and cover letter to any job posting using local LLMs.
 
-[![Build](https://github.com/rtome85/jobtailor/actions/workflows/submit.yml/badge.svg)](https://github.com/rtome85/jobtailor/actions)
+[![Build](https://github.com/rtome85/bespoke/actions/workflows/submit.yml/badge.svg)](https://github.com/rtome85/bespoke/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Plasmo](https://img.shields.io/badge/built%20with-Plasmo-blueviolet)](https://docs.plasmo.com)
 
@@ -10,7 +10,7 @@
 
 ## What it does
 
-JobTailor is a Chrome/Edge extension that reads a job posting you're viewing, then uses an LLM to generate a tailored resume and cover letter based on your personal profile — in seconds.
+Bespoke is a Chrome/Edge extension that reads a job posting you're viewing, then uses an LLM to generate a tailored resume and cover letter based on your personal profile — in seconds.
 
 **Key features:**
 
@@ -51,8 +51,8 @@ JobTailor is a Chrome/Edge extension that reads a job posting you're viewing, th
 
 ```bash
 # Clone the repo
-git clone https://github.com/rtome85/jobtailor.git
-cd jobtailor
+git clone https://github.com/rtome85/bespoke.git
+cd bespoke
 
 # Install dependencies
 pnpm install
@@ -121,7 +121,7 @@ All configuration is stored in Chrome's local storage — no `.env` file is need
 ### Generate a tailored CV
 
 1. Navigate to a job posting on LinkedIn (or any supported job board)
-2. Click the JobTailor extension icon **or** right-click and select **Generate CV for this job**
+2. Click the Bespoke extension icon **or** right-click and select **Generate CV for this job**
 3. Review the extracted job details in the dialog
 4. Click **Generate** — your tailored resume and cover letter will be created
 5. Download the documents directly from the dialog

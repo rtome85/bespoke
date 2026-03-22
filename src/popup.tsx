@@ -105,7 +105,7 @@ function IndexPopup() {
         </div>
         <div className="flex flex-col gap-0.5">
           <h1 className="font-heading text-[15px] font-bold text-canvas leading-tight">
-            JobTailor
+            Bespoke
           </h1>
           <p className="font-body text-[11px] text-[#9B9490] leading-tight">
             Tailor your CV to every job

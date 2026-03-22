@@ -1,11 +1,11 @@
 {
-  "name": "jobtailor",
-  "displayName": "JobTailor",
+  "name": "bespoke",
+  "displayName": "Bespoke",
   "version": "0.4.3",
   "description": "Tailor your CV to every job",
   "author": "Roberto Tomé <contact@robtome.com>",
   "plasmo": {
-    "productName": "JobTailor"
+    "productName": "Bespoke"
   },
   "scripts": {
     "dev": "plasmo dev",
