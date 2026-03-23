@@ -79,11 +79,12 @@
         align-items: center;
         gap: 0.5rem;
       }
-      .nav-logo-dot {
-        width: 8px;
-        height: 8px;
-        background: var(--accent);
-        border-radius: 50%;
+      .nav-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+        flex-shrink: 0;
       }
       .nav-links {
         display: flex;
@@ -572,7 +573,7 @@
     <nav>
       <div class="nav-inner">
         <a class="nav-logo" href="#">
-          <span class="nav-logo-dot"></span>
+          <img src="../assets/icon.png" alt="Bespoke icon" class="nav-icon" />
           Bespoke
         </a>
         <ul class="nav-links">
