@@ -1,5 +1,7 @@
 import { useState } from "react"
-import { BarChart3, Briefcase, ChevronRight, Loader2, Settings2 } from "lucide-react"
+import { BarChart3, Briefcase, ChevronRight, Settings2 } from "lucide-react"
+
+import icon from "../assets/icon.png"
 
 import "./style.css"
 
@@ -100,9 +102,7 @@ function IndexPopup() {
     <div className="w-80 bg-canvas border-2 border-sidebar font-body">
       {/* Header */}
       <div className="bg-sidebar px-5 py-4 flex items-center gap-3">
-        <div className="w-10 h-10 bg-sidebar-accent rounded flex items-center justify-center shrink-0">
-          <Briefcase className="w-5 h-5 text-white" />
-        </div>
+        <img src={icon} alt="Bespoke" className="w-10 h-10 rounded shrink-0" />
         <div className="flex flex-col gap-0.5">
           <h1 className="font-heading text-[15px] font-bold text-canvas leading-tight">
             Bespoke
