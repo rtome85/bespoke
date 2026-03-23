@@ -3,117 +3,749 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bespoke – AI-Powered CV Generator</title>
+  <title>Bespoke – AI-Powered CV Tailoring Extension</title>
+  <meta name="description" content="Bespoke is a browser extension that generates tailored CVs and cover letters for every job posting in seconds, powered by your own AI model." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar:        #1f1c19;
+      --sidebar-hover:  #2c2825;
+      --sidebar-divide: #333333;
+      --accent:         #c05a3c;
+      --accent-hover:   #a84d32;
+      --canvas:         #f5f3ef;
+      --canvas-divide:  #e8e4dc;
+      --ink:            #1a1a1a;
+      --ink-secondary:  #555555;
+      --ink-muted:      #888888;
+      --surface:        #ffffff;
+    }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
       line-height: 1.7;
-      color: #1a1a1a;
-      background: #f9f9f9;
+      color: var(--ink);
+      background: var(--canvas);
+    }
+
+    /* ─── NAV ────────────────────────────────────────────────────── */
+    nav {
+      background: var(--sidebar);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0 2rem;
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
     }
-    header {
-      background: #1a73e8;
-      color: #fff;
-      padding: 3rem 1rem 2.5rem;
+    .nav-logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #aaaaaa;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: #ffffff; }
+    .nav-cta {
+      background: var(--accent) !important;
+      color: #ffffff !important;
+      padding: 0.35rem 1rem;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      transition: background 0.15s !important;
+    }
+    .nav-cta:hover { background: var(--accent-hover) !important; }
+
+    /* ─── HERO ───────────────────────────────────────────────────── */
+    .hero {
+      background: var(--sidebar);
+      color: #ffffff;
+      padding: 6rem 2rem 5rem;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-    header h1 { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.5px; }
-    header p { margin-top: 0.5rem; font-size: 1.1rem; opacity: 0.9; }
-    main {
-      flex: 1;
-      max-width: 680px;
-      margin: 3rem auto;
-      padding: 0 1rem;
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(192,90,60,0.18) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
-      padding: 2rem;
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(192,90,60,0.18);
+      border: 1px solid rgba(192,90,60,0.35);
+      color: #e8987c;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 99px;
       margin-bottom: 1.5rem;
     }
-    .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
-    .card p { color: #444; }
-    .card ul { margin: 0.5rem 0 0 1.25rem; color: #444; }
-    .card li { margin-bottom: 0.25rem; }
-    .btn {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.6rem 1.4rem;
-      background: #1a73e8;
-      color: #fff;
-      border-radius: 6px;
-      text-decoration: none;
+    .hero h1 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      max-width: 700px;
+      margin: 0 auto 1.25rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-size: 1.15rem;
+      color: #b0a8a0;
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 0.75rem 1.75rem;
+      border-radius: 8px;
       font-weight: 600;
       font-size: 0.95rem;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
     }
-    .btn:hover { background: #1558c0; }
-    .btn-outline {
-      background: transparent;
-      color: #1a73e8;
-      border: 2px solid #1a73e8;
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.08);
+      color: #ffffff;
+      padding: 0.75rem 1.75rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: background 0.15s;
     }
-    .btn-outline:hover { background: #e8f0fe; }
-    footer {
-      text-align: center;
-      padding: 1.5rem 1rem;
+    .btn-secondary:hover { background: rgba(255,255,255,0.14); }
+    .hero-note {
+      margin-top: 1.5rem;
+      font-size: 0.82rem;
+      color: #666;
+    }
+
+    /* ─── SECTION WRAPPER ────────────────────────────────────────── */
+    .section {
+      padding: 5rem 2rem;
+    }
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      color: var(--ink);
+      margin-bottom: 0.75rem;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--ink-secondary);
+      max-width: 540px;
+      line-height: 1.65;
+    }
+
+    /* ─── HOW IT WORKS ───────────────────────────────────────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--canvas-divide);
+      border: 1px solid var(--canvas-divide);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 3rem;
+    }
+    .step {
+      background: var(--surface);
+      padding: 2rem;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      background: var(--sidebar);
+      color: #ffffff;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .step h3 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .step p {
+      font-size: 0.9rem;
+      color: var(--ink-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── FEATURES GRID ──────────────────────────────────────────── */
+    .features-bg { background: var(--surface); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .feature-card {
+      background: var(--canvas);
+      border: 1px solid var(--canvas-divide);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: var(--sidebar);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .feature-icon svg { width: 22px; height: 22px; fill: none; stroke: #ffffff; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .feature-card h3 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--ink-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── TEMPLATES ──────────────────────────────────────────────── */
+    .templates-bg { background: var(--canvas); }
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+    .template-card {
+      background: var(--surface);
+      border: 1px solid var(--canvas-divide);
+      border-radius: 12px;
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .template-card.featured {
+      border-color: var(--accent);
+    }
+    .template-tag {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 99px;
+    }
+    .template-card h3 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .template-tagline {
       font-size: 0.85rem;
-      color: #777;
-      border-top: 1px solid #e0e0e0;
+      color: var(--ink-secondary);
+      margin-bottom: 1rem;
     }
-    footer a { color: #1a73e8; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    .template-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .template-bullets li {
+      font-size: 0.85rem;
+      color: var(--ink-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .template-bullets li::before {
+      content: "✓";
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+
+    /* ─── TUNING ─────────────────────────────────────────────────── */
+    .tuning-bg { background: var(--sidebar); color: white; }
+    .tuning-bg .section-title { color: white; }
+    .tuning-bg .section-sub { color: #9c9490; }
+    .tuning-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 3rem;
+    }
+    .tuning-item {
+      background: var(--sidebar);
+      padding: 1.5rem;
+    }
+    .tuning-item dt {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.25rem;
+    }
+    .tuning-item dd {
+      font-size: 0.82rem;
+      color: #888;
+      line-height: 1.5;
+    }
+    .tuning-item .value {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      background: rgba(192,90,60,0.2);
+      color: #e8987c;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* ─── PRIVACY STRIP ──────────────────────────────────────────── */
+    .privacy-strip {
+      background: #f0ede8;
+      border-top: 1px solid var(--canvas-divide);
+      border-bottom: 1px solid var(--canvas-divide);
+      padding: 3.5rem 2rem;
+    }
+    .privacy-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2rem;
+    }
+    .privacy-item {
+      display: flex;
+      gap: 0.9rem;
+      align-items: flex-start;
+    }
+    .privacy-icon {
+      width: 40px; height: 40px;
+      background: var(--surface);
+      border: 1px solid var(--canvas-divide);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .privacy-icon svg { width: 18px; height: 18px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .privacy-item h4 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+    .privacy-item p {
+      font-size: 0.83rem;
+      color: var(--ink-secondary);
+      line-height: 1.55;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      background: var(--sidebar);
+      color: #666;
+      padding: 2.5rem 2rem;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    footer a { color: #888; text-decoration: none; transition: color 0.15s; }
+    footer a:hover { color: #fff; }
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .privacy-inner { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Bespoke</h1>
-    <p>Generate tailored CVs and cover letters with local AI — directly in your browser.</p>
-  </header>
 
-  <main>
-    <div class="card">
-      <h2>What is Bespoke?</h2>
-      <p>
-        Bespoke is a browser extension that reads a job listing, combines it with your
-        saved profile, and uses a locally-running AI model (via Ollama) to generate a
-        customised CV and cover letter — all without sending your data to third-party
-        cloud services.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>Key Features</h2>
-      <ul>
-        <li>One-click CV &amp; cover letter generation from any job page</li>
-        <li>Works with local Ollama models — your data stays on your machine</li>
-        <li>Optional Google Drive backup for your profile</li>
-        <li>Supports Chrome and Firefox</li>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="#">
+        <span class="nav-logo-dot"></span>
+        Bespoke
+      </a>
+      <ul class="nav-links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#templates">Templates</a></li>
+        <li><a href="https://github.com/rtome85/bespoke" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a class="nav-cta" href="https://github.com/rtome85/bespoke/releases" target="_blank" rel="noopener">Download</a></li>
       </ul>
-      <a class="btn btn-outline" href="https://github.com/rtome85/bespoke" target="_blank" rel="noopener">
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span>Open Source</span>
+    </div>
+    <h1>Every job deserves a <em>tailored</em> CV</h1>
+    <p class="hero-sub">
+      Bespoke reads a job posting, combines it with your profile, and generates a polished resume and cover letter in seconds — powered by AI.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="https://github.com/rtome85/bespoke/releases" target="_blank" rel="noopener">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Extension
+      </a>
+      <a class="btn-secondary" href="https://github.com/rtome85/bespoke" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.021C22 6.484 17.522 2 12 2z"/></svg>
         View on GitHub
       </a>
     </div>
+    <p class="hero-note">Chrome &amp; Firefox &nbsp;·&nbsp; Free &amp; open source</p>
+  </section>
 
-    <div class="card">
-      <h2>Privacy</h2>
-      <p>
-        Bespoke stores your profile locally on your device and only contacts the AI
-        endpoint you configure. No analytics, no tracking, no data sold to third parties.
-      </p>
-      <a class="btn" href="privacy-policy.html">Read the Privacy Policy</a>
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="section-inner">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">From job listing to finished documents<br>in three steps</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Browse any job posting</h3>
+          <p>Navigate to a listing on LinkedIn, a company career page, or any job board. Bespoke automatically extracts the job title, company, and description.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Right-click &rarr; Generate CV</h3>
+          <p>Select text or right-click anywhere on the page and choose <strong>Generate CV for this job</strong>. Confirm the job details in the popup dialog.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Download your documents</h3>
+          <p>Bespoke generates a tailored resume and cover letter, scores your profile match, and lets you download both as Markdown or PDF instantly.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Track your applications</h3>
+          <p>Save the application and track its progress through every stage — from Applied to Offer — with notes, tags, and interview prep guides.</p>
+        </div>
+      </div>
     </div>
-  </main>
+  </section>
 
+  <!-- FEATURES -->
+  <section class="section features-bg" id="features">
+    <div class="section-inner">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need for a smarter job search</h2>
+      <p class="section-sub">From document generation to application tracking, Bespoke covers the full job-application workflow.</p>
+
+      <div class="features-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h3>Tailored Resume &amp; Cover Letter</h3>
+          <p>Both documents are generated in parallel. The resume highlights the skills and experience most relevant to the specific job description.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Smart Job Scraping</h3>
+          <p>Extracts structured job data from LinkedIn via JSON-LD and CSS selectors. On other sites, an LLM parses the raw page text to pull out company, title, and description.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>Profile Match Score</h3>
+          <p>Get an instant 0–100% compatibility score with a breakdown of strengths, skill gaps, and concrete improvement suggestions for every application.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Application Tracker</h3>
+          <p>Save every application and move it through the hiring pipeline: Saved → Applied → HR Interview → Technical Interviews → Offer / Reject.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h3>Interview Preparation</h3>
+          <p>Generate a focused technical interview prep guide for any saved role. Covers key technologies, likely questions, coding challenges, and deep-dive topics.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h3>Analytics Dashboard</h3>
+          <p>Visualise your job-search activity over time — applications by status, conversion rates, and trends to help you focus your effort.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h3>PDF Export</h3>
+          <p>Download your generated resume and cover letter as PDF directly from the dialog, ready to attach to any application.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+          </div>
+          <h3>Google Drive Sync</h3>
+          <p>Your profile, settings, and applications automatically back up to your Google Drive's private app folder — seamlessly available across devices.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TEMPLATES -->
+  <section class="section templates-bg" id="templates">
+    <div class="section-inner">
+      <div class="section-label">Prompt Templates</div>
+      <h2 class="section-title">Built-in templates for every career path</h2>
+      <p class="section-sub">Choose a template that fits your target role, or customise every system prompt and user prompt yourself.</p>
+
+      <div class="templates-grid">
+        <div class="template-card">
+          <h3>Standard</h3>
+          <p class="template-tagline">General-purpose professional resume.</p>
+          <ul class="template-bullets">
+            <li>Professional tone</li>
+            <li>Balanced skills &amp; experience</li>
+            <li>Suitable for all industries</li>
+          </ul>
+        </div>
+
+        <div class="template-card featured">
+          <span class="template-tag">Popular</span>
+          <h3>Tech / Engineering</h3>
+          <p class="template-tagline">Optimised for software engineering roles.</p>
+          <ul class="template-bullets">
+            <li>GitHub, projects &amp; technical depth</li>
+            <li>Quantified achievements</li>
+            <li>Skills-forward structure</li>
+          </ul>
+        </div>
+
+        <div class="template-card">
+          <h3>Creative / Portfolio</h3>
+          <p class="template-tagline">For designers, PMs and creative professionals.</p>
+          <ul class="template-bullets">
+            <li>Portfolio &amp; projects front-and-centre</li>
+            <li>Warm narrative tone</li>
+            <li>Culture-fit focused cover letter</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LLM TUNING -->
+  <section class="section tuning-bg">
+    <div class="section-inner">
+      <div class="section-label" style="color:#e8987c">Fine-tune the output</div>
+      <h2 class="section-title">Full control over how the AI writes</h2>
+      <p class="section-sub">Six parameters let you dial in exactly the tone, focus, and scoring behaviour you want.</p>
+
+      <dl class="tuning-grid">
+        <div class="tuning-item">
+          <dt>Temperature</dt>
+          <dd>Controls creativity and variation in the output.</dd>
+          <span class="value">default 0.7</span>
+        </div>
+        <div class="tuning-item">
+          <dt>Top-P</dt>
+          <dd>Nucleus sampling — lower values keep vocabulary conservative.</dd>
+          <span class="value">default 0.9</span>
+        </div>
+        <div class="tuning-item">
+          <dt>Max Tokens</dt>
+          <dd>Maximum length of each generated document.</dd>
+          <span class="value">default 4096</span>
+        </div>
+        <div class="tuning-item">
+          <dt>Writing Tone</dt>
+          <dd>Formal, Professional, or Conversational — injected into every prompt.</dd>
+          <span class="value">professional</span>
+        </div>
+        <div class="tuning-item">
+          <dt>Resume Focus</dt>
+          <dd>Lead with Skills, Experience, or a balanced layout.</dd>
+          <span class="value">balanced</span>
+        </div>
+        <div class="tuning-item">
+          <dt>Match Strictness</dt>
+          <dd>How rigorously skill gaps are penalised in the match score.</dd>
+          <span class="value">balanced</span>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- PRIVACY STRIP -->
+  <div class="privacy-strip">
+    <div class="privacy-inner">
+      <div class="privacy-item">
+        <div class="privacy-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h4>Your data stays with you</h4>
+          <p>Your profile is stored locally in the browser. It is only sent to the AI endpoint you configure — never to any third-party service.</p>
+        </div>
+      </div>
+      <div class="privacy-item">
+        <div class="privacy-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <h4>No tracking, no analytics</h4>
+          <p>Bespoke contains no tracking pixels, no telemetry, and no usage analytics. What you do with it is entirely your business.</p>
+        </div>
+      </div>
+      <div class="privacy-item">
+        <div class="privacy-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <h4>Open source &amp; auditable</h4>
+          <p>Every line of code is on GitHub. Read it, fork it, or build on it. <a href="privacy-policy.html">Read the full Privacy Policy &rarr;</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
   <footer>
-    &copy; 2026 Roberto Tome &middot;
-    <a href="mailto:contact@robtome.com">contact@robtome.com</a> &middot;
-    <a href="privacy-policy.html">Privacy Policy</a>
+    <div class="footer-inner">
+      <span class="footer-logo">Bespoke</span>
+      <nav class="footer-links">
+        <a href="https://github.com/rtome85/bespoke" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/rtome85/bespoke/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="mailto:contact@robtome.com">Contact</a>
+      </nav>
+      <span style="font-size:0.82rem">&copy; 2026 Roberto Tome</span>
+    </div>
   </footer>
+
 </body>
 </html>
