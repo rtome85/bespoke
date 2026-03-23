@@ -571,6 +571,9 @@ function IndexDialog() {
           setLoading(false)
           setResult(response.data)
           setView("success")
+          chrome.windows.getCurrent(null, (win) => {
+            chrome.windows.update(win.id, { width: 600, height: 700 })
+          })
         }, 400)
       } else {
         setLoading(false)
