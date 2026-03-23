@@ -304,6 +304,62 @@ export class OllamaClient {
     return { resume, coverLetter }
   }
 
+  async extractJobDetails(rawText: string, model: string): Promise<{
+    companyName: string
+    jobTitle: string
+    jobDescription: string
+  }> {
+    const response = await fetch(`${this.config.baseUrl}/chat`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.config.apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a job posting parser. Extract structured data and return ONLY a valid JSON object with no markdown, no explanation."
+          },
+          {
+            role: "user",
+            content: `Extract the job details from this text and return ONLY this JSON shape:
+{"companyName":"...","jobTitle":"...","jobDescription":"..."}
+
+Text:
+${rawText.substring(0, 6000)}`
+          }
+        ],
+        stream: false,
+        temperature: 0,
+        top_p: 1,
+        max_tokens: 512
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const content = data.message?.content || "{}"
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error("No JSON in response")
+
+    const parsed = JSON.parse(jsonMatch[0])
+    if (!parsed.companyName && !parsed.jobTitle && !parsed.jobDescription) {
+      throw new Error("Missing required fields")
+    }
+
+    return {
+      companyName: String(parsed.companyName || ""),
+      jobTitle: String(parsed.jobTitle || ""),
+      jobDescription: String(parsed.jobDescription || "")
+    }
+  }
+
   async analyzeMatch(request: GenerateRequest): Promise<{
     percentage: number
     summary: string

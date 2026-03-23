@@ -41,7 +41,8 @@
       "contextMenus",
       "storage",
       "downloads",
-      "identity"
+      "identity",
+      "notifications"
     ],
     "oauth2": {
       "client_id": "67775878924-g6v26qab7anr8jf27enoejr1lfo81g03.apps.googleusercontent.com",
