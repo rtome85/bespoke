@@ -34,7 +34,7 @@ import {
 
 import "./style.css"
 
-const EXTENSION_VERSION = "0.4.2"
+const EXTENSION_VERSION = chrome.runtime.getManifest().version
 
 const NAV_GROUPS = [
   {
