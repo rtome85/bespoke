@@ -50,10 +50,10 @@ export function ModelSelector({
               }}
               className={`w-full px-4 py-3 text-left hover:bg-gray-50
                         ${selectedModel === model.id ? "bg-blue-50 border-l-4 border-blue-500" : ""}`}>
-              <div className="font-medium">
+              <div className="font-medium flex items-center gap-2">
                 {model.name}
                 {model.recommended && (
-                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
                     Recommended
                   </span>
                 )}

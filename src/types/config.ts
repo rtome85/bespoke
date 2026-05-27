@@ -76,37 +76,57 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   {
     id: "gpt-oss:20b-cloud",
     name: "GPT-OSS 20B",
-    description: "Fast, cost-effective option",
+    description: "Fast, cost-effective. Best for quick turnaround on CV workflows.",
     size: "20B",
     recommended: true
   },
   {
     id: "gpt-oss:120b-cloud",
     name: "GPT-OSS 120B",
-    description: "Highest quality, slower",
+    description: "Higher quality than 20B, same family. Good balance of speed and depth.",
     size: "120B",
     recommended: false
   },
   {
-    id: "deepseek-v3.1:671b-cloud",
-    name: "DeepSeek V3.1 671B",
-    description:
-      "Premium writing quality and strong contextual tailoring, but slower",
-    size: "671B",
+    id: "gemma4:31b-cloud",
+    name: "Gemma 4 31B",
+    description: "Google's latest frontier model. Strong instruction following and writing quality.",
+    size: "31B",
+    recommended: false
+  },
+  {
+    id: "qwen3-next:80b-cloud",
+    name: "Qwen3-Next 80B",
+    description: "256K context, 80B parameters. Excellent reasoning and structured output.",
+    size: "80B",
+    recommended: false
+  },
+  {
+    id: "qwen3-vl:235b-instruct-cloud",
+    name: "Qwen3-VL 235B Instruct",
+    description: "235B instruct-tuned model. Top-tier quality for complex cover letters and match analysis.",
+    size: "235B",
     recommended: false
   },
   {
     id: "minimax-m2.5:cloud",
     name: "MiniMax M2.5",
-    description: "Fast modern productivity model, good structured generation",
+    description: "MoE model, fast and reliable for structured generation and CV tailoring.",
     size: "MoE",
     recommended: false
   },
   {
-    id: "glm-5:cloud",
-    name: "GLM-5",
-    description: "Powerful reasoning model, often overkill for CV workflows",
-    size: "MoE",
+    id: "cogito-2.1:671b-cloud",
+    name: "Cogito 2.1 671B",
+    description: "671B reasoning model. Highest output quality, slower response times.",
+    size: "671B",
+    recommended: false
+  },
+  {
+    id: "nemotron-3-super:cloud",
+    name: "Nemotron-3 Super",
+    description: "Nvidia MoE, 120B total / 12B active. Compute-efficient with strong instruction following.",
+    size: "120B/12B active",
     recommended: false
   }
 ]
