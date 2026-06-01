@@ -30,7 +30,8 @@ export async function handleContextMenuClick(
 
   const selectedText = info.selectionText?.trim() || ""
   const isLinkedIn = tab.url?.includes("linkedin.com") ?? false
-  const isLinkedInJobView = tab.url?.includes("/jobs/view") ?? false
+  const isLinkedInJobView =
+    (tab.url?.includes("/jobs/view") || tab.url?.includes("currentJobId=")) ?? false
 
   // Get raw page content from content script
   let scraped = { data: "", companyName: "", jobTitle: "" }
