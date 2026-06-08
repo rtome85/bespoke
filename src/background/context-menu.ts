@@ -31,7 +31,8 @@ export async function handleContextMenuClick(
   const selectedText = info.selectionText?.trim() || ""
   const isLinkedIn = tab.url?.includes("linkedin.com") ?? false
   const isLinkedInJobView =
-    (tab.url?.includes("/jobs/view") || tab.url?.includes("currentJobId=")) ?? false
+    (tab.url?.includes("/jobs/view") || tab.url?.includes("currentJobId=")) ??
+    false
 
   // Get raw page content from content script
   let scraped = { data: "", companyName: "", jobTitle: "" }
@@ -161,8 +162,8 @@ export async function handleContextMenuClick(
         selectedText: extracted.jobDescription || rawText,
         tabUrl: tab.url,
         tabId: tab.id,
-        companyName: extracted.companyName,
-        jobTitle: extracted.jobTitle
+        companyName: scraped.companyName || extracted.companyName,
+        jobTitle: scraped.jobTitle || extracted.jobTitle
       }
     })
   } catch {
