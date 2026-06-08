@@ -45,9 +45,10 @@ function findJobPosting(value: unknown): Record<string, any> | null {
   }
 
   const object = value as Record<string, any>
-  const types = Array.isArray(object["@type"])
+  const rawTypes = Array.isArray(object["@type"])
     ? object["@type"]
     : [object["@type"]]
+  const types = rawTypes.map((type) => String(type).split("/").pop())
   if (types.includes("JobPosting")) return object
 
   for (const nested of Object.values(object)) {
