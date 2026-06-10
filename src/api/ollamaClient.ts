@@ -368,29 +368,31 @@ ${rawText.substring(0, 6000)}`
     improvements: string[]
   }> {
     const llmTuning = request.llmTuning ?? DEFAULT_LLM_TUNING
-    const { strictnessInstruction } = this.tuningInstructions(llmTuning)
 
     try {
-      const userPrompt = `You are a career advisor. Analyze how well this candidate fits the job posting below.
-${strictnessInstruction}
+      const userPrompt = `You are a career advisor. Score this candidate on FOUR dimensions against the job posting, then provide qualitative analysis.
 
-Respond with ONLY a single valid JSON object — no prose, no markdown fences, no explanation outside the JSON.
+DIMENSION SCORING — be literal, score only what is explicitly stated in the candidate profile:
+- "skillsCoverage" (0–100): what % of the job's REQUIRED skills/technologies the candidate explicitly lists. 100 = all required skills present, 50 = half present, 0 = none.
+- "experienceMatch" (0–100): how well the candidate's seniority and years of experience match the role. 100 = exact fit, 50 = somewhat under/over-qualified, 0 = completely mismatched.
+- "domainFit" (0–100): relevance of the candidate's industry/domain background. 100 = same domain, 50 = adjacent, 0 = unrelated.
+- "bonusSkills" (0–100): coverage of the job's nice-to-have/preferred (non-required) skills. 100 = all bonus skills present, 0 = none.
 
-The JSON must have exactly these five keys:
-- "percentage": integer 0–100 representing overall fit
-- "summary": string with 2 concise sentences summarising the overall fit
-- "strengths": array of 3 to 5 strings, each describing a specific reason the candidate is a strong fit
-- "weaknesses": array of 3 to 5 strings, each describing a specific gap or missing requirement
-- "improvements": array of 3 to 5 strings, each an actionable step the candidate can take to improve their chances
+Respond with ONLY a single valid JSON object — no prose, no markdown fences.
 
-Example of the required shape (use real content, not these placeholders):
+Required shape:
 {
-  "percentage": 72,
-  "summary": "The candidate has strong frontend experience matching most requirements. However, they lack the required cloud and DevOps skills.",
-  "strengths": ["5 years React experience matches the role requirement", "TypeScript proficiency listed in job description", "Agile/Scrum background aligns with team process"],
-  "weaknesses": ["No AWS or cloud platform experience mentioned", "Missing CI/CD pipeline skills required by the job", "No mention of GraphQL which is listed as required"],
-  "improvements": ["Obtain an AWS Cloud Practitioner certification", "Build a side project using GitHub Actions for CI/CD", "Complete a GraphQL course and add a project to the portfolio"]
+  "skillsCoverage": <integer 0–100>,
+  "experienceMatch": <integer 0–100>,
+  "domainFit": <integer 0–100>,
+  "bonusSkills": <integer 0–100>,
+  "summary": "<2 concise sentences summarising overall fit>",
+  "strengths": ["<specific strength>", ...],
+  "weaknesses": ["<specific gap>", ...],
+  "improvements": ["<actionable step>", ...]
 }
+
+strengths, weaknesses, and improvements must each have 3–5 items.
 
 ---
 Job Title: ${request.jobTitle} at ${request.companyName}
@@ -418,7 +420,7 @@ ${this.formatUserProfile(request.userProfile, true)}`
             { role: "user", content: userPrompt }
           ],
           stream: false,
-          temperature: Math.min(llmTuning.temperature, 0.4), // keep analysis deterministic
+          temperature: Math.min(llmTuning.temperature, 0.4),
           top_p: llmTuning.topP,
           max_tokens: 1024
         })
@@ -431,13 +433,24 @@ ${this.formatUserProfile(request.userProfile, true)}`
       const data = await response.json()
       const content = data.message?.content || "{}"
 
-      // Extract the outermost JSON object regardless of surrounding text/markdown
       const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error("No JSON object found in response")
       const parsed = JSON.parse(jsonMatch[0])
 
+      const clamp = (n: unknown) =>
+        Math.min(100, Math.max(0, Number(n) || 0))
+
+      // Weighted composite computed here — model cannot inflate this number
+      const skills = clamp(parsed.skillsCoverage)
+      const exp = clamp(parsed.experienceMatch)
+      const domain = clamp(parsed.domainFit)
+      const bonus = clamp(parsed.bonusSkills)
+      const percentage = Math.round(
+        0.4 * skills + 0.3 * exp + 0.2 * domain + 0.1 * bonus
+      )
+
       return {
-        percentage: Math.min(100, Math.max(0, Number(parsed.percentage) || 0)),
+        percentage,
         summary: String(parsed.summary || ""),
         strengths: Array.isArray(parsed.strengths)
           ? parsed.strengths.map(String)
