@@ -403,28 +403,36 @@ ${request.jobDescription.substring(0, 2500)}
 Candidate Profile:
 ${this.formatUserProfile(request.userProfile, true)}`
 
-      const response = await fetch(`${this.config.baseUrl}/chat`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.config.apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: request.model,
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a career advisor. Return only valid JSON, no markdown."
-            },
-            { role: "user", content: userPrompt }
-          ],
-          stream: false,
-          temperature: Math.min(llmTuning.temperature, 0.4),
-          top_p: llmTuning.topP,
-          max_tokens: 1024
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30_000)
+      let response: Response
+      try {
+        response = await fetch(`${this.config.baseUrl}/chat`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: request.model,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a career advisor. Return only valid JSON, no markdown."
+              },
+              { role: "user", content: userPrompt }
+            ],
+            stream: false,
+            temperature: Math.min(llmTuning.temperature, 0.4),
+            top_p: llmTuning.topP,
+            max_tokens: 1024
+          }),
+          signal: controller.signal
         })
-      })
+      } finally {
+        clearTimeout(timeoutId)
+      }
 
       if (!response.ok) {
         throw new Error(`Ollama API error: ${response.status}`)
