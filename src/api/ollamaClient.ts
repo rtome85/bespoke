@@ -237,8 +237,11 @@ export class OllamaClient {
     }
 
     const data = await response.json()
-
-    return data.message?.content || "No content generated"
+    const content = data?.message?.content
+    if (!content) {
+      console.error("[OllamaClient] generate: unexpected response shape", JSON.stringify(data))
+    }
+    return content || "No content generated"
   }
 
   async generateCoverLetter(request: GenerateRequest): Promise<string> {
@@ -291,16 +294,18 @@ export class OllamaClient {
     }
 
     const data = await response.json()
-    return data.message?.content || "No content generated"
+    const content = data?.message?.content
+    if (!content) {
+      console.error("[OllamaClient] generateCoverLetter: unexpected response shape", JSON.stringify(data))
+    }
+    return content || "No content generated"
   }
 
   async generateResumeAndCoverLetter(
     request: GenerateRequest
   ): Promise<{ resume: string; coverLetter: string }> {
-    const [resume, coverLetter] = await Promise.all([
-      this.generate(request),
-      this.generateCoverLetter(request)
-    ])
+    const resume = await this.generate(request)
+    const coverLetter = await this.generateCoverLetter(request)
     return { resume, coverLetter }
   }
 
@@ -344,7 +349,7 @@ ${rawText.substring(0, 6000)}`
     }
 
     const data = await response.json()
-    const content = data.message?.content || "{}"
+    const content = data?.message?.content || "{}"
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error("No JSON in response")
 
@@ -439,7 +444,7 @@ ${this.formatUserProfile(request.userProfile, true)}`
       }
 
       const data = await response.json()
-      const content = data.message?.content || "{}"
+      const content = data?.message?.content || "{}"
 
       const jsonMatch = content.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error("No JSON object found in response")

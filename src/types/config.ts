@@ -98,14 +98,6 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     recommended: false
   },
   {
-    id: "qwen3-vl:235b-instruct-cloud",
-    name: "Qwen3-VL 235B Instruct",
-    description:
-      "235B instruct-tuned model. Top-tier quality for complex cover letters and match analysis.",
-    size: "235B",
-    recommended: false
-  },
-  {
     id: "minimax-m2.5:cloud",
     name: "MiniMax M2.5",
     description:
@@ -114,11 +106,19 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     recommended: false
   },
   {
-    id: "cogito-2.1:671b-cloud",
-    name: "Cogito 2.1 671B",
+    id: "devstral-small-2:24b-cloud",
+    name: "DevStral Small 2 24B",
     description:
-      "671B reasoning model. Highest output quality, slower response times.",
-    size: "671B",
+      "MoE model, fast and reliable for structured generation and CV tailoring.",
+    size: "MoE",
+    recommended: false
+  },
+  {
+    id: "glm-4.7:cloud",
+    name: "GLM-4.7",
+    description:
+      "MoE model, fast and reliable for structured generation and CV tailoring.",
+    size: "MoE",
     recommended: false
   }
 ]
