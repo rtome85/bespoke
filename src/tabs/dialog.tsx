@@ -208,6 +208,7 @@ function IndexDialog() {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
+  const [jobDescription, setJobDescription] = useState("")
   const [perplexityConfig, setPerplexityConfig] =
     useState<PerplexityConfig | null>(null)
 
@@ -276,6 +277,8 @@ function IndexDialog() {
             setJobTitle(res.pendingJobData.jobTitle)
           if (res.pendingJobData?.tabUrl)
             setPendingJobUrl(res.pendingJobData.tabUrl)
+          if (res.pendingJobData?.selectedText)
+            setJobDescription(res.pendingJobData.selectedText)
         }
       }
     )
@@ -294,6 +297,7 @@ function IndexDialog() {
       if (data.companyName) setCompanyName(data.companyName as string)
       if (data.jobTitle) setJobTitle(data.jobTitle as string)
       if (data.tabUrl) setPendingJobUrl(data.tabUrl as string)
+      if (data.selectedText) setJobDescription(data.selectedText as string)
       setView("form")
     }
 
@@ -572,7 +576,13 @@ function IndexDialog() {
     try {
       const response = await sendToBackground({
         name: "generateDocuments",
-        body: { companyName, jobTitle, model: selectedModel, userProfile }
+        body: {
+          companyName,
+          jobTitle,
+          model: selectedModel,
+          userProfile,
+          jobDescription: jobDescription || undefined
+        }
       })
 
       if (response?.success) {
@@ -2056,6 +2066,21 @@ function IndexDialog() {
                            placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
               />
             </div>
+
+            {jobDescription && (
+              <div>
+                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
+                  Job Description (Extracted)
+                </label>
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  rows={8}
+                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
+                             focus:outline-none focus:border-ink-secondary transition-colors resize-y"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
