@@ -64,10 +64,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       llmTuning
     }
 
-    const [{ resume, coverLetter }, match] = await Promise.all([
-      client.generateResumeAndCoverLetter(generateRequest),
-      client.analyzeMatch(generateRequest)
-    ])
+    const { resume, coverLetter } = await client.generateResumeAndCoverLetter(generateRequest)
+    const match = await client.analyzeMatch(generateRequest)
 
     const resumeFilename = generateFilename(
       "resume",
