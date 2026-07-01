@@ -10,7 +10,7 @@ import {
 } from "~utils/documentFormatter"
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { companyName, jobTitle, model, userProfile } = req.body
+  const { companyName, jobTitle, model, userProfile, jobDescription: bodyJobDescription } = req.body
 
   try {
     const storage = await new Promise<any>((resolve) => {
@@ -42,7 +42,9 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       return
     }
 
-    if (!jobData?.selectedText) {
+    const effectiveJobDescription = bodyJobDescription || jobData?.selectedText
+
+    if (!effectiveJobDescription) {
       res.send({
         success: false,
         message:
@@ -55,7 +57,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const generatedAt = new Date()
 
     const generateRequest = {
-      jobDescription: jobData.selectedText,
+      jobDescription: effectiveJobDescription,
       companyName,
       jobTitle,
       model: selectedModel,
