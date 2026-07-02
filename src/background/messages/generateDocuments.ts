@@ -1,73 +1,34 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 import { OllamaClient } from "~api/ollamaClient"
+import { prepareGenerateRequest } from "~background/prepareGenerateRequest"
 import { STORAGE_KEYS } from "~storage/keys"
-import { DEFAULT_LLM_TUNING, DEFAULT_PROMPTS } from "~types/config"
-import { type UserProfile } from "~types/userProfile"
 import {
   formatMarkdownContent,
   generateFilename
 } from "~utils/documentFormatter"
 
+// Step 2 of the two-step flow: generates resume + cover letter after the
+// user has reviewed the match analysis (see analyzeMatch).
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { companyName, jobTitle, model, userProfile, jobDescription: bodyJobDescription } = req.body
+  const { companyName, jobTitle } = req.body
 
   try {
-    const storage = await new Promise<any>((resolve) => {
-      chrome.storage.local.get(
-        [
-          STORAGE_KEYS.OLLAMA_CONFIG,
-          STORAGE_KEYS.CUSTOM_PROMPTS,
-          STORAGE_KEYS.LAST_SELECTED_MODEL,
-          STORAGE_KEYS.PENDING_JOB_DATA,
-          STORAGE_KEYS.LLM_TUNING
-        ],
-        resolve
-      )
-    })
+    const prepared = await prepareGenerateRequest(req.body)
 
-    const ollamaConfig = storage[STORAGE_KEYS.OLLAMA_CONFIG]
-    const customPrompts =
-      storage[STORAGE_KEYS.CUSTOM_PROMPTS] || DEFAULT_PROMPTS
-    const llmTuning = storage[STORAGE_KEYS.LLM_TUNING] || DEFAULT_LLM_TUNING
-    const jobData = storage[STORAGE_KEYS.PENDING_JOB_DATA]
-    const selectedModel =
-      model || storage[STORAGE_KEYS.LAST_SELECTED_MODEL] || "gpt-oss:20b-cloud"
-
-    if (!ollamaConfig?.apiKey) {
-      res.send({
-        success: false,
-        message: "Ollama API key not configured. Please set it in Settings."
-      })
+    if (prepared.ok === false) {
+      res.send({ success: false, message: prepared.message })
       return
     }
 
-    const effectiveJobDescription = bodyJobDescription || jobData?.selectedText
-
-    if (!effectiveJobDescription) {
-      res.send({
-        success: false,
-        message:
-          "No job description found. Right-click on a job posting and select 'Generate CV for this job'."
-      })
-      return
-    }
-
-    const client = new OllamaClient(ollamaConfig)
+    const client = new OllamaClient(prepared.ollamaConfig)
     const generatedAt = new Date()
 
-    const generateRequest = {
-      jobDescription: effectiveJobDescription,
-      companyName,
-      jobTitle,
-      model: selectedModel,
-      prompts: customPrompts,
-      userProfile: userProfile as UserProfile,
-      llmTuning
-    }
+    const { resume, coverLetter } = await client.generateResumeAndCoverLetter(
+      prepared.request
+    )
 
-    const { resume, coverLetter } = await client.generateResumeAndCoverLetter(generateRequest)
-    const match = await client.analyzeMatch(generateRequest)
+    const selectedModel = prepared.request.model
 
     const resumeFilename = generateFilename(
       "resume",
@@ -108,8 +69,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
         resumeContent,
         resumeFilename,
         coverLetterContent,
-        coverLetterFilename,
-        match
+        coverLetterFilename
       }
     })
   } catch (error) {
