@@ -1,7 +1,7 @@
 {
   "name": "bespoke",
   "displayName": "Bespoke",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Tailor your CV to every job",
   "author": "Roberto Tomé <contact@robtome.com>",
   "plasmo": {
