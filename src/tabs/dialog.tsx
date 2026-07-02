@@ -147,10 +147,6 @@ const QUOTES = [
 ]
 
 interface GenerationResult {
-  resumeContent: string
-  resumeFilename: string
-  coverLetterContent: string
-  coverLetterFilename: string
   match: {
     percentage: number
     summary: string
@@ -158,6 +154,11 @@ interface GenerationResult {
     weaknesses: string[]
     improvements: string[]
   }
+  // Present only after the user requests document generation (step 2)
+  resumeContent?: string
+  resumeFilename?: string
+  coverLetterContent?: string
+  coverLetterFilename?: string
 }
 
 type View =
@@ -205,6 +206,9 @@ function IndexDialog() {
   )
   const [quoteVisible, setQuoteVisible] = useState(true)
   const [result, setResult] = useState<GenerationResult | null>(null)
+  const [docsLoading, setDocsLoading] = useState(false)
+  const [docsProgress, setDocsProgress] = useState(0)
+  const [docsError, setDocsError] = useState("")
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
@@ -252,6 +256,9 @@ function IndexDialog() {
     null
   )
   const quoteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const docsProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  )
 
   useEffect(() => {
     chrome.storage.local.get(
@@ -355,6 +362,29 @@ function IndexDialog() {
       if (quoteIntervalRef.current) clearInterval(quoteIntervalRef.current)
     }
   }, [loading])
+
+  // Simulated progress for step-2 document generation
+  useEffect(() => {
+    if (docsLoading) {
+      setDocsProgress(0)
+
+      docsProgressIntervalRef.current = setInterval(() => {
+        setDocsProgress((prev) => {
+          if (prev >= 85) return prev
+          const increment = Math.max(0.3, (85 - prev) * 0.04)
+          return Math.min(85, prev + increment)
+        })
+      }, 300)
+    } else if (docsProgressIntervalRef.current) {
+      clearInterval(docsProgressIntervalRef.current)
+      docsProgressIntervalRef.current = null
+    }
+
+    return () => {
+      if (docsProgressIntervalRef.current)
+        clearInterval(docsProgressIntervalRef.current)
+    }
+  }, [docsLoading])
 
   useEffect(() => {
     if (
@@ -570,12 +600,13 @@ function IndexDialog() {
 
     setLoading(true)
     setStatus("")
+    setDocsError("")
 
     chrome.storage.local.set({ lastSelectedModel: selectedModel })
 
     try {
       const response = await sendToBackground({
-        name: "generateDocuments",
+        name: "analyzeMatch",
         body: {
           companyName,
           jobTitle,
@@ -598,7 +629,7 @@ function IndexDialog() {
       } else {
         setLoading(false)
         setView("form")
-        setStatus(response?.message || "Generation failed. Please try again.")
+        setStatus(response?.message || "Match analysis failed. Please try again.")
       }
     } catch (error) {
       setLoading(false)
@@ -606,6 +637,43 @@ function IndexDialog() {
       setStatus(
         error instanceof Error ? error.message : "An unexpected error occurred"
       )
+    }
+  }
+
+  // Step 2: generate CV + cover letter once the user has reviewed the match
+  const handleGenerateDocuments = async () => {
+    setDocsLoading(true)
+    setDocsError("")
+
+    try {
+      const response = await sendToBackground({
+        name: "generateDocuments",
+        body: {
+          companyName,
+          jobTitle,
+          model: selectedModel,
+          userProfile,
+          jobDescription: jobDescription || undefined
+        }
+      })
+
+      if (response?.success) {
+        setDocsProgress(100)
+        setTimeout(() => {
+          setResult((prev) => (prev ? { ...prev, ...response.data } : prev))
+          setDocsLoading(false)
+        }, 400)
+      } else {
+        setDocsError(
+          response?.message || "Generation failed. Please try again."
+        )
+        setDocsLoading(false)
+      }
+    } catch (error) {
+      setDocsError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      )
+      setDocsLoading(false)
     }
   }
 
@@ -658,7 +726,7 @@ function IndexDialog() {
     setSaveFormError("")
 
     const docs =
-      !editingApplication && result && saveDocs
+      !editingApplication && result?.resumeContent && saveDocs
         ? {
             resumeContent: result.resumeContent,
             resumeFilename: result.resumeFilename,
@@ -820,10 +888,10 @@ function IndexDialog() {
         <div className="w-full max-w-md bg-white border-2 border-ink p-8 flex flex-col items-center gap-6 text-center">
           <div className="flex flex-col items-center gap-2">
             <h2 className="text-[20px] font-bold tracking-[0.1em] text-ink uppercase">
-              Crafting your report…
+              Analyzing your match…
             </h2>
             <p className="text-[13px] text-ink-secondary">
-              This may take a minute
+              Scoring your profile against the job
             </p>
           </div>
 
@@ -852,6 +920,18 @@ function IndexDialog() {
   // Success screen
   if (view === "success" && result) {
     const pct = result.match.percentage
+    const docs =
+      result.resumeContent &&
+      result.resumeFilename &&
+      result.coverLetterContent &&
+      result.coverLetterFilename
+        ? {
+            resumeContent: result.resumeContent,
+            resumeFilename: result.resumeFilename,
+            coverLetterContent: result.coverLetterContent,
+            coverLetterFilename: result.coverLetterFilename
+          }
+        : null
     return (
       <div className="min-h-screen bg-canvas flex flex-col">
         {/* Top Bar */}
@@ -1091,7 +1171,49 @@ function IndexDialog() {
             </div>
           )}
 
+          {/* Generate Documents CTA (step 2) — shown until docs exist */}
+          {!docs && (
+            <div className="bg-white border-2 border-ink p-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
+                  Tailored Documents
+                </span>
+                <p className="text-[13px] text-ink-secondary leading-relaxed">
+                  Happy with the match? Generate a CV and cover letter tailored
+                  to this job.
+                </p>
+              </div>
+              {docsLoading ? (
+                <div className="flex flex-col gap-2">
+                  <div
+                    className="w-full bg-canvas-divide h-[10px]"
+                    style={{ borderRadius: 2 }}>
+                    <div
+                      className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
+                      style={{ width: `${docsProgress}%`, borderRadius: 2 }}
+                    />
+                  </div>
+                  <p className="text-[12px] text-ink-muted text-center">
+                    Generating your documents… this may take a minute
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateDocuments}
+                  className="flex items-center justify-center gap-2 py-[14px] bg-sidebar-accent text-white text-[13px] font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity"
+                  style={{ borderRadius: 2 }}>
+                  <Sparkles size={16} />
+                  Generate CV + Cover Letter
+                </button>
+              )}
+              {docsError && (
+                <p className="text-[13px] text-red-500">{docsError}</p>
+              )}
+            </div>
+          )}
+
           {/* Download Card */}
+          {docs && (
           <div className="bg-white border-2 border-ink">
             {/* Resume */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-canvas-divide">
@@ -1102,8 +1224,8 @@ function IndexDialog() {
                 <button
                   onClick={() =>
                     downloadMarkdownFile(
-                      result.resumeFilename,
-                      result.resumeContent
+                      docs.resumeFilename,
+                      docs.resumeContent
                     )
                   }
                   className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
@@ -1115,8 +1237,8 @@ function IndexDialog() {
                   onClick={async () => {
                     try {
                       await downloadMarkdownAsPdf(
-                        result.resumeContent,
-                        result.resumeFilename
+                        docs.resumeContent,
+                        docs.resumeFilename
                       )
                     } catch (error) {
                       console.error("PDF export failed:", error)
@@ -1139,8 +1261,8 @@ function IndexDialog() {
                 <button
                   onClick={() =>
                     downloadMarkdownFile(
-                      result.coverLetterFilename,
-                      result.coverLetterContent
+                      docs.coverLetterFilename,
+                      docs.coverLetterContent
                     )
                   }
                   className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
@@ -1152,8 +1274,8 @@ function IndexDialog() {
                   onClick={async () => {
                     try {
                       await downloadMarkdownAsPdf(
-                        result.coverLetterContent,
-                        result.coverLetterFilename
+                        docs.coverLetterContent,
+                        docs.coverLetterFilename
                       )
                     } catch (error) {
                       console.error("PDF export failed:", error)
@@ -1168,6 +1290,7 @@ function IndexDialog() {
               </div>
             </div>
           </div>
+          )}
 
           {/* CTA Row */}
           <div className="flex gap-4 pb-2">
@@ -1423,7 +1546,7 @@ function IndexDialog() {
             </div>
 
             {/* Save docs checkbox (only from success flow) */}
-            {saveFormOrigin === "success" && result && (
+            {saveFormOrigin === "success" && result?.resumeContent && (
               <label className="flex items-center gap-2.5 text-[13px] text-ink cursor-pointer">
                 <input
                   type="checkbox"
@@ -2114,7 +2237,7 @@ function IndexDialog() {
               type="submit"
               className="w-full px-4 py-3 bg-ink text-white text-[11px] font-semibold tracking-[0.1em]
                          hover:opacity-80 transition-opacity">
-              GENERATE CV + COVER LETTER
+              ANALYZE MATCH
             </button>
           </form>
 
