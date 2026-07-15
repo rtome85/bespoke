@@ -76,7 +76,7 @@ export async function handleContextMenuClick(
       const client = new OllamaClient(ollamaConfig)
       const extracted = await client.extractJobDetails(
         rawText,
-        "ministral-3:3b-cloud"
+        "gemma4:cloud"
       )
 
       await chrome.storage.local.set({
