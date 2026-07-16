@@ -18,7 +18,7 @@ export class OllamaClient {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.baseUrl}/models`, {
+      const response = await fetch(`${this.config.baseUrl}/tags`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
