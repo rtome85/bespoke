@@ -57,13 +57,23 @@ function normalizeWhitespace(text: string | null | undefined): string {
     .replace(/\n\s*\n/g, "\n")
 }
 
-function queryFirstMatch(selectors: string[], root: Document): string {
+// Return the first element (in selector priority order) whose text is
+// non-empty. Unlike a comma-joined querySelector — which matches in document
+// order and ignores the list's priority — this honours DESCRIPTION_SELECTORS
+// ordering so the most-specific matching element wins.
+function queryFirstElement(
+  selectors: string[],
+  root: Document
+): Element | null {
   for (const selector of selectors) {
     const el = root.querySelector(selector)
-    const text = normalizeWhitespace(el?.textContent)
-    if (text) return text
+    if (normalizeWhitespace(el?.textContent)) return el
   }
-  return ""
+  return null
+}
+
+function queryFirstMatch(selectors: string[], root: Document): string {
+  return normalizeWhitespace(queryFirstElement(selectors, root)?.textContent)
 }
 
 type JobData = {
@@ -79,7 +89,7 @@ function getCurrentJobId(): string | null {
   try {
     const url = new URL(window.location.href)
     const fromQuery = url.searchParams.get("currentJobId")
-    if (fromQuery) return fromQuery
+    if (fromQuery && /^\d+$/.test(fromQuery)) return fromQuery
     const fromPath = url.pathname.match(/\/jobs\/view\/(\d+)/)
     if (fromPath) return fromPath[1]
   } catch {
@@ -174,8 +184,9 @@ function extractFromJsonLd(
 // a same-origin `/preload/` iframe.
 function documentReferencesJob(root: Document, currentJobId: string): boolean {
   try {
+    const id = CSS.escape(currentJobId)
     return !!root.querySelector(
-      `a[href*="${currentJobId}"], [data-job-id="${currentJobId}"], [data-occludable-job-id="${currentJobId}"]`
+      `a[href*="${id}"], [data-job-id="${id}"], [data-occludable-job-id="${id}"]`
     )
   } catch {
     return false
@@ -187,7 +198,7 @@ function extractFromDocument(
   root: Document,
   currentJobId: string | null
 ): JobData {
-  const jobElement = root.querySelector(DESCRIPTION_SELECTORS.join(", "))
+  const jobElement = queryFirstElement(DESCRIPTION_SELECTORS, root)
   const jsonLd = extractFromJsonLd(root, currentJobId)
 
   const companyName = queryFirstMatch(COMPANY_SELECTORS, root)
