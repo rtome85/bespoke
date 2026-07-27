@@ -49,12 +49,87 @@ const TITLE_SELECTORS = [
   "h1[class*='job-title']"
 ]
 
+// Page furniture that never carries job content: non-rendered nodes whose
+// source would otherwise land in `textContent`, layout landmarks, and the
+// consent/navigation chrome that dominates most careers pages.
+const BOILERPLATE_SELECTORS = [
+  "script",
+  "style",
+  "noscript",
+  "svg",
+  "canvas",
+  "template",
+  "nav",
+  "header",
+  "footer",
+  "aside",
+  "form",
+  '[role="navigation"]',
+  '[role="banner"]',
+  '[role="contentinfo"]',
+  '[role="dialog"]',
+  '[id*="cookie" i]',
+  '[class*="consent" i]',
+  '[id*="onetrust" i]',
+  '[class*="menu" i]',
+  '[aria-hidden="true"]'
+].join(",")
+
 function normalizeWhitespace(text: string | null | undefined): string {
   if (!text) return ""
   return text
     .trim()
     .replace(/\s+/g, " ")
     .replace(/\n\s*\n/g, "\n")
+}
+
+function isVisuallyHidden(element: Element): boolean {
+  const view = element.ownerDocument?.defaultView
+  if (!view) return false
+  const style = view.getComputedStyle(element)
+  return (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    style.opacity === "0"
+  )
+}
+
+// Return the body's rendered text with page furniture stripped out.
+//
+// `document.body.textContent` concatenates inline <script>/<style> source and
+// the text of hidden nodes — collapsed mobile menus, cookie banners — which on
+// a typical careers page outweighs the job posting by an order of magnitude.
+// Callers feed this text to the LLM under a character budget, so that noise
+// crowds out the content we actually care about.
+//
+// Hidden-ness has to be resolved against the live tree (a detached clone has no
+// computed style), but we must not mutate the host page. Since `cloneNode(true)`
+// preserves document order exactly, the two element lists correspond
+// index-for-index, so we can read visibility from the live node and remove its
+// counterpart in the clone.
+function extractVisibleText(root: Document): string {
+  const body = root.body
+  if (!body) return ""
+
+  const clone = body.cloneNode(true) as HTMLElement
+  const liveElements = body.querySelectorAll("*")
+  const clonedElements = clone.querySelectorAll("*")
+
+  for (let i = 0; i < liveElements.length; i++) {
+    if (isVisuallyHidden(liveElements[i])) clonedElements[i]?.remove()
+  }
+
+  try {
+    for (const element of Array.from(
+      clone.querySelectorAll(BOILERPLATE_SELECTORS)
+    )) {
+      element.remove()
+    }
+  } catch {
+    // Unsupported selector syntax — keep whatever survived the hidden pass.
+  }
+
+  return normalizeWhitespace(clone.textContent)
 }
 
 // Return the first element (in selector priority order) whose text is
@@ -277,8 +352,7 @@ function scrapeSelectedJob(): JobData {
   // downstream LLM extraction still has something to work with.
   const fallback = extractFromDocument(document, currentJobId)
   return {
-    description:
-      fallback.description || normalizeWhitespace(document.body.textContent),
+    description: fallback.description || extractVisibleText(document),
     companyName: fallback.companyName,
     jobTitle: fallback.jobTitle
   }
