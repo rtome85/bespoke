@@ -98,29 +98,21 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     recommended: false
   },
   {
-    id: "minimax-m2.5:cloud",
-    name: "MiniMax M2.5",
+    id: "minimax-m3:cloud",
+    name: "MiniMax M3",
     description:
       "MoE model, fast and reliable for structured generation and CV tailoring.",
     size: "MoE",
     recommended: false
   },
   {
-    id: "devstral-small-2:24b-cloud",
-    name: "DevStral Small 2 24B",
+    id: "nemotron-3-nano:30b-cloud",
+    name: "Nemotron 3 Nano",
     description:
       "MoE model, fast and reliable for structured generation and CV tailoring.",
     size: "MoE",
     recommended: false
   },
-  {
-    id: "glm-4.7:cloud",
-    name: "GLM-4.7",
-    description:
-      "MoE model, fast and reliable for structured generation and CV tailoring.",
-    size: "MoE",
-    recommended: false
-  }
 ]
 
 export interface LLMTuningConfig {
