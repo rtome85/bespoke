@@ -67,7 +67,6 @@ const BOILERPLATE_SELECTORS = [
   '[role="navigation"]',
   '[role="banner"]',
   '[role="contentinfo"]',
-  '[role="dialog"]',
   '[id*="cookie" i]',
   '[class*="consent" i]',
   '[id*="onetrust" i]',
@@ -81,6 +80,21 @@ function normalizeWhitespace(text: string | null | undefined): string {
     .trim()
     .replace(/\s+/g, " ")
     .replace(/\n\s*\n/g, "\n")
+}
+
+// Consent managers overwhelmingly render as a dialog, but so do job boards that
+// open the posting itself in a modal — so `[role="dialog"]` cannot be stripped
+// wholesale without risking the very content we came for. Match the naming
+// conventions the common CMPs use instead. Note this has to cover more than the
+// id/class consent rules above: real banners appear as `faz-preference-center`
+// and the like, with no "cookie" or "consent" anywhere in the name.
+const CONSENT_DIALOG_PATTERN =
+  /cookie|consent|gdpr|privacy|preference|onetrust|cookiebot|didomi|usercentrics|trustarc|osano/i
+
+function isConsentDialog(element: Element): boolean {
+  return CONSENT_DIALOG_PATTERN.test(
+    `${element.id} ${element.getAttribute("class") ?? ""}`
+  )
 }
 
 function isVisuallyHidden(element: Element): boolean {
@@ -124,6 +138,11 @@ function extractVisibleText(root: Document): string {
       clone.querySelectorAll(BOILERPLATE_SELECTORS)
     )) {
       element.remove()
+    }
+    for (const element of Array.from(
+      clone.querySelectorAll('[role="dialog"],[role="alertdialog"]')
+    )) {
+      if (isConsentDialog(element)) element.remove()
     }
   } catch {
     // Unsupported selector syntax — keep whatever survived the hidden pass.
