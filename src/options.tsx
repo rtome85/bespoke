@@ -45,6 +45,11 @@ const NAV_GROUPS = [
         subtitle: "Configure API access and select your model"
       },
       {
+        label: "MATCH MODEL",
+        value: "match-model",
+        subtitle: "Pick the model used to score your profile against a job"
+      },
+      {
         label: "PERPLEXITY",
         value: "perplexity",
         subtitle: "Configure company research and interview preparation"
@@ -208,6 +213,24 @@ const infoMsg =
 
 const divider = "border-0 border-t border-canvas-divide my-6"
 
+const costBadgeCls: Record<"low" | "medium" | "high", string> = {
+  low: "bg-[#f0fdf4] text-[#166534] border-[#86efac]",
+  medium: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
+  high: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]"
+}
+
+const speedBadgeCls: Record<"fast" | "medium" | "slow", string> = {
+  fast: "bg-[#f0fdf4] text-[#166534] border-[#86efac]",
+  medium: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
+  slow: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]"
+}
+
+const scoringBadgeCls: Record<"strict" | "balanced" | "generous", string> = {
+  strict: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]",
+  balanced: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
+  generous: "bg-[#f0fdf4] text-[#166534] border-[#86efac]"
+}
+
 function Options() {
   const [activeTab, setActiveTab] = useState("ai-settings")
 
@@ -239,6 +262,11 @@ function Options() {
   const [llmTuning, setLlmTuning] = useDebouncedStorage<LLMTuningConfig>(
     "llmTuning",
     DEFAULT_LLM_TUNING
+  )
+
+  const [matchModel, setMatchModel] = useDebouncedStorage<string>(
+    "lastSelectedModel",
+    "gpt-oss:20b-cloud"
   )
 
   useEffect(() => {
@@ -398,7 +426,8 @@ function Options() {
       perplexityConfig,
       customPrompts,
       userProfile,
-      llmTuning
+      llmTuning,
+      lastSelectedModel: matchModel
     })
     setSaveStatus("Settings saved successfully!")
     setTimeout(() => setSaveStatus(""), 3000)
@@ -486,6 +515,7 @@ function Options() {
         customPrompts,
         userProfile,
         llmTuning,
+        lastSelectedModel: matchModel,
         savedApplications: savedApplications ?? []
       }
 
@@ -535,6 +565,7 @@ function Options() {
           if (data.customPrompts) setCustomPrompts(data.customPrompts)
           if (data.userProfile) setUserProfile(data.userProfile)
           if (data.llmTuning) setLlmTuning(data.llmTuning)
+          if (data.lastSelectedModel) setMatchModel(data.lastSelectedModel)
           if (data.savedApplications) {
             await chrome.storage.local.set({
               savedApplications: data.savedApplications
@@ -664,29 +695,6 @@ function Options() {
             <p className={hintCls}>Default is fine for most users.</p>
           </div>
 
-          <div>
-            <label className={labelCls}>Available Models</label>
-            <div className="bg-canvas border border-canvas-input-border p-4">
-              <div className="space-y-3">
-                {AVAILABLE_MODELS.map((model) => (
-                  <div
-                    key={model.id}
-                    className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-ink">{model.name}</span>
-                      {model.recommended && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-sidebar-accent text-white px-2 py-0.5">
-                          Recommended
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-ink-muted text-xs">{model.size}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           <div className="flex gap-3">
             <button
               onClick={handleTestOllama}
@@ -702,6 +710,79 @@ function Options() {
           {testStatus.type === "error" && (
             <div className={errorMsg}>{testStatus.message}</div>
           )}
+        </div>
+      </div>
+    ),
+
+    "match-model": (
+      <div className={card}>
+        <h2 className={sectionHeadCls}>Match Analysis Model</h2>
+        <p className="text-sm text-ink-secondary mb-6">
+          The extension now scores your profile against a job posting
+          automatically as soon as it's scraped — there's no in-between
+          screen to pick a model per job anymore. Choose the model used for
+          that scoring here instead. It also becomes the default for
+          resume/cover-letter generation.
+        </p>
+        <hr className={divider} />
+
+        <div className="space-y-3">
+          {AVAILABLE_MODELS.map((model) => {
+            const isSelected = matchModel === model.id
+            return (
+              <button
+                key={model.id}
+                type="button"
+                onClick={() => setMatchModel(model.id)}
+                className={`w-full text-left p-4 border-2 transition-colors ${
+                  isSelected
+                    ? "border-ink bg-canvas"
+                    : "border-canvas-input-border bg-white hover:border-ink-secondary"
+                }`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-ink text-sm">
+                      {model.name}
+                    </span>
+                    <span className="text-ink-muted text-xs">
+                      {model.size}
+                    </span>
+                    {model.recommended && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-sidebar-accent text-white px-2 py-0.5">
+                        Recommended
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                      isSelected
+                        ? "border-ink bg-ink"
+                        : "border-canvas-input-border"
+                    }`}
+                  />
+                </div>
+
+                <p className="text-sm text-ink-secondary mt-1.5">
+                  {model.description}
+                </p>
+
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${costBadgeCls[model.costProfile]}`}>
+                    Token cost: {model.costProfile}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${speedBadgeCls[model.speedProfile]}`}>
+                    Speed: {model.speedProfile}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${scoringBadgeCls[model.scoringProfile]}`}>
+                    Scoring: {model.scoringProfile}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
     ),
