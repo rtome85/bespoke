@@ -216,6 +216,9 @@ function IndexDialog() {
     useState<UserProfile>(DEFAULT_USER_PROFILE)
   const [status, setStatus] = useState("")
   const [loading, setLoading] = useState(false)
+  // Set once extraction lands with usable data, so the match analysis
+  // kicks off automatically instead of stopping on the review form.
+  const [autoAnalyze, setAutoAnalyze] = useState(false)
   const [progress, setProgress] = useState(0)
   const [quoteIndex, setQuoteIndex] = useState(() =>
     Math.floor(Math.random() * QUOTES.length)
@@ -293,6 +296,7 @@ function IndexDialog() {
 
         if (res.pendingJobData?.extracting) {
           setView("extracting")
+          setProgress(0)
         } else {
           if (res.pendingJobData?.companyName)
             setCompanyName(res.pendingJobData.companyName)
@@ -316,6 +320,7 @@ function IndexDialog() {
       if (!data) return
       if (data.extracting) {
         setView("extracting")
+        setProgress(0)
         return
       }
       if (data.error) {
@@ -323,11 +328,23 @@ function IndexDialog() {
         setView("form")
         return
       }
-      if (data.companyName) setCompanyName(data.companyName as string)
-      if (data.jobTitle) setJobTitle(data.jobTitle as string)
+      const extractedCompany = (data.companyName as string) || ""
+      const extractedTitle = (data.jobTitle as string) || ""
+      const extractedDescription = (data.selectedText as string) || ""
       if (data.tabUrl) setPendingJobUrl(data.tabUrl as string)
-      if (data.selectedText) setJobDescription(data.selectedText as string)
-      setView("form")
+      setCompanyName(extractedCompany)
+      setJobTitle(extractedTitle)
+      setJobDescription(extractedDescription)
+
+      // Extraction produced enough to work with — skip the review form and
+      // go straight into match analysis. Missing fields fall back to the
+      // form so the user can fill them in manually.
+      if (extractedCompany.trim() && extractedTitle.trim()) {
+        setAutoAnalyze(true)
+      } else {
+        setStatus("Unable to extract the details. Please fill in manually.")
+        setView("form")
+      }
     }
 
     const listener = (
@@ -343,15 +360,21 @@ function IndexDialog() {
   }, [])
 
   useEffect(() => {
-    if (loading) {
-      setView("loading")
-      setProgress(0)
+    if (loading) setView("loading")
+  }, [loading])
 
+  // Progress bar and quotes both run continuously across the extracting →
+  // analyzing handoff (one simulated run, not reset in between) so the two
+  // loading screens read as a single unbroken step.
+  useEffect(() => {
+    const inProgress = view === "extracting" || loading
+
+    if (inProgress) {
       progressIntervalRef.current = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 85) return prev
-          const increment = Math.max(0.3, (85 - prev) * 0.04)
-          return Math.min(85, prev + increment)
+          if (prev >= 90) return prev
+          const increment = Math.max(0.3, (90 - prev) * 0.04)
+          return Math.min(90, prev + increment)
         })
       }, 300)
 
@@ -378,7 +401,7 @@ function IndexDialog() {
         clearInterval(progressIntervalRef.current)
       if (quoteIntervalRef.current) clearInterval(quoteIntervalRef.current)
     }
-  }, [loading])
+  }, [view, loading])
 
   // Simulated progress for step-2 document generation
   useEffect(() => {
@@ -607,14 +630,15 @@ function IndexDialog() {
     fetchCompanyInfo()
   }, [result, companyName, perplexityConfig])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!companyName.trim() || !jobTitle.trim()) {
-      setStatus("Please fill in company name and job title")
-      return
-    }
-
+  // Shared by the manual "Check my match" submit and the automatic
+  // post-extraction flow — takes explicit values rather than reading
+  // component state, since the auto-triggered call fires in the same
+  // render pass that sets companyName/jobTitle/jobDescription.
+  const runAnalysis = async (
+    company: string,
+    title: string,
+    description: string
+  ) => {
     setLoading(true)
     setStatus("")
     setDocsError("")
@@ -625,11 +649,11 @@ function IndexDialog() {
       const response = await sendToBackground({
         name: "analyzeMatch",
         body: {
-          companyName,
-          jobTitle,
+          companyName: company,
+          jobTitle: title,
           model: selectedModel,
           userProfile,
-          jobDescription: jobDescription || undefined
+          jobDescription: description || undefined
         }
       })
 
@@ -653,6 +677,26 @@ function IndexDialog() {
       )
     }
   }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!companyName.trim() || !jobTitle.trim()) {
+      setStatus("Please fill in company name and job title")
+      return
+    }
+
+    await runAnalysis(companyName, jobTitle, jobDescription)
+  }
+
+  // Fires once extraction lands with usable company/job title, launching
+  // match analysis straight away instead of stopping on the review form.
+  useEffect(() => {
+    if (!autoAnalyze) return
+    setAutoAnalyze(false)
+    runAnalysis(companyName, jobTitle, jobDescription)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAnalyze])
 
   // Step 2: generate CV + cover letter once the user has reviewed the match
   const handleGenerateDocuments = async () => {
@@ -878,17 +922,35 @@ function IndexDialog() {
 
   // Loading screen
   if (view === "extracting") {
+    const quote = QUOTES[quoteIndex]
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center p-12">
         <div className="w-full max-w-md bg-white border-2 border-ink p-8 flex flex-col items-center gap-6 text-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-[3px] border-canvas-divide border-t-sidebar-accent rounded-full animate-spin" />
-            <h2 className="text-[16px] font-bold tracking-[0.1em] text-ink uppercase">
+          <div className="flex flex-col items-center gap-2">
+            <h2 className="text-[20px] font-bold tracking-[0.1em] text-ink uppercase">
               Extracting job details…
             </h2>
             <p className="text-[13px] text-ink-secondary">
               Reading the job posting with AI
             </p>
+          </div>
+
+          <div
+            className="w-full bg-canvas-divide h-[10px]"
+            style={{ borderRadius: 2 }}>
+            <div
+              className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
+              style={{ width: `${progress}%`, borderRadius: 2 }}
+            />
+          </div>
+
+          <div
+            className="transition-opacity duration-400"
+            style={{ opacity: quoteVisible ? 1 : 0 }}>
+            <p className="text-[13px] text-ink-secondary italic leading-relaxed">
+              "{quote.text}"
+            </p>
+            <p className="text-[12px] text-ink-muted mt-2">— {quote.author}</p>
           </div>
         </div>
       </div>
@@ -948,24 +1010,6 @@ function IndexDialog() {
         : null
     return (
       <div className="min-h-screen bg-canvas flex flex-col">
-        {/* Top Bar */}
-        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b-2 border-ink">
-          <div className="flex flex-col gap-[3px]">
-            <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none uppercase">
-              Application Analysis
-            </h1>
-            <p className="text-[13px] text-ink-secondary leading-none">
-              Match scores, strengths, weaknesses and document downloads
-            </p>
-          </div>
-          <button
-            onClick={closeSidePanel}
-            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] border border-[#D4CEC5] text-sidebar-item hover:bg-canvas-divide transition-colors"
-            style={{ borderRadius: 2 }}>
-            <X size={18} />
-          </button>
-        </div>
-
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-12 py-10 flex flex-col gap-6">
           {/* Hero */}
@@ -2155,10 +2199,10 @@ function IndexDialog() {
       <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
         <div className="flex flex-col gap-[3px]">
           <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none">
-            GENERATE DOCUMENTS
+            CHECK YOUR MATCH
           </h1>
           <p className="text-[13px] text-ink-secondary leading-none">
-            Confirm job details and select model
+            Confirm the job details, then analyze your match
           </p>
         </div>
         <div className="flex items-center gap-3">
