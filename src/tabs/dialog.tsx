@@ -231,6 +231,9 @@ function IndexDialog() {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
+  const [matchAccordionOpen, setMatchAccordionOpen] = useState<
+    "strengths" | "weaknesses" | "improvements" | null
+  >("strengths")
   const [jobDescription, setJobDescription] = useState("")
   const [perplexityConfig, setPerplexityConfig] =
     useState<PerplexityConfig | null>(null)
@@ -1080,58 +1083,116 @@ function IndexDialog() {
             )}
           </div>
 
-          {/* Strengths / Weaknesses Row */}
+          {/* Strengths / Weaknesses / Improvements Accordion */}
           {((result.match.strengths?.length ?? 0) > 0 ||
-            (result.match.weaknesses?.length ?? 0) > 0) && (
-            <div className="flex gap-4">
+            (result.match.weaknesses?.length ?? 0) > 0 ||
+            (result.match.improvements?.length ?? 0) > 0) && (
+            <div className="flex flex-col gap-3">
               {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-[#EDF5ED] border-2 border-[#2D6A2D] p-5 flex flex-col gap-[10px]">
-                  <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
-                    Strengths
-                  </p>
-                  <ul className="flex flex-col gap-[6px]">
-                    {result.match.strengths.map((s, i) => (
-                      <li
-                        key={i}
-                        className="text-[12px] text-ink leading-[1.5]">
-                        ✓&nbsp;&nbsp;{s}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="bg-[#EDF5ED] border-2 border-[#2D6A2D]">
+                  <button
+                    onClick={() =>
+                      setMatchAccordionOpen((v) =>
+                        v === "strengths" ? null : "strengths"
+                      )
+                    }
+                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
+                    <ChevronRight
+                      className="w-3.5 h-3.5 text-[#2D6A2D] transition-transform duration-200 shrink-0"
+                      style={{
+                        transform:
+                          matchAccordionOpen === "strengths"
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)"
+                      }}
+                    />
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
+                      Strengths ({result.match.strengths.length})
+                    </p>
+                  </button>
+                  {matchAccordionOpen === "strengths" && (
+                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
+                      {result.match.strengths.map((s, i) => (
+                        <li
+                          key={i}
+                          className="text-[12px] text-ink leading-[1.5]">
+                          ✓&nbsp;&nbsp;{s}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
               {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="flex-1 bg-[#FDEAE4] border-2 border-sidebar-accent p-5 flex flex-col gap-[10px]">
-                  <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
-                    Weaknesses
-                  </p>
-                  <ul className="flex flex-col gap-[6px]">
-                    {result.match.weaknesses.map((w, i) => (
-                      <li
-                        key={i}
-                        className="text-[12px] text-ink leading-[1.5]">
-                        ×&nbsp;&nbsp;{w}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="bg-[#FDEAE4] border-2 border-sidebar-accent">
+                  <button
+                    onClick={() =>
+                      setMatchAccordionOpen((v) =>
+                        v === "weaknesses" ? null : "weaknesses"
+                      )
+                    }
+                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
+                    <ChevronRight
+                      className="w-3.5 h-3.5 text-sidebar-accent transition-transform duration-200 shrink-0"
+                      style={{
+                        transform:
+                          matchAccordionOpen === "weaknesses"
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)"
+                      }}
+                    />
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
+                      Weaknesses ({result.match.weaknesses.length})
+                    </p>
+                  </button>
+                  {matchAccordionOpen === "weaknesses" && (
+                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
+                      {result.match.weaknesses.map((w, i) => (
+                        <li
+                          key={i}
+                          className="text-[12px] text-ink leading-[1.5]">
+                          ×&nbsp;&nbsp;{w}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Improvements Card */}
-          {(result.match.improvements?.length ?? 0) > 0 && (
-            <div className="bg-[#E8EEF6] border-2 border-[#4A6FA5] px-6 py-5 flex flex-col gap-[10px]">
-              <p className="text-[10px] font-bold tracking-[0.15em] text-[#4A6FA5] uppercase">
-                Improvements
-              </p>
-              <ul className="flex flex-col gap-[6px]">
-                {result.match.improvements.map((imp, i) => (
-                  <li key={i} className="text-[12px] text-ink leading-[1.5]">
-                    →&nbsp;&nbsp;{imp}
-                  </li>
-                ))}
-              </ul>
+              {(result.match.improvements?.length ?? 0) > 0 && (
+                <div className="bg-[#E8EEF6] border-2 border-[#4A6FA5]">
+                  <button
+                    onClick={() =>
+                      setMatchAccordionOpen((v) =>
+                        v === "improvements" ? null : "improvements"
+                      )
+                    }
+                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
+                    <ChevronRight
+                      className="w-3.5 h-3.5 text-[#4A6FA5] transition-transform duration-200 shrink-0"
+                      style={{
+                        transform:
+                          matchAccordionOpen === "improvements"
+                            ? "rotate(90deg)"
+                            : "rotate(0deg)"
+                      }}
+                    />
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#4A6FA5] uppercase">
+                      Improvements ({result.match.improvements.length})
+                    </p>
+                  </button>
+                  {matchAccordionOpen === "improvements" && (
+                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
+                      {result.match.improvements.map((imp, i) => (
+                        <li
+                          key={i}
+                          className="text-[12px] text-ink leading-[1.5]">
+                          →&nbsp;&nbsp;{imp}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
