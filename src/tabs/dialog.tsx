@@ -169,9 +169,15 @@ type View =
   | "applicationsList"
   | "extracting"
 
-// The report flow (form/loading/success) always runs inside the side panel,
-// which has no window to close — instead disable the panel for this tab.
+// The report flow (form/loading/success) runs inside the side panel on
+// Chrome, which has no window to close — instead disable the panel for this
+// tab. Firefox (MV2) has no chrome.sidePanel: the report is still a popup
+// window there, so just close it.
 async function closeSidePanel() {
+  if (typeof chrome.sidePanel === "undefined") {
+    window.close()
+    return
+  }
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
   const tabId = tabs[0]?.id
   if (tabId !== undefined) {
@@ -302,10 +308,16 @@ function IndexDialog() {
   }, [])
 
   useEffect(() => {
-    if (view !== "extracting") return
-
+    // Registered for the page's whole lifetime, not just while view is
+    // "extracting" — the side panel is a single persistent page per tab, so a
+    // second "Check my match" trigger while the panel is already showing
+    // "form"/"success" must still be able to snap it back to "extracting".
     const applyData = (data: Record<string, unknown> | null) => {
-      if (!data || data.extracting) return
+      if (!data) return
+      if (data.extracting) {
+        setView("extracting")
+        return
+      }
       if (data.error) {
         setStatus("Unable to extract the details. Please fill in manually.")
         setView("form")
@@ -327,13 +339,8 @@ function IndexDialog() {
 
     chrome.storage.onChanged.addListener(listener)
 
-    // Handle race: extraction may have completed before listener was registered
-    chrome.storage.local.get("pendingJobData", (res) =>
-      applyData(res.pendingJobData)
-    )
-
     return () => chrome.storage.onChanged.removeListener(listener)
-  }, [view])
+  }, [])
 
   useEffect(() => {
     if (loading) {

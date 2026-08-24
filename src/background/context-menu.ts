@@ -35,6 +35,9 @@ export async function handleContextMenuClick(
 ) {
   if (info.menuItemId !== "generateCV" || !tab) return
 
+  // Firefox (MV2) has no chrome.sidePanel — fall back to the old popup window.
+  const hasSidePanel = typeof chrome.sidePanel !== "undefined"
+
   // sidePanel.open() only counts as a response to the user's click if it's
   // called before the function's first `await` — even a fast internal call
   // like chrome.storage.local.set() is enough to lose the gesture and make
@@ -42,18 +45,32 @@ export async function handleContextMenuClick(
   // side_panel.default_path means it doesn't need setOptions() to resolve
   // first. Re-enable it for this tab (in case a prior close disabled it)
   // and show the "extracting" placeholder afterwards.
-  const openPromise = chrome.sidePanel.open({ tabId: tab.id })
-  const enablePromise = chrome.sidePanel.setOptions({
-    tabId: tab.id,
-    path: "tabs/dialog.html",
-    enabled: true
-  })
+  const openPromise = hasSidePanel
+    ? chrome.sidePanel.open({ tabId: tab.id })
+    : null
+  const enablePromise = hasSidePanel
+    ? chrome.sidePanel.setOptions({
+        tabId: tab.id,
+        path: "tabs/dialog.html",
+        enabled: true
+      })
+    : null
+
+  if (!hasSidePanel) {
+    chrome.windows.create({
+      url: chrome.runtime.getURL("tabs/dialog.html"),
+      type: "popup",
+      width: 500,
+      height: 440,
+      focused: true
+    })
+  }
 
   await chrome.storage.local.set({
     [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: true }
   })
-  await enablePromise
-  await openPromise
+  if (enablePromise) await enablePromise
+  if (openPromise) await openPromise
 
   const selectedText = info.selectionText?.trim() || ""
   const isLinkedIn = tab.url?.includes("linkedin.com") ?? false
