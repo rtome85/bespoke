@@ -278,6 +278,10 @@ function IndexDialog() {
   const docsProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   )
+  // Bumped whenever a new extraction/analysis run starts, so a stale
+  // runAnalysis call that resolves after being superseded can detect it's
+  // no longer the latest request and skip applying its result.
+  const analysisRequestIdRef = useRef(0)
 
   useEffect(() => {
     chrome.storage.local.get(
@@ -295,17 +299,34 @@ function IndexDialog() {
         if (res.perplexityConfig) setPerplexityConfig(res.perplexityConfig)
 
         if (res.pendingJobData?.extracting) {
+          analysisRequestIdRef.current++
           setView("extracting")
           setProgress(0)
         } else {
-          if (res.pendingJobData?.companyName)
-            setCompanyName(res.pendingJobData.companyName)
-          if (res.pendingJobData?.jobTitle)
-            setJobTitle(res.pendingJobData.jobTitle)
+          const extractedCompany = res.pendingJobData?.companyName || ""
+          const extractedTitle = res.pendingJobData?.jobTitle || ""
+          if (extractedCompany) setCompanyName(extractedCompany)
+          if (extractedTitle) setJobTitle(extractedTitle)
           if (res.pendingJobData?.tabUrl)
             setPendingJobUrl(res.pendingJobData.tabUrl)
           if (res.pendingJobData?.selectedText)
             setJobDescription(res.pendingJobData.selectedText)
+
+          // Extraction can finish before this initial read runs (e.g. the
+          // LinkedIn CSS-selector path has no LLM round-trip to wait out),
+          // so treat already-completed data the same as the live update in
+          // the storage listener below and auto-continue to analysis.
+          // Scoped to the default side-panel entry (no explicit ?view=) so
+          // the standalone Applications window — which never sets
+          // pendingJobData itself — can't be hijacked by leftover data from
+          // an earlier match check.
+          if (
+            !initialView &&
+            extractedCompany.trim() &&
+            extractedTitle.trim()
+          ) {
+            setAutoAnalyze(true)
+          }
         }
       }
     )
@@ -319,6 +340,7 @@ function IndexDialog() {
     const applyData = (data: Record<string, unknown> | null) => {
       if (!data) return
       if (data.extracting) {
+        analysisRequestIdRef.current++
         setView("extracting")
         setProgress(0)
         return
@@ -639,6 +661,8 @@ function IndexDialog() {
     title: string,
     description: string
   ) => {
+    const requestId = ++analysisRequestIdRef.current
+
     setLoading(true)
     setStatus("")
     setDocsError("")
@@ -657,9 +681,14 @@ function IndexDialog() {
         }
       })
 
+      // A newer extraction/analysis run superseded this one while it was
+      // in flight — drop the response instead of clobbering fresher state.
+      if (analysisRequestIdRef.current !== requestId) return
+
       if (response?.success) {
         setProgress(100)
         setTimeout(() => {
+          if (analysisRequestIdRef.current !== requestId) return
           setLoading(false)
           setResult(response.data)
           setView("success")
@@ -670,6 +699,7 @@ function IndexDialog() {
         setStatus(response?.message || "Match analysis failed. Please try again.")
       }
     } catch (error) {
+      if (analysisRequestIdRef.current !== requestId) return
       setLoading(false)
       setView("form")
       setStatus(
