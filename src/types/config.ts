@@ -70,6 +70,12 @@ export interface ModelConfig {
   description: string
   size: string
   recommended: boolean
+  /** Relative token cost per match-analysis call — some models spend a lot of hidden reasoning tokens before answering. */
+  costProfile: "low" | "medium" | "high"
+  /** Relative response latency. */
+  speedProfile: "fast" | "medium" | "slow"
+  /** How the model tends to score a profile-vs-job match: strict penalizes missing skills hard, generous gives more benefit of the doubt. */
+  scoringProfile: "strict" | "balanced" | "generous"
 }
 
 export const AVAILABLE_MODELS: ModelConfig[] = [
@@ -79,7 +85,10 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     description:
       "Fast, cost-effective. Best for quick turnaround on CV workflows.",
     size: "20B",
-    recommended: true
+    recommended: true,
+    costProfile: "medium",
+    speedProfile: "fast",
+    scoringProfile: "balanced"
   },
   {
     id: "gpt-oss:120b-cloud",
@@ -87,7 +96,10 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     description:
       "Higher quality than 20B, same family. Good balance of speed and depth.",
     size: "120B",
-    recommended: false
+    recommended: false,
+    costProfile: "medium",
+    speedProfile: "fast",
+    scoringProfile: "balanced"
   },
   {
     id: "gemma4:31b-cloud",
@@ -95,15 +107,21 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     description:
       "Google's latest frontier model. Strong instruction following and writing quality.",
     size: "31B",
-    recommended: false
+    recommended: false,
+    costProfile: "low",
+    speedProfile: "medium",
+    scoringProfile: "generous"
   },
   {
     id: "minimax-m3:cloud",
     name: "MiniMax M3",
     description:
-      "MoE model, fast and reliable for structured generation and CV tailoring.",
+      "MoE model. Scores more strictly than other models — weighs missing required skills heavily.",
     size: "MoE",
-    recommended: false
+    recommended: false,
+    costProfile: "medium",
+    speedProfile: "slow",
+    scoringProfile: "strict"
   },
   {
     id: "nemotron-3-nano:30b-cloud",
@@ -111,7 +129,10 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     description:
       "MoE model, fast and reliable for structured generation and CV tailoring.",
     size: "MoE",
-    recommended: false
+    recommended: false,
+    costProfile: "high",
+    speedProfile: "medium",
+    scoringProfile: "generous"
   },
 ]
 
