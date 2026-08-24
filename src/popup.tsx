@@ -65,9 +65,15 @@ function IndexPopup() {
 
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: "getSource"
-      })
+      let response
+      try {
+        response = await chrome.tabs.sendMessage(tab.id, {
+          action: "getSource"
+        })
+      } catch {
+        // content script not injected — fall through to the no-data branch
+        response = null
+      }
 
       if (!response?.data) {
         await chrome.storage.local.set({
