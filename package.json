@@ -42,8 +42,12 @@
       "storage",
       "downloads",
       "identity",
-      "notifications"
+      "notifications",
+      "sidePanel"
     ],
+    "side_panel": {
+      "default_path": "tabs/dialog.html"
+    },
     "oauth2": {
       "client_id": "110025309401-0dhpb6kpq3hb7v16pnasa5aumrdbtaq4.apps.googleusercontent.com",
       "scopes": [

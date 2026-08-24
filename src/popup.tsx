@@ -33,6 +33,19 @@ function IndexPopup() {
         return
       }
 
+      const openPromise = chrome.sidePanel.open({ tabId: tab.id })
+      const enablePromise = chrome.sidePanel.setOptions({
+        tabId: tab.id,
+        path: "tabs/dialog.html",
+        enabled: true
+      })
+
+      await chrome.storage.local.set({
+        pendingJobData: { extracting: true }
+      })
+      await enablePromise
+      await openPromise
+
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       const response = await chrome.tabs.sendMessage(tab.id, {
@@ -40,12 +53,15 @@ function IndexPopup() {
       })
 
       if (!response?.data) {
+        await chrome.storage.local.set({
+          pendingJobData: { extracting: false, error: true }
+        })
         setStatus("No job description found on this page")
         setLoading(false)
         return
       }
 
-      chrome.storage.local.set({
+      await chrome.storage.local.set({
         pendingJobData: {
           selectedText: response.data,
           tabUrl: tab.url,
@@ -53,14 +69,6 @@ function IndexPopup() {
           companyName: response.companyName || "",
           jobTitle: response.jobTitle || ""
         }
-      })
-
-      chrome.windows.create({
-        url: chrome.runtime.getURL("tabs/dialog.html"),
-        type: "popup",
-        width: 500,
-        height: 440,
-        focused: true
       })
 
       window.close()

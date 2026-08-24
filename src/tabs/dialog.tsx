@@ -169,6 +169,16 @@ type View =
   | "applicationsList"
   | "extracting"
 
+// The report flow (form/loading/success) always runs inside the side panel,
+// which has no window to close — instead disable the panel for this tab.
+async function closeSidePanel() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tabId = tabs[0]?.id
+  if (tabId !== undefined) {
+    await chrome.sidePanel.setOptions({ tabId, enabled: false })
+  }
+}
+
 function statusTextClass(status: ApplicationStatus): string {
   switch (status) {
     case "Saved":
@@ -622,9 +632,6 @@ function IndexDialog() {
           setLoading(false)
           setResult(response.data)
           setView("success")
-          chrome.windows.getCurrent(null, (win) => {
-            chrome.windows.update(win.id, { width: 600, height: 700 })
-          })
         }, 400)
       } else {
         setLoading(false)
@@ -945,7 +952,7 @@ function IndexDialog() {
             </p>
           </div>
           <button
-            onClick={() => window.close()}
+            onClick={closeSidePanel}
             className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] border border-[#D4CEC5] text-sidebar-item hover:bg-canvas-divide transition-colors"
             style={{ borderRadius: 2 }}>
             <X size={18} />
@@ -2149,7 +2156,7 @@ function IndexDialog() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => window.close()}
+            onClick={closeSidePanel}
             className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
             <X size={18} />
           </button>
