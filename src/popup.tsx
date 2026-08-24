@@ -61,7 +61,15 @@ function IndexPopup() {
         pendingJobData: { extracting: true }
       })
       if (enablePromise) await enablePromise
-      if (openPromise) await openPromise
+      if (openPromise) {
+        try {
+          await openPromise
+        } catch {
+          // open() raced ahead of setOptions() and found no panel registered
+          // yet for this tab — enablePromise has resolved by now, so retry.
+          await chrome.sidePanel.open({ tabId: tab.id })
+        }
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 500))
 
