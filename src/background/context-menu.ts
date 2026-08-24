@@ -70,7 +70,16 @@ export async function handleContextMenuClick(
     [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: true }
   })
   if (enablePromise) await enablePromise
-  if (openPromise) await openPromise
+  if (openPromise) {
+    try {
+      await openPromise
+    } catch {
+      // open() raced ahead of setOptions() and found no panel registered yet
+      // for this tab (e.g. its first-ever use, or one closeSidePanel() had
+      // disabled) — enablePromise has resolved by now, so retry.
+      await chrome.sidePanel.open({ tabId: tab.id })
+    }
+  }
 
   const selectedText = info.selectionText?.trim() || ""
   const isLinkedIn = tab.url?.includes("linkedin.com") ?? false
