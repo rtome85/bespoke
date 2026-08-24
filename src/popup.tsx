@@ -154,7 +154,7 @@ function IndexPopup() {
       <div className="bg-[#F0EDE8] border-t border-canvas-divide px-5 py-3">
         <p className="font-body text-[11px] text-ink-secondary leading-relaxed">
           Tip: Right-click any job posting →{" "}
-          <span className="font-medium text-ink">Generate CV for this job</span>
+          <span className="font-medium text-ink">Check my match for this job</span>
         </p>
       </div>
     </div>

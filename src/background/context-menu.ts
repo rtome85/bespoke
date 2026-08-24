@@ -6,7 +6,7 @@ export async function createContextMenu() {
 
   chrome.contextMenus.create({
     id: "generateCV",
-    title: "Generate CV for this job",
+    title: "Check my match for this job",
     contexts: ["selection", "page"]
   })
 }

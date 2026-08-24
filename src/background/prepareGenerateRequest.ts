@@ -58,7 +58,7 @@ export async function prepareGenerateRequest(
     return {
       ok: false,
       message:
-        "No job description found. Right-click on a job posting and select 'Generate CV for this job'."
+        "No job description found. Right-click on a job posting and select 'Check my match for this job'."
     }
   }
 
