@@ -22,11 +22,55 @@ function showExtractionError() {
   })
 }
 
+async function setExtractionError() {
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: false, error: true }
+  })
+  showExtractionError()
+}
+
 export async function handleContextMenuClick(
   info: chrome.contextMenus.OnClickData,
   tab?: chrome.tabs.Tab
 ) {
   if (info.menuItemId !== "generateCV" || !tab) return
+
+  // Firefox (MV2) has no chrome.sidePanel — fall back to the old popup window.
+  const hasSidePanel = typeof chrome.sidePanel !== "undefined"
+
+  // sidePanel.open() only counts as a response to the user's click if it's
+  // called before the function's first `await` — even a fast internal call
+  // like chrome.storage.local.set() is enough to lose the gesture and make
+  // Chrome reject it. Fire it synchronously first; the manifest's
+  // side_panel.default_path means it doesn't need setOptions() to resolve
+  // first. Re-enable it for this tab (in case a prior close disabled it)
+  // and show the "extracting" placeholder afterwards.
+  const openPromise = hasSidePanel
+    ? chrome.sidePanel.open({ tabId: tab.id })
+    : null
+  const enablePromise = hasSidePanel
+    ? chrome.sidePanel.setOptions({
+        tabId: tab.id,
+        path: "tabs/dialog.html",
+        enabled: true
+      })
+    : null
+
+  if (!hasSidePanel) {
+    chrome.windows.create({
+      url: chrome.runtime.getURL("tabs/dialog.html"),
+      type: "popup",
+      width: 500,
+      height: 440,
+      focused: true
+    })
+  }
+
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: true }
+  })
+  if (enablePromise) await enablePromise
+  if (openPromise) await openPromise
 
   const selectedText = info.selectionText?.trim() || ""
   const isLinkedIn = tab.url?.includes("linkedin.com") ?? false
@@ -49,7 +93,7 @@ export async function handleContextMenuClick(
   if (isLinkedIn && isLinkedInJobView) {
     const rawText = selectedText || scraped.data
     if (!rawText) {
-      showExtractionError()
+      await setExtractionError()
       return
     }
 
@@ -57,20 +101,9 @@ export async function handleContextMenuClick(
     const ollamaConfig = storage[STORAGE_KEYS.OLLAMA_CONFIG]
 
     if (!ollamaConfig?.apiKey) {
-      showExtractionError()
+      await setExtractionError()
       return
     }
-
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: true }
-    })
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/dialog.html"),
-      type: "popup",
-      width: 500,
-      height: 440,
-      focused: true
-    })
 
     try {
       const client = new OllamaClient(ollamaConfig)
@@ -89,10 +122,7 @@ export async function handleContextMenuClick(
         }
       })
     } catch {
-      await chrome.storage.local.set({
-        [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: false, error: true }
-      })
-      showExtractionError()
+      await setExtractionError()
     }
     return
   }
@@ -101,7 +131,7 @@ export async function handleContextMenuClick(
   if (isLinkedIn) {
     const jobDescription = selectedText || scraped.data
     if (!jobDescription) {
-      showExtractionError()
+      await setExtractionError()
       return
     }
     await chrome.storage.local.set({
@@ -113,20 +143,13 @@ export async function handleContextMenuClick(
         jobTitle: scraped.jobTitle
       }
     })
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/dialog.html"),
-      type: "popup",
-      width: 500,
-      height: 440,
-      focused: true
-    })
     return
   }
 
   // ── Non-LinkedIn: LLM extraction ───────────────────────────────────────
   const rawText = selectedText || scraped.data
   if (!rawText) {
-    showExtractionError()
+    await setExtractionError()
     return
   }
 
@@ -134,21 +157,9 @@ export async function handleContextMenuClick(
   const ollamaConfig = storage[STORAGE_KEYS.OLLAMA_CONFIG]
 
   if (!ollamaConfig?.apiKey) {
-    showExtractionError()
+    await setExtractionError()
     return
   }
-
-  // Open dialog immediately with extracting state so user gets instant feedback
-  await chrome.storage.local.set({
-    [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: true }
-  })
-  chrome.windows.create({
-    url: chrome.runtime.getURL("tabs/dialog.html"),
-    type: "popup",
-    width: 500,
-    height: 440,
-    focused: true
-  })
 
   try {
     const client = new OllamaClient(ollamaConfig)
@@ -167,9 +178,6 @@ export async function handleContextMenuClick(
       }
     })
   } catch {
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.PENDING_JOB_DATA]: { extracting: false, error: true }
-    })
-    showExtractionError()
+    await setExtractionError()
   }
 }

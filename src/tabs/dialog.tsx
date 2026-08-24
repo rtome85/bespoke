@@ -169,6 +169,22 @@ type View =
   | "applicationsList"
   | "extracting"
 
+// The report flow (form/loading/success) runs inside the side panel on
+// Chrome, which has no window to close — instead disable the panel for this
+// tab. Firefox (MV2) has no chrome.sidePanel: the report is still a popup
+// window there, so just close it.
+async function closeSidePanel() {
+  if (typeof chrome.sidePanel === "undefined") {
+    window.close()
+    return
+  }
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tabId = tabs[0]?.id
+  if (tabId !== undefined) {
+    await chrome.sidePanel.setOptions({ tabId, enabled: false })
+  }
+}
+
 function statusTextClass(status: ApplicationStatus): string {
   switch (status) {
     case "Saved":
@@ -292,10 +308,16 @@ function IndexDialog() {
   }, [])
 
   useEffect(() => {
-    if (view !== "extracting") return
-
+    // Registered for the page's whole lifetime, not just while view is
+    // "extracting" — the side panel is a single persistent page per tab, so a
+    // second "Check my match" trigger while the panel is already showing
+    // "form"/"success" must still be able to snap it back to "extracting".
     const applyData = (data: Record<string, unknown> | null) => {
-      if (!data || data.extracting) return
+      if (!data) return
+      if (data.extracting) {
+        setView("extracting")
+        return
+      }
       if (data.error) {
         setStatus("Unable to extract the details. Please fill in manually.")
         setView("form")
@@ -317,13 +339,8 @@ function IndexDialog() {
 
     chrome.storage.onChanged.addListener(listener)
 
-    // Handle race: extraction may have completed before listener was registered
-    chrome.storage.local.get("pendingJobData", (res) =>
-      applyData(res.pendingJobData)
-    )
-
     return () => chrome.storage.onChanged.removeListener(listener)
-  }, [view])
+  }, [])
 
   useEffect(() => {
     if (loading) {
@@ -622,9 +639,6 @@ function IndexDialog() {
           setLoading(false)
           setResult(response.data)
           setView("success")
-          chrome.windows.getCurrent(null, (win) => {
-            chrome.windows.update(win.id, { width: 600, height: 700 })
-          })
         }, 400)
       } else {
         setLoading(false)
@@ -945,7 +959,7 @@ function IndexDialog() {
             </p>
           </div>
           <button
-            onClick={() => window.close()}
+            onClick={closeSidePanel}
             className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] border border-[#D4CEC5] text-sidebar-item hover:bg-canvas-divide transition-colors"
             style={{ borderRadius: 2 }}>
             <X size={18} />
@@ -2149,7 +2163,7 @@ function IndexDialog() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => window.close()}
+            onClick={closeSidePanel}
             className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
             <X size={18} />
           </button>

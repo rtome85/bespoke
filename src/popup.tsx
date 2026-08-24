@@ -33,19 +33,58 @@ function IndexPopup() {
         return
       }
 
+      // Firefox (MV2) has no chrome.sidePanel — fall back to the old popup window.
+      const hasSidePanel = typeof chrome.sidePanel !== "undefined"
+
+      const openPromise = hasSidePanel
+        ? chrome.sidePanel.open({ tabId: tab.id })
+        : null
+      const enablePromise = hasSidePanel
+        ? chrome.sidePanel.setOptions({
+            tabId: tab.id,
+            path: "tabs/dialog.html",
+            enabled: true
+          })
+        : null
+
+      if (!hasSidePanel) {
+        chrome.windows.create({
+          url: chrome.runtime.getURL("tabs/dialog.html"),
+          type: "popup",
+          width: 500,
+          height: 440,
+          focused: true
+        })
+      }
+
+      await chrome.storage.local.set({
+        pendingJobData: { extracting: true }
+      })
+      if (enablePromise) await enablePromise
+      if (openPromise) await openPromise
+
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: "getSource"
-      })
+      let response
+      try {
+        response = await chrome.tabs.sendMessage(tab.id, {
+          action: "getSource"
+        })
+      } catch {
+        // content script not injected — fall through to the no-data branch
+        response = null
+      }
 
       if (!response?.data) {
+        await chrome.storage.local.set({
+          pendingJobData: { extracting: false, error: true }
+        })
         setStatus("No job description found on this page")
         setLoading(false)
         return
       }
 
-      chrome.storage.local.set({
+      await chrome.storage.local.set({
         pendingJobData: {
           selectedText: response.data,
           tabUrl: tab.url,
@@ -53,14 +92,6 @@ function IndexPopup() {
           companyName: response.companyName || "",
           jobTitle: response.jobTitle || ""
         }
-      })
-
-      chrome.windows.create({
-        url: chrome.runtime.getURL("tabs/dialog.html"),
-        type: "popup",
-        width: 500,
-        height: 440,
-        focused: true
       })
 
       window.close()
