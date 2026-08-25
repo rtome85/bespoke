@@ -1,6 +1,8 @@
 import {
+  AlertTriangle,
   Briefcase,
   Building2,
+  CheckCircle2,
   ChevronRight,
   Download,
   ExternalLink,
@@ -11,6 +13,7 @@ import {
   Pencil,
   Sparkles,
   Trash2,
+  TrendingUp,
   Users,
   X
 } from "lucide-react"
@@ -1029,6 +1032,9 @@ function IndexDialog() {
   // Success screen
   if (view === "success" && result) {
     const pct = result.match.percentage
+    // Semantic score color: red (<50), amber (50-74), green (>=75) —
+    // kept distinct from the brand accent so it reads as a signal, not a button.
+    const scoreColor = pct >= 75 ? "#2D6A2D" : pct >= 50 ? "#B8860B" : "#B33A3A"
     const docs =
       result.resumeContent &&
       result.resumeFilename &&
@@ -1044,27 +1050,22 @@ function IndexDialog() {
     return (
       <div className="min-h-screen bg-canvas flex flex-col">
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-12 py-10 flex flex-col gap-6">
+        <div className="flex-1 overflow-y-auto px-12 py-10 flex flex-col gap-8">
           {/* Hero */}
 
-          <h2 className="text-[28px] font-bold tracking-[0.05em] text-ink uppercase">
-            Your Report Is Ready!
+          <h2 className="text-[28px] font-bold tracking-[0.01em] text-ink">
+            Your report is ready!
           </h2>
 
           {/* Match Card */}
-          <div className="bg-white border-2 border-ink p-6 flex flex-col gap-4">
+          <div className="bg-white border-2 border-ink p-6 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
                 Match Score
               </span>
               <span
-                className={`text-[22px] font-bold ${
-                  pct >= 85
-                    ? "text-sidebar-accent"
-                    : pct >= 70
-                      ? "text-ink"
-                      : "text-ink-secondary"
-                }`}>
+                className="text-[22px] font-bold"
+                style={{ color: scoreColor }}>
                 {pct}%
               </span>
             </div>
@@ -1072,12 +1073,16 @@ function IndexDialog() {
               className="w-full bg-canvas-divide h-[10px]"
               style={{ borderRadius: 2 }}>
               <div
-                className="h-[10px] bg-sidebar-accent transition-all duration-700"
-                style={{ width: `${pct}%`, borderRadius: 2 }}
+                className="h-[10px] transition-all duration-700"
+                style={{
+                  width: `${pct}%`,
+                  borderRadius: 2,
+                  backgroundColor: scoreColor
+                }}
               />
             </div>
             {result.match.summary && (
-              <p className="text-[13px] text-[#555555] leading-relaxed">
+              <p className="text-[13px] text-ink-secondary leading-relaxed">
                 {result.match.summary}
               </p>
             )}
@@ -1089,7 +1094,7 @@ function IndexDialog() {
             (result.match.improvements?.length ?? 0) > 0) && (
             <div className="flex flex-col gap-3">
               {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="bg-[#EDF5ED] border-2 border-[#2D6A2D]">
+                <div className="bg-[#EDF5ED] border border-[#2D6A2D]">
                   <button
                     onClick={() =>
                       setMatchAccordionOpen((v) =>
@@ -1106,6 +1111,7 @@ function IndexDialog() {
                             : "rotate(0deg)"
                       }}
                     />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#2D6A2D] shrink-0" />
                     <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
                       Strengths ({result.match.strengths.length})
                     </p>
@@ -1124,7 +1130,7 @@ function IndexDialog() {
                 </div>
               )}
               {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="bg-[#FDEAE4] border-2 border-sidebar-accent">
+                <div className="bg-[#FBEAEA] border border-[#B33A3A]">
                   <button
                     onClick={() =>
                       setMatchAccordionOpen((v) =>
@@ -1133,7 +1139,7 @@ function IndexDialog() {
                     }
                     className="w-full flex items-center gap-2 px-5 py-4 text-left">
                     <ChevronRight
-                      className="w-3.5 h-3.5 text-sidebar-accent transition-transform duration-200 shrink-0"
+                      className="w-3.5 h-3.5 text-[#B33A3A] transition-transform duration-200 shrink-0"
                       style={{
                         transform:
                           matchAccordionOpen === "weaknesses"
@@ -1141,7 +1147,8 @@ function IndexDialog() {
                             : "rotate(0deg)"
                       }}
                     />
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-sidebar-accent uppercase">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#B33A3A] shrink-0" />
+                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#B33A3A] uppercase">
                       Weaknesses ({result.match.weaknesses.length})
                     </p>
                   </button>
@@ -1159,7 +1166,7 @@ function IndexDialog() {
                 </div>
               )}
               {(result.match.improvements?.length ?? 0) > 0 && (
-                <div className="bg-[#E8EEF6] border-2 border-[#4A6FA5]">
+                <div className="bg-[#E8EEF6] border border-[#4A6FA5]">
                   <button
                     onClick={() =>
                       setMatchAccordionOpen((v) =>
@@ -1176,6 +1183,7 @@ function IndexDialog() {
                             : "rotate(0deg)"
                       }}
                     />
+                    <TrendingUp className="w-3.5 h-3.5 text-[#4A6FA5] shrink-0" />
                     <p className="text-[10px] font-bold tracking-[0.15em] text-[#4A6FA5] uppercase">
                       Improvements ({result.match.improvements.length})
                     </p>
@@ -1349,7 +1357,7 @@ function IndexDialog() {
               ) : (
                 <button
                   onClick={handleGenerateDocuments}
-                  className="flex items-center justify-center gap-2 py-[14px] bg-sidebar-accent text-white text-[13px] font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity"
+                  className="flex items-center justify-center gap-2 py-[14px] bg-sidebar-accent text-white text-[13px] font-semibold hover:opacity-90 transition-opacity"
                   style={{ borderRadius: 2 }}>
                   <Sparkles size={16} />
                   Generate CV + Cover Letter
@@ -1441,20 +1449,25 @@ function IndexDialog() {
           </div>
           )}
 
-          {/* CTA Row */}
-          <div className="flex gap-4 pb-2">
-            <button
-              onClick={() => openSaveForm("success")}
-              className="flex-1 flex items-center justify-center py-[14px] bg-ink text-canvas text-[13px] font-semibold tracking-wide uppercase hover:opacity-90 transition-opacity"
-              style={{ borderRadius: 2 }}>
-              Save Application
-            </button>
-            <button
-              onClick={() => setView("applicationsList")}
-              className="flex-1 flex items-center justify-center py-[14px] bg-canvas border-2 border-ink text-ink text-[13px] font-semibold tracking-wide uppercase hover:bg-canvas-divide transition-colors"
-              style={{ borderRadius: 2 }}>
-              View Saved Applications
-            </button>
+          {/* CTA Row — Save is secondary (outline), View Saved is tertiary (text link) */}
+          <div className="flex flex-col gap-2 pb-2">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => openSaveForm("success")}
+                className="flex-1 flex items-center justify-center py-[14px] bg-canvas border-2 border-ink text-ink text-[13px] font-semibold hover:bg-canvas-divide transition-colors"
+                style={{ borderRadius: 2 }}>
+                Save Application
+              </button>
+              <button
+                onClick={() => setView("applicationsList")}
+                className="text-[13px] font-semibold text-ink-secondary hover:text-ink transition-colors">
+                View Saved Applications
+              </button>
+            </div>
+            <p className="text-[12px] text-ink-muted">
+              You can come back to this analysis anytime from Saved
+              Applications.
+            </p>
           </div>
         </div>
       </div>
