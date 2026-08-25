@@ -716,15 +716,6 @@ function Options() {
 
     "match-model": (
       <div className={card}>
-        <h2 className={sectionHeadCls}>Match Analysis Model</h2>
-        <p className="text-sm text-ink-secondary mb-6">
-          The extension now scores your profile against a job posting
-          automatically as soon as it's scraped — there's no in-between
-          screen to pick a model per job anymore. Choose the model used for
-          that scoring here instead. It also becomes the default for
-          resume/cover-letter generation.
-        </p>
-        <hr className={divider} />
 
         <div className="space-y-3">
           {AVAILABLE_MODELS.map((model) => {
