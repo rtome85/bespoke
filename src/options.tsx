@@ -5,10 +5,9 @@ import {
   Folder,
   Globe,
   GraduationCap,
-  LayoutTemplate,
   Languages as LanguagesIcon,
   Server,
-  Target,
+  SlidersHorizontal,
   User,
   Zap
 } from "lucide-react"
@@ -26,6 +25,7 @@ import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
 import { SettingsRail } from "~components/SettingsRail"
 import { SkillEditor } from "~components/SkillEditor"
+import { Spectrum } from "~components/Spectrum"
 import {
   AVAILABLE_MODELS,
   DEFAULT_LLM_TUNING,
@@ -51,42 +51,36 @@ import "./style.css"
 
 const NAV_GROUPS = [
   {
-    label: "AI Providers",
+    label: "AI Models",
     items: [
       {
         label: "Ollama",
         value: "ai-settings",
-        subtitle: "Configure API access and select your model",
+        subtitle: "Connection, model and generation parameters",
         icon: Server
-      },
-      {
-        label: "Match model",
-        value: "match-model",
-        subtitle: "Pick the model used to score your profile against a job",
-        icon: Target
       },
       {
         label: "Perplexity",
         value: "perplexity",
-        subtitle: "Configure company research and interview preparation",
+        subtitle: "Company research and interview data",
         icon: Globe
       }
     ]
   },
   {
-    label: "Content",
+    label: "Generation",
     items: [
+      {
+        label: "Output style",
+        value: "output-style",
+        subtitle: "How the AI scores and writes",
+        icon: SlidersHorizontal
+      },
       {
         label: "Prompts",
         value: "prompts",
-        subtitle: "Fine-tune model behaviour and custom prompts",
+        subtitle: "Presets and the raw text sent to the model",
         icon: FileText
-      },
-      {
-        label: "Templates",
-        value: "templates",
-        subtitle: "Apply preset prompt configurations",
-        icon: LayoutTemplate
       }
     ]
   },
@@ -255,6 +249,51 @@ const scoringBadgeCls: Record<"strict" | "balanced" | "generous", string> = {
   strict: "bg-aa-error-soft text-aa-error-strong border-aa-error-strong",
   balanced: "bg-aa-neutral-100 text-aa-text-secondary border-aa-border",
   generous: "bg-aa-success-soft text-aa-success-strong border-aa-success-strong"
+}
+
+// Output style — the three spectrum/segment axes.
+const STRICTNESS = ["strict", "balanced", "generous"] as const
+const TONE = ["formal", "professional", "conversational"] as const
+const FOCUS = ["skills", "balanced", "experience"] as const
+
+const STRICTNESS_NOTE: Record<(typeof STRICTNESS)[number], string> = {
+  strict:
+    "Rigorous — gaps and missing must-haves are weighted heavily; a single unmet requirement can drop the score sharply.",
+  balanced:
+    "Balanced — explicit requirements and transferable skills weigh equally. A missing must-have costs about 10 points.",
+  generous:
+    "Lenient — transferable skills and potential count for a lot; only large gaps move the score much."
+}
+
+// Static preview of a résumé bullet per tone × focus — no model call.
+const SAMPLE_BULLETS: Record<
+  (typeof TONE)[number],
+  Record<(typeof FOCUS)[number], string>
+> = {
+  formal: {
+    skills:
+      "Applied React and TypeScript to deliver a production checkout flow, achieving a 12% uplift in conversion.",
+    balanced:
+      "Led a team of six engineers in rebuilding the checkout flow in React and TypeScript, improving conversion by 12%.",
+    experience:
+      "As Lead Engineer, directed the checkout rebuild across a six-person team, delivering a 12% conversion gain."
+  },
+  professional: {
+    skills:
+      "Built the checkout flow in React and TypeScript, lifting conversion 12% and cutting page weight by a third.",
+    balanced:
+      "Led a team of six engineers to rebuild the checkout flow in React and TypeScript, lifting conversion 12% and cutting page weight by a third.",
+    experience:
+      "Led a six-engineer team through the checkout rebuild — shipped in two quarters, +12% conversion, −33% page weight."
+  },
+  conversational: {
+    skills:
+      "Rebuilt checkout in React + TypeScript and got conversion up 12% while trimming a third of the page weight.",
+    balanced:
+      "Ran a six-person team to rebuild checkout in React + TypeScript — conversion went up 12% and the page got a third lighter.",
+    experience:
+      "Led six engineers through the checkout rebuild; we shipped in two quarters and conversion jumped 12%."
+  }
 }
 
 function Options() {
@@ -693,127 +732,221 @@ function Options() {
   // ── Tab content ──────────────────────────────────────────────────────────────
   const tabContent: Record<string, React.ReactNode> = {
     "ai-settings": (
-      <div className={card}>
-        <h2 className={sectionHeadCls}>Ollama Configuration</h2>
-        <hr className={divider} />
+      <div className="space-y-6">
+        {/* Connection */}
+        <div className={card}>
+          <h2 className={sectionHeadCls}>Connection</h2>
+          <hr className={divider} />
+          <div className="space-y-6">
+            <div>
+              <label className={labelCls}>API Key *</label>
+              <input
+                type="password"
+                value={ollamaConfig.apiKey}
+                onChange={(e) =>
+                  setOllamaConfig({ ...ollamaConfig, apiKey: e.target.value })
+                }
+                placeholder="oll-..."
+                className={inputCls}
+              />
+              <p className={hintCls}>
+                Get your API key from{" "}
+                <a
+                  href="https://ollama.com/settings/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-aa-primary hover:underline">
+                  ollama.com/settings/keys
+                </a>
+              </p>
+            </div>
 
-        <div className="space-y-6">
-          <div>
-            <label className={labelCls}>API Key *</label>
-            <input
-              type="password"
-              value={ollamaConfig.apiKey}
-              onChange={(e) =>
-                setOllamaConfig({ ...ollamaConfig, apiKey: e.target.value })
-              }
-              placeholder="oll-..."
-              className={inputCls}
-            />
-            <p className={hintCls}>
-              Get your API key from{" "}
-              <a
-                href="https://ollama.com/settings/keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-aa-primary hover:underline">
-                ollama.com/settings/keys
-              </a>
-            </p>
+            <div>
+              <label className={labelCls}>Base URL</label>
+              <input
+                type="text"
+                value={ollamaConfig.baseUrl}
+                onChange={(e) =>
+                  setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })
+                }
+                placeholder="https://ollama.com/api"
+                className={inputCls}
+              />
+              <p className={hintCls}>Default is fine for most users.</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleTestOllama}
+                disabled={testStatus.type === "loading"}
+                className={btnOutline}>
+                {testStatus.type === "loading"
+                  ? "Testing..."
+                  : "Test Connection"}
+              </button>
+            </div>
+
+            {testStatus.type === "success" && (
+              <div className={successMsg}>{testStatus.message}</div>
+            )}
+            {testStatus.type === "error" && (
+              <div className={errorMsg}>{testStatus.message}</div>
+            )}
           </div>
+        </div>
 
-          <div>
-            <label className={labelCls}>Base URL</label>
-            <input
-              type="text"
-              value={ollamaConfig.baseUrl}
-              onChange={(e) =>
-                setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })
-              }
-              placeholder="https://ollama.com/api"
-              className={inputCls}
-            />
-            <p className={hintCls}>Default is fine for most users.</p>
+        {/* Model */}
+        <div className={card}>
+          <h2 className={sectionHeadCls}>Model</h2>
+          <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
+            The model used to score your profile and draft documents.
+          </p>
+          <hr className={divider} />
+          <div className="space-y-3">
+            {AVAILABLE_MODELS.map((model) => {
+              const isSelected = matchModel === model.id
+              return (
+                <button
+                  key={model.id}
+                  type="button"
+                  onClick={() => setMatchModel(model.id)}
+                  className={`w-full text-left p-4 rounded-aa-md border transition-colors ${
+                    isSelected
+                      ? "border-aa-primary bg-aa-primary-soft"
+                      : "border-aa-border bg-aa-surface hover:border-aa-neutral-400"
+                  }`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-aa-text-primary text-sm">
+                        {model.name}
+                      </span>
+                      <span className="text-aa-text-secondary text-xs">
+                        {model.size}
+                      </span>
+                      {model.recommended && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-pill bg-aa-primary-soft text-aa-primary px-2 py-0.5">
+                          Recommended
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                        isSelected
+                          ? "border-aa-primary bg-aa-primary"
+                          : "border-aa-neutral-400"
+                      }`}
+                    />
+                  </div>
+
+                  <p className="text-sm text-aa-text-secondary mt-1.5">
+                    {model.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${costBadgeCls[model.costProfile]}`}>
+                      Token cost: {model.costProfile}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${speedBadgeCls[model.speedProfile]}`}>
+                      Speed: {model.speedProfile}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${scoringBadgeCls[model.scoringProfile]}`}>
+                      Scoring: {model.scoringProfile}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
+        </div>
 
-          <div className="flex gap-3">
+        {/* Fine-tuning */}
+        <div className={card}>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className={sectionHeadCls}>Fine-tuning</h2>
+              <p className="text-sm text-aa-text-secondary -mt-1">
+                Generation parameters. Defaults suit most cases.
+              </p>
+            </div>
             <button
-              onClick={handleTestOllama}
-              disabled={testStatus.type === "loading"}
+              onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
               className={btnOutline}>
-              {testStatus.type === "loading" ? "Testing..." : "Test Connection"}
+              Reset to defaults
             </button>
           </div>
-
-          {testStatus.type === "success" && (
-            <div className={successMsg}>{testStatus.message}</div>
-          )}
-          {testStatus.type === "error" && (
-            <div className={errorMsg}>{testStatus.message}</div>
-          )}
-        </div>
-      </div>
-    ),
-
-    "match-model": (
-      <div className={card}>
-
-        <div className="space-y-3">
-          {AVAILABLE_MODELS.map((model) => {
-            const isSelected = matchModel === model.id
-            return (
-              <button
-                key={model.id}
-                type="button"
-                onClick={() => setMatchModel(model.id)}
-                className={`w-full text-left p-4 border-2 transition-colors ${
-                  isSelected
-                    ? "border-aa-border bg-aa-neutral-50"
-                    : "border-aa-border bg-aa-surface hover:border-aa-border-secondary"
-                }`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-aa-text-primary text-sm">
-                      {model.name}
+          <hr className={divider} />
+          <div className="space-y-5">
+            {[
+              {
+                label: "Temperature",
+                key: "temperature" as const,
+                min: 0.1,
+                max: 1.5,
+                step: 0.1,
+                fmt: (v: number) => v.toFixed(1),
+                lo: "0.1 — Precise",
+                hi: "1.5 — Creative"
+              },
+              {
+                label: "Top P",
+                key: "topP" as const,
+                min: 0.5,
+                max: 1.0,
+                step: 0.05,
+                fmt: (v: number) => v.toFixed(2),
+                lo: "0.5 — Conservative",
+                hi: "1.0 — Full diversity"
+              },
+              {
+                label: "Max output tokens",
+                key: "maxTokens" as const,
+                min: 1024,
+                max: 8192,
+                step: 256,
+                fmt: (v: number) => v.toLocaleString(),
+                lo: "1 024 — Concise",
+                hi: "8 192 — Detailed"
+              }
+            ].map(({ label, key, min, max, step, fmt, lo, hi }) => {
+              const tuning = llmTuning ?? DEFAULT_LLM_TUNING
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium text-aa-text-primary">
+                      {label}
+                    </label>
+                    <span className="text-sm font-mono font-semibold text-aa-primary-pressed">
+                      {fmt(tuning[key])}
                     </span>
-                    <span className="text-aa-text-secondary text-xs">
-                      {model.size}
-                    </span>
-                    {model.recommended && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-aa-primary text-aa-text-on-primary px-2 py-0.5">
-                        Recommended
-                      </span>
-                    )}
                   </div>
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                      isSelected
-                        ? "border-aa-border bg-ink"
-                        : "border-aa-border"
-                    }`}
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={tuning[key]}
+                    onChange={(e) =>
+                      setLlmTuning({
+                        ...tuning,
+                        [key]:
+                          key === "maxTokens"
+                            ? parseInt(e.target.value, 10)
+                            : parseFloat(e.target.value)
+                      })
+                    }
+                    className="w-full accent-aa-primary"
                   />
+                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
+                    <span>{lo}</span>
+                    <span>{hi}</span>
+                  </div>
                 </div>
-
-                <p className="text-sm text-aa-text-secondary mt-1.5">
-                  {model.description}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${costBadgeCls[model.costProfile]}`}>
-                    Token cost: {model.costProfile}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${speedBadgeCls[model.speedProfile]}`}>
-                    Speed: {model.speedProfile}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border ${scoringBadgeCls[model.scoringProfile]}`}>
-                    Scoring: {model.scoringProfile}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </div>
     ),
@@ -903,70 +1036,6 @@ function Options() {
             </div>
           </div>
 
-          <hr className={divider} />
-
-          <div>
-            <h3 className={sectionHeadCls}>Interview Preparation Plan</h3>
-            <p className="text-sm text-aa-text-secondary mb-4">
-              Generate AI-powered technical interview preparation plans for HR
-              and technical interviews.
-            </p>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="preparationPlanEnabled"
-                  checked={perplexityConfig.preparationPlanEnabled}
-                  onChange={(e) =>
-                    setPerplexityConfig({
-                      ...perplexityConfig,
-                      preparationPlanEnabled: e.target.checked
-                    })
-                  }
-                  className="w-4 h-4 accent-aa-primary"
-                />
-                <label
-                  htmlFor="preparationPlanEnabled"
-                  className="text-sm font-medium text-aa-text-primary">
-                  Enable Preparation Plan Generation
-                </label>
-              </div>
-
-              <div>
-                <label className={labelCls}>Preparation Plan Prompt</label>
-                <textarea
-                  value={perplexityConfig.preparationPlanPrompt}
-                  onChange={(e) =>
-                    setPerplexityConfig({
-                      ...perplexityConfig,
-                      preparationPlanPrompt: e.target.value
-                    })
-                  }
-                  rows={8}
-                  className={textareaCls}
-                />
-                <div className="flex items-center justify-between mt-1">
-                  <p className={hintCls}>
-                    Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
-                    {"{{jobDescription}}"}, and {"{{interviewType}}"} as
-                    placeholders.
-                  </p>
-                  <button
-                    onClick={() =>
-                      openPerplexityDialog(
-                        "Preparation Plan Prompt",
-                        "preparation"
-                      )
-                    }
-                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
-                    Expand
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className={infoMsg}>
             <h3 className="text-[11px] font-bold uppercase tracking-widest mb-1">
               Pricing
@@ -1000,276 +1069,99 @@ function Options() {
     ),
 
     prompts: (
-      <div className="flex flex-row gap-6">
-        {/* LLM Fine-tuning */}
-        <div className={`${card} w-1/3`}>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
-              <p className="text-sm text-aa-text-secondary">
-                Adjust model behaviour and document generation style. Changes
-                apply to the next generation.
-              </p>
-            </div>
-            <button
-              onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
-              className={btnOutline}>
-              Reset to Defaults
-            </button>
-          </div>
+      <div className="space-y-6">
+        {/* Start from a preset */}
+        <div className={card}>
+          <h2 className={sectionHeadCls}>Start from a preset</h2>
+          <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
+            Applying a preset overwrites the custom prompts below.
+          </p>
           <hr className={divider} />
-
-          <div className="space-y-8">
-            <div>
-              <h3 className={sectionHeadCls}>Generation Parameters</h3>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-aa-text-primary">
-                      Temperature
-                    </label>
-                    <span className="text-sm font-mono font-semibold text-aa-primary w-10 text-right">
-                      {(llmTuning ?? DEFAULT_LLM_TUNING).temperature.toFixed(1)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.5"
-                    step="0.1"
-                    value={(llmTuning ?? DEFAULT_LLM_TUNING).temperature}
-                    onChange={(e) =>
-                      setLlmTuning({
-                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                        temperature: parseFloat(e.target.value)
-                      })
-                    }
-                    className="w-full accent-aa-primary"
-                  />
-                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
-                    <span>0.1 — Precise</span>
-                    <span>1.5 — Creative</span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-aa-text-primary">
-                      Top P
-                    </label>
-                    <span className="text-sm font-mono font-semibold text-aa-primary w-10 text-right">
-                      {(llmTuning ?? DEFAULT_LLM_TUNING).topP.toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="1.0"
-                    step="0.05"
-                    value={(llmTuning ?? DEFAULT_LLM_TUNING).topP}
-                    onChange={(e) =>
-                      setLlmTuning({
-                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                        topP: parseFloat(e.target.value)
-                      })
-                    }
-                    className="w-full accent-aa-primary"
-                  />
-                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
-                    <span>0.5 — Conservative</span>
-                    <span>1.0 — Full diversity</span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-aa-text-primary">
-                      Max Output Tokens
-                    </label>
-                    <span className="text-sm font-mono font-semibold text-aa-primary w-16 text-right">
-                      {(
-                        llmTuning ?? DEFAULT_LLM_TUNING
-                      ).maxTokens.toLocaleString()}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1024"
-                    max="8192"
-                    step="256"
-                    value={(llmTuning ?? DEFAULT_LLM_TUNING).maxTokens}
-                    onChange={(e) =>
-                      setLlmTuning({
-                        ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                        maxTokens: parseInt(e.target.value)
-                      })
-                    }
-                    className="w-full accent-aa-primary"
-                  />
-                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
-                    <span>1 024 — Concise</span>
-                    <span>8 192 — Detailed</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <hr className={divider} />
-
-            <div>
-              <h3 className={sectionHeadCls}>Analysis &amp; Style</h3>
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
-                    Profile Match Strictness
-                  </label>
-                  <p className="text-[11px] text-aa-text-secondary mb-2">
-                    How rigorously the AI scores your profile against
-                    requirements.
-                  </p>
-                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
-                    {(["strict", "balanced", "generous"] as const).map(
-                      (opt) => (
-                        <button
-                          key={opt}
-                          onClick={() =>
-                            setLlmTuning({
-                              ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                              matchStrictness: opt
-                            })
-                          }
-                          className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${(llmTuning ?? DEFAULT_LLM_TUNING)
-                              .matchStrictness === opt
-                              ? "bg-ink text-aa-text-on-primary"
-                              : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
-                            }`}>
-                          {opt === "strict"
-                            ? "Strict"
-                            : opt === "balanced"
-                              ? "Balanced"
-                              : "Generous"}
-                        </button>
-                      )
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {PROMPT_TEMPLATES.map((template) => {
+              const isActive = activeTemplateName === template.name
+              return (
+                <div
+                  key={template.id}
+                  className={`flex flex-col rounded-aa-md border p-4 transition-colors ${
+                    isActive
+                      ? "border-aa-primary bg-aa-primary-soft"
+                      : "border-aa-border bg-aa-surface hover:border-aa-neutral-400"
+                  }`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-aa-text-primary text-[13px]">
+                      {template.name}
+                    </h3>
+                    {isActive && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-pill bg-aa-success-soft text-aa-success-strong px-2 py-0.5 shrink-0 ml-2">
+                        Active
+                      </span>
                     )}
                   </div>
-                  <p className="mt-2 text-[11px] text-aa-text-secondary">
-                    {
-                      {
-                        strict: "Gaps and missing skills are weighted heavily.",
-                        balanced:
-                          "Explicit requirements and transferable skills weighed equally.",
-                        generous: "Transferable skills and potential count."
-                      }[(llmTuning ?? DEFAULT_LLM_TUNING).matchStrictness]
-                    }
+                  <p className="text-xs text-aa-text-secondary mb-3">
+                    {template.tagLine}
                   </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
-                    Writing Tone
-                  </label>
-                  <p className="text-[11px] text-aa-text-secondary mb-2">
-                    Applies to both resumes and cover letters.
-                  </p>
-                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
-                    {(
-                      ["formal", "professional", "conversational"] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() =>
-                          setLlmTuning({
-                            ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                            writingTone: opt
-                          })
-                        }
-                        className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${(llmTuning ?? DEFAULT_LLM_TUNING).writingTone ===
-                            opt
-                            ? "bg-ink text-aa-text-on-primary"
-                            : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
-                          }`}>
-                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                      </button>
+                  <ul className="space-y-1.5 flex-1 mb-4">
+                    {template.bullets.map((b) => (
+                      <li
+                        key={b}
+                        className="flex items-start gap-2 text-xs text-aa-text-secondary">
+                        <span className="text-aa-primary mt-0.5 shrink-0">•</span>
+                        {b}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
+                  <button
+                    onClick={() => handleApplyTemplate(template)}
+                    disabled={isActive}
+                    className={`w-full py-2 rounded-aa-md text-[12px] font-semibold transition-colors ${
+                      isActive
+                        ? "bg-aa-neutral-100 text-aa-text-secondary cursor-default"
+                        : "bg-aa-primary text-aa-text-on-primary hover:bg-aa-primary-hover"
+                    }`}>
+                    {isActive ? "Applied" : "Apply preset"}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
-                    Resume Focus
-                  </label>
-                  <p className="text-[11px] text-aa-text-secondary mb-2">
-                    Which section the model leads with and emphasises most.
-                  </p>
-                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
-                    {(["skills", "balanced", "experience"] as const).map(
-                      (opt) => (
-                        <button
-                          key={opt}
-                          onClick={() =>
-                            setLlmTuning({
-                              ...(llmTuning ?? DEFAULT_LLM_TUNING),
-                              resumeFocus: opt
-                            })
-                          }
-                          className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
-                          ${(llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus ===
-                              opt
-                              ? "bg-ink text-aa-text-on-primary"
-                              : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
-                            }`}>
-                          {opt === "skills"
-                            ? "Skills-first"
-                            : opt === "balanced"
-                              ? "Balanced"
-                              : "Experience-first"}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+              )
+            })}
           </div>
         </div>
 
-        {/* Custom Prompts */}
-        <div className={`${card} flex-1`}>
-          <div className="flex items-center justify-between mb-6">
+        {/* Custom prompts */}
+        <div className={card}>
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className={sectionHeadCls}>Custom Prompts</h2>
-              <p className="text-sm text-aa-text-secondary">
+              <h2 className={sectionHeadCls}>Custom prompts</h2>
+              <p className="text-sm text-aa-text-secondary -mt-1">
                 Override the system and user prompts sent to the model.
               </p>
             </div>
             <button onClick={handleResetPrompts} className={btnOutline}>
-              Reset to Defaults
+              Reset to defaults
             </button>
           </div>
-
+          <hr className={divider} />
           <div className="space-y-6">
             {(
               [
                 {
                   key: "resumeSystemPrompt" as keyof CustomPrompts,
-                  label: "Resume System Prompt",
+                  label: "Resume system prompt",
                   hint: "Defines how the AI behaves when generating resumes."
                 },
                 {
                   key: "resumeUserPromptTemplate" as keyof CustomPrompts,
-                  label: "Resume User Prompt Template",
+                  label: "Resume user prompt template",
                   hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
                 },
                 {
                   key: "coverLetterSystemPrompt" as keyof CustomPrompts,
-                  label: "Cover Letter System Prompt",
+                  label: "Cover letter system prompt",
                   hint: "Defines how the AI behaves when generating cover letters."
                 },
                 {
                   key: "coverLetterUserPromptTemplate" as keyof CustomPrompts,
-                  label: "Cover Letter User Prompt Template",
+                  label: "Cover letter user prompt template",
                   hint: "Use {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
                 }
               ] as const
@@ -1286,7 +1178,7 @@ function Options() {
                   <p className={hintCls}>{hint}</p>
                   <button
                     onClick={() => openPromptDialog(label, key)}
-                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
                     Expand
                   </button>
                 </div>
@@ -1294,70 +1186,195 @@ function Options() {
             ))}
           </div>
         </div>
-      </div>
-    ),
 
-    templates: (
-      <div className={card}>
-        <h2 className={sectionHeadCls}>Prompt Templates</h2>
-        <p className="text-sm text-aa-text-secondary mb-6">
-          Apply a preset to instantly configure your Custom Prompts for a
-          specific role type.
-        </p>
-        <hr className={divider} />
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PROMPT_TEMPLATES.map((template) => {
-            const isActive = activeTemplateName === template.name
-            return (
-              <div
-                key={template.id}
-                className={`flex flex-col border-2 p-5 transition-all
-                  ${isActive ? "border-aa-primary bg-aa-primary-soft" : "border-aa-border bg-aa-surface hover:border-aa-border"}`}>
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-aa-text-primary text-sm">
-                    {template.name}
-                  </h3>
-                  {isActive && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-aa-success-soft text-aa-success-strong border border-aa-success-strong px-2 py-0.5 shrink-0 ml-2">
-                      Active
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-aa-text-secondary mb-4">
-                  {template.tagLine}
+        {/* Interview prep */}
+        <div className={card}>
+          <h2 className={sectionHeadCls}>Interview prep</h2>
+          <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
+            The plan generated for HR and technical interview stages.
+          </p>
+          <hr className={divider} />
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={perplexityConfig.preparationPlanEnabled}
+                onChange={(e) =>
+                  setPerplexityConfig({
+                    ...perplexityConfig,
+                    preparationPlanEnabled: e.target.checked
+                  })
+                }
+                className="w-4 h-4 accent-aa-primary"
+              />
+              <span className="text-sm font-medium text-aa-text-primary">
+                Generate an interview preparation plan
+              </span>
+            </label>
+            <div>
+              <label className={labelCls}>Preparation plan prompt</label>
+              <textarea
+                value={perplexityConfig.preparationPlanPrompt}
+                onChange={(e) =>
+                  setPerplexityConfig({
+                    ...perplexityConfig,
+                    preparationPlanPrompt: e.target.value
+                  })
+                }
+                rows={6}
+                className={textareaCls}
+              />
+              <div className="flex items-center justify-between mt-1">
+                <p className={hintCls}>
+                  Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
+                  {"{{jobDescription}}"}, and {"{{interviewType}}"} as
+                  placeholders.
                 </p>
-
-                <ul className="space-y-1.5 flex-1 mb-5">
-                  {template.bullets.map((b) => (
-                    <li
-                      key={b}
-                      className="flex items-start gap-2 text-xs text-aa-text-secondary">
-                      <span className="text-aa-primary mt-0.5 shrink-0">
-                        •
-                      </span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-
                 <button
-                  onClick={() => handleApplyTemplate(template)}
-                  disabled={isActive}
-                  className={`w-full py-2 text-[11px] font-bold uppercase tracking-widest transition-colors
-                    ${isActive
-                      ? "bg-aa-neutral-50 text-aa-text-secondary cursor-default border border-aa-border"
-                      : "bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90"
-                    }`}>
-                  {isActive ? "Applied" : "Apply Template"}
+                  onClick={() =>
+                    openPerplexityDialog(
+                      "Preparation Plan Prompt",
+                      "preparation"
+                    )
+                  }
+                  className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
+                  Expand
                 </button>
               </div>
-            )
-          })}
+            </div>
+          </div>
         </div>
       </div>
     ),
+
+    "output-style": (() => {
+      const tuning = llmTuning ?? DEFAULT_LLM_TUNING
+      const strictnessIdx = STRICTNESS.indexOf(tuning.matchStrictness)
+      const focusIdx = FOCUS.indexOf(tuning.resumeFocus)
+      const toneLabel =
+        tuning.writingTone[0].toUpperCase() + tuning.writingTone.slice(1)
+      const focusLabel =
+        tuning.resumeFocus === "skills"
+          ? "Skills-first"
+          : tuning.resumeFocus === "experience"
+            ? "Experience-first"
+            : "Balanced"
+      return (
+        <div className="space-y-8 max-w-3xl">
+          {/* Scoring */}
+          <section className="space-y-4">
+            <div>
+              <h2 className={sectionHeadCls}>Scoring</h2>
+              <p className="text-sm text-aa-text-secondary -mt-2">
+                How rigorously your profile is matched against the job's
+                requirements.
+              </p>
+            </div>
+            <div className="space-y-3 pt-1">
+              <span className="block text-[12px] font-semibold text-aa-text-secondary">
+                Match strictness
+              </span>
+              <Spectrum
+                stops={["Rigorous", "Balanced", "Lenient"]}
+                value={strictnessIdx < 0 ? 1 : strictnessIdx}
+                onChange={(i) =>
+                  setLlmTuning({
+                    ...tuning,
+                    matchStrictness: STRICTNESS[i] ?? tuning.matchStrictness
+                  })
+                }
+              />
+              <div className="flex items-start gap-3 rounded-aa-md bg-aa-primary-soft p-4 max-w-[660px]">
+                <SlidersHorizontal className="w-4 h-4 text-aa-primary shrink-0 mt-0.5" />
+                <p className="text-[13px] leading-relaxed text-aa-neutral-700">
+                  {STRICTNESS_NOTE[tuning.matchStrictness]}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <hr className={divider} />
+
+          {/* Writing style */}
+          <section className="space-y-4">
+            <div>
+              <h2 className={sectionHeadCls}>Writing style</h2>
+              <p className="text-sm text-aa-text-secondary -mt-2">
+                Tone and emphasis applied to the CV and the cover letter.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-10 pt-1">
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <span className="block text-[12px] font-semibold text-aa-text-secondary">
+                    Tone
+                  </span>
+                  <div className="inline-flex rounded-aa-md border border-aa-border p-[3px]">
+                    {TONE.map((opt) => {
+                      const on = tuning.writingTone === opt
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() =>
+                            setLlmTuning({ ...tuning, writingTone: opt })
+                          }
+                          className={`px-4 py-2 rounded-aa-sm text-[12px] font-semibold transition-colors ${
+                            on
+                              ? "bg-aa-primary text-aa-text-on-primary"
+                              : "text-aa-text-secondary hover:text-aa-text-primary"
+                          }`}>
+                          {opt[0].toUpperCase() + opt.slice(1)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <span className="block text-[12px] font-semibold text-aa-text-secondary">
+                    Resume focus
+                  </span>
+                  <Spectrum
+                    stops={["Skills-first", "Balanced", "Experience-first"]}
+                    value={focusIdx < 0 ? 1 : focusIdx}
+                    onChange={(i) =>
+                      setLlmTuning({
+                        ...tuning,
+                        resumeFocus: FOCUS[i] ?? tuning.resumeFocus
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="w-[340px] rounded-aa-lg border border-aa-border bg-aa-surface p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-aa-text-secondary">
+                    Sample bullet
+                  </span>
+                  <span className="text-[10px] font-semibold rounded-aa-pill border border-aa-border px-2 py-[3px] text-aa-text-secondary">
+                    {toneLabel} · {focusLabel}
+                  </span>
+                </div>
+                <p className="text-[13px] leading-relaxed text-aa-neutral-700">
+                  {SAMPLE_BULLETS[tuning.writingTone][tuning.resumeFocus]}
+                </p>
+                <p className="text-[11px] text-aa-text-secondary">
+                  Updates as you change tone and focus.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <button
+            onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
+            className="text-[12px] font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
+            Reset to defaults
+          </button>
+        </div>
+      )
+    })(),
 
     "personal-info": (
       <div className={card}>
