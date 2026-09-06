@@ -231,12 +231,19 @@ function IndexDialog() {
   const [docsLoading, setDocsLoading] = useState(false)
   const [docsProgress, setDocsProgress] = useState(0)
   const [docsError, setDocsError] = useState("")
+  const [generatingDocsForApp, setGeneratingDocsForApp] = useState(false)
+  const [docsGenError, setDocsGenError] = useState("")
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
   const [matchAccordionOpen, setMatchAccordionOpen] = useState<
     "strengths" | "weaknesses" | "improvements" | null
   >("strengths")
+  // What the user decided to do with this match, right after reading the
+  // analysis — gates the document-generation and save CTAs below it.
+  const [triageDecision, setTriageDecision] = useState<
+    "apply" | "save" | "discard" | null
+  >(null)
   const [jobDescription, setJobDescription] = useState("")
   const [perplexityConfig, setPerplexityConfig] =
     useState<PerplexityConfig | null>(null)
@@ -672,6 +679,7 @@ function IndexDialog() {
     setLoading(true)
     setStatus("")
     setDocsError("")
+    setTriageDecision(null)
 
     chrome.storage.local.set({ lastSelectedModel: selectedModel })
 
@@ -702,7 +710,9 @@ function IndexDialog() {
       } else {
         setLoading(false)
         setView("form")
-        setStatus(response?.message || "Match analysis failed. Please try again.")
+        setStatus(
+          response?.message || "Match analysis failed. Please try again."
+        )
       }
     } catch (error) {
       if (analysisRequestIdRef.current !== requestId) return
@@ -771,9 +781,56 @@ function IndexDialog() {
     }
   }
 
+  // Generates CV + cover letter for an already-saved application that was
+  // tracked via "Save for later" without documents — reuses the jobDescription
+  // persisted at save time instead of the (now gone) in-memory analysis result.
+  const generateDocumentsForApplication = async () => {
+    if (!editingApplication?.jobDescription) return
+
+    setGeneratingDocsForApp(true)
+    setDocsGenError("")
+
+    try {
+      const response = await sendToBackground({
+        name: "generateDocuments",
+        body: {
+          companyName: editingApplication.company,
+          jobTitle: editingApplication.jobTitle,
+          model: selectedModel,
+          userProfile,
+          jobDescription: editingApplication.jobDescription
+        }
+      })
+
+      if (response?.success) {
+        const updatedApp: SavedApplication = {
+          ...editingApplication,
+          ...response.data
+        }
+        const updatedList = savedApplications.map((a) =>
+          a.id === updatedApp.id ? updatedApp : a
+        )
+        chrome.storage.local.set({ savedApplications: updatedList })
+        setSavedApplications(updatedList)
+        setEditingApplication(updatedApp)
+      } else {
+        setDocsGenError(
+          response?.message || "Generation failed. Please try again."
+        )
+      }
+    } catch (error) {
+      setDocsGenError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      )
+    } finally {
+      setGeneratingDocsForApp(false)
+    }
+  }
+
   const openSaveForm = (
     origin: "success" | "applicationsList",
-    app: SavedApplication | null = null
+    app: SavedApplication | null = null,
+    defaultStatus: ApplicationStatus = "Saved"
   ) => {
     setEditingApplication(app)
     setSaveFormOrigin(origin)
@@ -797,7 +854,7 @@ function IndexDialog() {
       setSaveFormData({
         company: companyName,
         jobTitle: jobTitle,
-        status: "Saved",
+        status: defaultStatus,
         date: new Date().toISOString().split("T")[0],
         jobUrl: pendingJobUrl,
         tags: [],
@@ -831,7 +888,14 @@ function IndexDialog() {
 
     const matchData =
       !editingApplication && result
-        ? { matchPercentage: result.match.percentage }
+        ? {
+            matchPercentage: result.match.percentage,
+            jobDescription: jobDescription || undefined,
+            matchSummary: result.match.summary,
+            matchStrengths: result.match.strengths,
+            matchWeaknesses: result.match.weaknesses,
+            matchImprovements: result.match.improvements
+          }
         : {}
 
     const updated: SavedApplication[] = editingApplication
@@ -956,85 +1020,83 @@ function IndexDialog() {
     return "bg-red-500"
   }
 
-  // Loading screen
-  if (view === "extracting") {
+  // Analysis splash — shared by the "extracting" and "loading" steps.
+  // Kept as a render helper (not a nested component) so the progress bar and
+  // quote cross-fade reconcile across renders instead of remounting.
+  const renderAnalysisSplash = (title: string, subtitle: string) => {
     const quote = QUOTES[quoteIndex]
     return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center p-12">
-        <div className="w-full max-w-md bg-white border-2 border-ink p-8 flex flex-col items-center gap-6 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-[20px] font-bold tracking-[0.1em] text-ink uppercase">
-              Extracting job details…
-            </h2>
-            <p className="text-[13px] text-ink-secondary">
-              Reading the job posting with AI
-            </p>
+      <div className="min-h-screen bg-aa-surface-subtle flex items-center justify-center p-aa-6 font-aa text-aa-text-primary">
+        <div className="w-full max-w-[380px] bg-aa-surface border border-aa-border rounded-aa-xl px-aa-8 py-aa-10 flex flex-col items-center gap-aa-6 text-center">
+          <div className="flex flex-col items-center gap-aa-2">
+            <h1 className="text-[22px] font-bold tracking-[-0.3px] leading-[1.25]">
+              {title}
+            </h1>
+            <p className="text-[14px] text-aa-text-secondary">{subtitle}</p>
           </div>
 
-          <div
-            className="w-full bg-canvas-divide h-[10px]"
-            style={{ borderRadius: 2 }}>
+          <div className="w-full bg-aa-neutral-200 h-[10px] rounded-aa-pill overflow-hidden">
             <div
-              className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
-              style={{ width: `${progress}%`, borderRadius: 2 }}
+              className="h-full bg-aa-primary transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
             />
           </div>
 
           <div
-            className="transition-opacity duration-400"
+            className="transition-opacity duration-500 ease-out"
             style={{ opacity: quoteVisible ? 1 : 0 }}>
-            <p className="text-[13px] text-ink-secondary italic leading-relaxed">
+            <p className="text-[14px] italic leading-[1.6] text-aa-neutral-600">
               "{quote.text}"
             </p>
-            <p className="text-[12px] text-ink-muted mt-2">— {quote.author}</p>
+            <p className="mt-aa-2 text-[12px] text-aa-neutral-500">
+              — {quote.author}
+            </p>
           </div>
         </div>
       </div>
     )
   }
 
+  if (view === "extracting") {
+    return renderAnalysisSplash(
+      "Extracting job details…",
+      "Reading the job posting with AI"
+    )
+  }
+
   if (view === "loading") {
-    const quote = QUOTES[quoteIndex]
-    return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center p-12">
-        <div className="w-full max-w-md bg-white border-2 border-ink p-8 flex flex-col items-center gap-6 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-[20px] font-bold tracking-[0.1em] text-ink uppercase">
-              Analyzing your match…
-            </h2>
-            <p className="text-[13px] text-ink-secondary">
-              Scoring your profile against the job
-            </p>
-          </div>
-
-          <div
-            className="w-full bg-canvas-divide h-[10px]"
-            style={{ borderRadius: 2 }}>
-            <div
-              className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
-              style={{ width: `${progress}%`, borderRadius: 2 }}
-            />
-          </div>
-
-          <div
-            className="transition-opacity duration-400"
-            style={{ opacity: quoteVisible ? 1 : 0 }}>
-            <p className="text-[13px] text-ink-secondary italic leading-relaxed">
-              "{quote.text}"
-            </p>
-            <p className="text-[12px] text-ink-muted mt-2">— {quote.author}</p>
-          </div>
-        </div>
-      </div>
+    return renderAnalysisSplash(
+      "Analyzing your match…",
+      "Scoring your profile against the job"
     )
   }
 
   // Success screen
   if (view === "success" && result) {
     const pct = result.match.percentage
-    // Semantic score color: red (<50), amber (50-74), green (>=75) —
-    // kept distinct from the brand accent so it reads as a signal, not a button.
-    const scoreColor = pct >= 75 ? "#2D6A2D" : pct >= 50 ? "#B8860B" : "#B33A3A"
+    // Semantic score reading (ApplyAI tokens): weak / moderate / strong.
+    // `scoreFill` is the light gauge fill; `scoreInk` the legible text/border
+    // pair; both stay distinct from the brand accent so the score reads as a
+    // signal, not a button.
+    const scoreTier = pct >= 75 ? "strong" : pct >= 50 ? "moderate" : "weak"
+    const scoreFill =
+      scoreTier === "strong"
+        ? "var(--aa-success)"
+        : scoreTier === "moderate"
+          ? "var(--aa-warning)"
+          : "var(--aa-error)"
+    const scoreInk =
+      scoreTier === "strong"
+        ? "var(--aa-success-strong)"
+        : scoreTier === "moderate"
+          ? "var(--aa-warning-strong)"
+          : "var(--aa-error-strong)"
+    const scoreBand =
+      scoreTier === "strong"
+        ? "Strong match"
+        : scoreTier === "moderate"
+          ? "Moderate match"
+          : "Weak match"
     const docs =
       result.resumeContent &&
       result.resumeFilename &&
@@ -1048,199 +1110,183 @@ function IndexDialog() {
           }
         : null
     return (
-      <div className="min-h-screen bg-canvas flex flex-col">
+      <div className="min-h-screen bg-aa-surface flex flex-col font-aa text-aa-text-primary">
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-12 py-10 flex flex-col gap-8">
-          {/* Hero */}
+        <div className="flex-1 overflow-y-auto px-aa-6 pt-[36px] pb-aa-8 flex flex-col gap-aa-6">
+          {/* Header */}
+          <div className="flex flex-col gap-[6px]">
+            <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.4px] text-aa-text-primary">
+              {userProfile.personalInfo?.fullName || "Match report"}
+            </h1>
+            <p className="text-[13px] leading-[1.4] text-aa-text-secondary">
+              {jobTitle || "This role"}
+              {companyName ? ` — ${companyName}` : ""}
+            </p>
+          </div>
 
-          <h2 className="text-[28px] font-bold tracking-[0.01em] text-ink">
-            Your report is ready!
-          </h2>
-
-          {/* Match Card */}
-          <div className="bg-white border-2 border-ink p-6 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
-                Match Score
-              </span>
+          {/* Score panel — number, gauge and the analyst's read, on one surface */}
+          <div className="bg-aa-surface-subtle rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
+            <div className="flex items-end justify-between">
+              <div className="flex items-end gap-[1px]">
+                <span
+                  className="text-[56px] font-bold leading-none tracking-[-1.5px]"
+                  style={{ color: scoreInk }}>
+                  {pct}
+                </span>
+                <span className="text-[22px] font-bold leading-[1.35] text-aa-text-secondary">
+                  %
+                </span>
+              </div>
               <span
-                className="text-[22px] font-bold"
-                style={{ color: scoreColor }}>
-                {pct}%
+                className="inline-flex items-center rounded-aa-pill border px-[10px] py-[5px] text-[12px] font-semibold"
+                style={{ color: scoreInk, borderColor: scoreInk }}>
+                {scoreBand}
               </span>
             </div>
-            <div
-              className="w-full bg-canvas-divide h-[10px]"
-              style={{ borderRadius: 2 }}>
-              <div
-                className="h-[10px] transition-all duration-700"
-                style={{
-                  width: `${pct}%`,
-                  borderRadius: 2,
-                  backgroundColor: scoreColor
-                }}
-              />
+
+            <div className="flex flex-col gap-aa-2">
+              <div className="flex gap-[3px]">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 h-[10px] rounded-[2px] transition-colors duration-500"
+                    style={{
+                      backgroundColor:
+                        i < Math.round(pct / 5)
+                          ? scoreFill
+                          : "var(--aa-neutral-200)"
+                    }}
+                  />
+                ))}
+              </div>
             </div>
+
             {result.match.summary && (
-              <p className="text-[13px] text-ink-secondary leading-relaxed">
+              <p className="text-[14px] leading-[1.55] text-aa-neutral-700">
                 {result.match.summary}
               </p>
             )}
           </div>
 
-          {/* Strengths / Weaknesses / Improvements Accordion */}
+          {/* Breakdown — one bordered container, collapsible rows */}
           {((result.match.strengths?.length ?? 0) > 0 ||
             (result.match.weaknesses?.length ?? 0) > 0 ||
             (result.match.improvements?.length ?? 0) > 0) && (
-            <div className="flex flex-col gap-3">
-              {(result.match.strengths?.length ?? 0) > 0 && (
-                <div className="bg-[#EDF5ED] border border-[#2D6A2D]">
-                  <button
-                    onClick={() =>
-                      setMatchAccordionOpen((v) =>
-                        v === "strengths" ? null : "strengths"
-                      )
-                    }
-                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
-                    <ChevronRight
-                      className="w-3.5 h-3.5 text-[#2D6A2D] transition-transform duration-200 shrink-0"
-                      style={{
-                        transform:
-                          matchAccordionOpen === "strengths"
-                            ? "rotate(90deg)"
-                            : "rotate(0deg)"
-                      }}
-                    />
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#2D6A2D] shrink-0" />
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#2D6A2D] uppercase">
-                      Strengths ({result.match.strengths.length})
-                    </p>
-                  </button>
-                  {matchAccordionOpen === "strengths" && (
-                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
-                      {result.match.strengths.map((s, i) => (
-                        <li
-                          key={i}
-                          className="text-[12px] text-ink leading-[1.5]">
-                          ✓&nbsp;&nbsp;{s}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-              {(result.match.weaknesses?.length ?? 0) > 0 && (
-                <div className="bg-[#FBEAEA] border border-[#B33A3A]">
-                  <button
-                    onClick={() =>
-                      setMatchAccordionOpen((v) =>
-                        v === "weaknesses" ? null : "weaknesses"
-                      )
-                    }
-                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
-                    <ChevronRight
-                      className="w-3.5 h-3.5 text-[#B33A3A] transition-transform duration-200 shrink-0"
-                      style={{
-                        transform:
-                          matchAccordionOpen === "weaknesses"
-                            ? "rotate(90deg)"
-                            : "rotate(0deg)"
-                      }}
-                    />
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#B33A3A] shrink-0" />
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#B33A3A] uppercase">
-                      Weaknesses ({result.match.weaknesses.length})
-                    </p>
-                  </button>
-                  {matchAccordionOpen === "weaknesses" && (
-                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
-                      {result.match.weaknesses.map((w, i) => (
-                        <li
-                          key={i}
-                          className="text-[12px] text-ink leading-[1.5]">
-                          ×&nbsp;&nbsp;{w}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-              {(result.match.improvements?.length ?? 0) > 0 && (
-                <div className="bg-[#E8EEF6] border border-[#4A6FA5]">
-                  <button
-                    onClick={() =>
-                      setMatchAccordionOpen((v) =>
-                        v === "improvements" ? null : "improvements"
-                      )
-                    }
-                    className="w-full flex items-center gap-2 px-5 py-4 text-left">
-                    <ChevronRight
-                      className="w-3.5 h-3.5 text-[#4A6FA5] transition-transform duration-200 shrink-0"
-                      style={{
-                        transform:
-                          matchAccordionOpen === "improvements"
-                            ? "rotate(90deg)"
-                            : "rotate(0deg)"
-                      }}
-                    />
-                    <TrendingUp className="w-3.5 h-3.5 text-[#4A6FA5] shrink-0" />
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#4A6FA5] uppercase">
-                      Improvements ({result.match.improvements.length})
-                    </p>
-                  </button>
-                  {matchAccordionOpen === "improvements" && (
-                    <ul className="flex flex-col gap-[6px] px-5 pb-5 pl-10">
-                      {result.match.improvements.map((imp, i) => (
-                        <li
-                          key={i}
-                          className="text-[12px] text-ink leading-[1.5]">
-                          →&nbsp;&nbsp;{imp}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
+            <div className="bg-aa-surface rounded-aa-lg border border-aa-border overflow-hidden flex flex-col">
+              {(
+                [
+                  {
+                    key: "strengths",
+                    label: "Strengths",
+                    color: "var(--aa-success-strong)",
+                    Icon: CheckCircle2,
+                    marker: "✓",
+                    items: result.match.strengths ?? []
+                  },
+                  {
+                    key: "weaknesses",
+                    label: "Weaknesses",
+                    color: "var(--aa-error-strong)",
+                    Icon: AlertTriangle,
+                    marker: "×",
+                    items: result.match.weaknesses ?? []
+                  },
+                  {
+                    key: "improvements",
+                    label: "Improvements",
+                    color: "var(--aa-secondary)",
+                    Icon: TrendingUp,
+                    marker: "→",
+                    items: result.match.improvements ?? []
+                  }
+                ] as const
+              )
+                .filter((row) => row.items.length > 0)
+                .map((row, idx) => {
+                  const open = matchAccordionOpen === row.key
+                  return (
+                    <div
+                      key={row.key}
+                      className={idx > 0 ? "border-t border-aa-border" : ""}>
+                      <button
+                        onClick={() =>
+                          setMatchAccordionOpen((v) =>
+                            v === row.key ? null : row.key
+                          )
+                        }
+                        className="w-full flex items-center gap-aa-3 px-aa-4 py-aa-4 text-left">
+                        <ChevronRight
+                          className="w-[18px] h-[18px] text-aa-neutral-500 shrink-0 transition-transform duration-200"
+                          style={{
+                            transform: open ? "rotate(90deg)" : "rotate(0deg)"
+                          }}
+                        />
+                        <row.Icon
+                          className="w-4 h-4 shrink-0"
+                          style={{ color: row.color }}
+                        />
+                        <span className="flex-1 text-[15px] font-semibold text-aa-text-primary">
+                          {row.label}
+                        </span>
+                        <span className="text-[13px] font-semibold text-aa-text-secondary tabular-nums">
+                          {row.items.length}
+                        </span>
+                      </button>
+                      {open && (
+                        <ul className="flex flex-col gap-aa-3 px-aa-4 pb-aa-4 pl-[46px]">
+                          {row.items.map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex gap-aa-2 text-[14px] leading-[1.45] text-aa-neutral-700">
+                              <span
+                                className="shrink-0 font-semibold"
+                                style={{ color: row.color }}>
+                                {row.marker}
+                              </span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                })}
             </div>
           )}
 
           {/* Company About Card */}
           {(companyInfo || companyInfoLoading) && (
-            <div className="bg-white border border-canvas-divide px-6 py-5 flex flex-col gap-[14px]">
+            <div className="bg-aa-surface rounded-aa-lg border border-aa-border px-aa-4 py-aa-4 flex flex-col gap-aa-3">
               {companyInfoLoading ? (
-                <div className="flex items-center gap-2 animate-pulse">
-                  <Building2 className="w-4 h-4 text-ink-secondary" />
-                  <span className="text-[14px] font-bold text-ink">
+                <div className="flex items-center gap-aa-2 animate-pulse">
+                  <Building2 className="w-4 h-4 text-aa-neutral-500" />
+                  <span className="text-[14px] font-semibold text-aa-text-primary">
                     Researching {companyName}...
                   </span>
                 </div>
               ) : (
                 companyInfo && (
                   <>
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-ink-secondary" />
-                      <h3 className="text-[14px] font-bold text-ink">
+                    <div className="flex items-center gap-aa-2">
+                      <Building2 className="w-4 h-4 text-aa-neutral-500" />
+                      <h3 className="text-[14px] font-semibold text-aa-text-primary">
                         About {companyName}
                       </h3>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <span
-                        className="inline-flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px] text-[#555555]"
-                        style={{ borderRadius: 2 }}>
-                        <Building2 className="w-3 h-3 text-ink-secondary" />
+                    <div className="flex flex-wrap gap-aa-2">
+                      <span className="inline-flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px] text-aa-text-secondary">
+                        <Building2 className="w-3 h-3 text-aa-neutral-400" />
                         {companyInfo.industry}
                       </span>
-                      <span
-                        className="inline-flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px] text-[#555555]"
-                        style={{ borderRadius: 2 }}>
-                        <Users className="w-3 h-3 text-ink-secondary" />
+                      <span className="inline-flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px] text-aa-text-secondary">
+                        <Users className="w-3 h-3 text-aa-neutral-400" />
                         {companyInfo.size}
                       </span>
                     </div>
 
                     {companyInfo.description && (
-                      <p className="text-[12px] text-[#555555] leading-[1.6]">
+                      <p className="text-[12px] text-aa-neutral-600 leading-[1.6]">
                         {companyInfo.description}
                       </p>
                     )}
@@ -1249,7 +1295,7 @@ function IndexDialog() {
                       <div>
                         <button
                           onClick={() => setProjectsExpanded((v) => !v)}
-                          className="flex items-center gap-1 text-[12px] font-semibold text-sidebar-accent">
+                          className="flex items-center gap-1 text-[12px] font-semibold text-aa-text-link">
                           <ChevronRight
                             className="w-3 h-3 transition-transform duration-200"
                             style={{
@@ -1262,7 +1308,7 @@ function IndexDialog() {
                           {companyInfo.notableProjects.length})
                         </button>
                         {projectsExpanded && (
-                          <ul className="list-disc list-inside text-[12px] text-[#555555] space-y-1 pl-1 mt-2">
+                          <ul className="list-disc list-inside text-[12px] text-aa-neutral-600 space-y-1 pl-1 mt-2">
                             {companyInfo.notableProjects.map((project, idx) => (
                               <li key={`${project}-${idx}`}>{project}</li>
                             ))}
@@ -1277,14 +1323,13 @@ function IndexDialog() {
                       <div className="flex flex-wrap gap-2">
                         {companyInfo.ratings.glassdoor && (
                           <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Glassdoor</span>
+                            className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                            <span className="text-aa-text-secondary">Glassdoor</span>
                             <span
                               className={
                                 companyInfo.ratings.glassdoor >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                  ? "text-aa-success-strong"
+                                  : "text-aa-error-strong"
                               }>
                               {companyInfo.ratings.glassdoor}★
                             </span>
@@ -1292,14 +1337,13 @@ function IndexDialog() {
                         )}
                         {companyInfo.ratings.indeed && (
                           <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Indeed</span>
+                            className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                            <span className="text-aa-text-secondary">Indeed</span>
                             <span
                               className={
                                 companyInfo.ratings.indeed >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                  ? "text-aa-success-strong"
+                                  : "text-aa-error-strong"
                               }>
                               {companyInfo.ratings.indeed}★
                             </span>
@@ -1307,14 +1351,13 @@ function IndexDialog() {
                         )}
                         {companyInfo.ratings.teamlyzer && (
                           <span
-                            className="inline-flex items-center gap-1 bg-[#F0EDE8] border border-[#D4CEC5] px-[10px] py-[6px] text-[11px]"
-                            style={{ borderRadius: 2 }}>
-                            <span className="text-[#555555]">Teamlyzer</span>
+                            className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                            <span className="text-aa-text-secondary">Teamlyzer</span>
                             <span
                               className={
                                 companyInfo.ratings.teamlyzer >= 3.5
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                  ? "text-aa-success-strong"
+                                  : "text-aa-error-strong"
                               }>
                               {companyInfo.ratings.teamlyzer}★
                             </span>
@@ -1328,147 +1371,155 @@ function IndexDialog() {
             </div>
           )}
 
-          {/* Generate Documents CTA (step 2) — shown until docs exist */}
-          {!docs && (
-            <div className="bg-white border-2 border-ink p-6 flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
-                  Tailored Documents
-                </span>
-                <p className="text-[13px] text-ink-secondary leading-relaxed">
-                  Happy with the match? Generate a CV and cover letter tailored
-                  to this job.
+          {/* Triage — the one decision that gates everything below it */}
+          {!triageDecision && (
+            <div className="bg-aa-surface-subtle rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
+              <span className="text-[13px] font-semibold text-aa-text-primary">
+                What next?
+              </span>
+              <div className="flex flex-col gap-aa-3">
+                <div className="flex gap-aa-3">
+                  <button
+                    onClick={() => setTriageDecision("apply")}
+                    className="flex-1 flex items-center justify-center gap-aa-2 py-[12px] rounded-aa-md bg-aa-primary text-aa-text-on-primary text-[14px] font-semibold hover:bg-aa-primary-hover transition-colors">
+                    <Sparkles size={16} className="shrink-0" />
+                    Apply
+                  </button>
+                  <button
+                    onClick={() => openSaveForm("success")}
+                    className="flex-1 flex items-center justify-center py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
+                    Save for later
+                  </button>
+                </div>
+                <button
+                  onClick={() => closeSidePanel()}
+                  className="self-center px-aa-3 py-aa-2 text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
+                  Not a fit
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Everything below only appears once "Apply" is chosen in the
+              triage above — "Save for later" and "Not a fit" navigate away
+              immediately instead of revealing more of this screen. */}
+          {triageDecision === "apply" && (
+            <>
+              {/* Generate Documents CTA (step 2) — shown until docs exist */}
+              {!docs && (
+                <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[15px] font-semibold text-aa-text-primary">
+                      Tailored documents
+                    </span>
+                    <p className="text-[13px] text-aa-text-secondary leading-[1.5]">
+                      Happy with the match? Generate a CV and cover letter
+                      tailored to this job.
+                    </p>
+                  </div>
+                  {docsLoading ? (
+                    <div className="flex flex-col gap-aa-2">
+                      <div className="w-full bg-aa-neutral-200 h-[10px] rounded-aa-pill overflow-hidden">
+                        <div
+                          className="h-[10px] bg-aa-primary transition-all duration-300 ease-out"
+                          style={{ width: `${docsProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-[12px] text-aa-text-secondary text-center">
+                        Generating your documents… this may take a minute
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleGenerateDocuments}
+                      className="flex items-center justify-center gap-aa-2 py-[12px] rounded-aa-md bg-aa-primary text-aa-text-on-primary text-[14px] font-semibold hover:bg-aa-primary-hover transition-colors">
+                      <Sparkles size={16} />
+                      Generate CV + cover letter
+                    </button>
+                  )}
+                  {docsError && (
+                    <p className="text-[13px] text-aa-error-strong">
+                      {docsError}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Download Card */}
+              {docs && (
+                <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
+                  {[
+                    {
+                      label: "Resume",
+                      filename: docs.resumeFilename,
+                      content: docs.resumeContent
+                    },
+                    {
+                      label: "Cover letter",
+                      filename: docs.coverLetterFilename,
+                      content: docs.coverLetterContent
+                    }
+                  ].map((file, i) => (
+                    <div
+                      key={file.label}
+                      className={`flex items-center justify-between px-aa-4 py-aa-4 ${
+                        i === 0 ? "border-b border-aa-border" : ""
+                      }`}>
+                      <span className="text-[14px] font-semibold text-aa-text-primary">
+                        {file.label}
+                      </span>
+                      <div className="flex items-center gap-aa-2">
+                        <button
+                          onClick={() =>
+                            downloadMarkdownFile(file.filename, file.content)
+                          }
+                          className="flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[14px] py-2 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+                          <FileText size={14} />
+                          MD
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await downloadMarkdownAsPdf(
+                                file.content,
+                                file.filename
+                              )
+                            } catch (error) {
+                              console.error("PDF export failed:", error)
+                              alert("Failed to generate PDF. Please try again.")
+                            }
+                          }}
+                          className="flex items-center gap-[6px] rounded-aa-sm bg-aa-primary px-[14px] py-2 text-[11px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+                          <Download size={14} />
+                          PDF
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Post-generation CTA — Save is secondary, View Saved is a text link */}
+              <div className="flex flex-col gap-aa-2 pb-aa-2">
+                <div className="flex items-center gap-aa-4">
+                  <button
+                    onClick={() => openSaveForm("success", null, "Applied")}
+                    className="flex-1 flex items-center justify-center py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
+                    Save application
+                  </button>
+                  <button
+                    onClick={() => setView("applicationsList")}
+                    className="text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
+                    View saved
+                  </button>
+                </div>
+                <p className="text-[12px] text-aa-text-secondary">
+                  You can come back to this analysis anytime from saved
+                  applications.
                 </p>
               </div>
-              {docsLoading ? (
-                <div className="flex flex-col gap-2">
-                  <div
-                    className="w-full bg-canvas-divide h-[10px]"
-                    style={{ borderRadius: 2 }}>
-                    <div
-                      className="h-[10px] bg-sidebar-accent transition-all duration-300 ease-out"
-                      style={{ width: `${docsProgress}%`, borderRadius: 2 }}
-                    />
-                  </div>
-                  <p className="text-[12px] text-ink-muted text-center">
-                    Generating your documents… this may take a minute
-                  </p>
-                </div>
-              ) : (
-                <button
-                  onClick={handleGenerateDocuments}
-                  className="flex items-center justify-center gap-2 py-[14px] bg-sidebar-accent text-white text-[13px] font-semibold hover:opacity-90 transition-opacity"
-                  style={{ borderRadius: 2 }}>
-                  <Sparkles size={16} />
-                  Generate CV + Cover Letter
-                </button>
-              )}
-              {docsError && (
-                <p className="text-[13px] text-red-500">{docsError}</p>
-              )}
-            </div>
+            </>
           )}
-
-          {/* Download Card */}
-          {docs && (
-          <div className="bg-white border-2 border-ink">
-            {/* Resume */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-canvas-divide">
-              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
-                Download Resume
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    downloadMarkdownFile(
-                      docs.resumeFilename,
-                      docs.resumeContent
-                    )
-                  }
-                  className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
-                  style={{ borderRadius: 2 }}>
-                  <FileText size={14} />
-                  MD
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await downloadMarkdownAsPdf(
-                        docs.resumeContent,
-                        docs.resumeFilename
-                      )
-                    } catch (error) {
-                      console.error("PDF export failed:", error)
-                      alert("Failed to generate PDF. Please try again.")
-                    }
-                  }}
-                  className="flex items-center gap-[6px] bg-sidebar-accent px-[14px] py-2 text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
-                  style={{ borderRadius: 2 }}>
-                  <Download size={14} />
-                  PDF
-                </button>
-              </div>
-            </div>
-            {/* Cover Letter */}
-            <div className="flex items-center justify-between px-6 py-5">
-              <span className="text-[11px] font-bold tracking-[0.15em] text-ink uppercase">
-                Download Cover Letter
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    downloadMarkdownFile(
-                      docs.coverLetterFilename,
-                      docs.coverLetterContent
-                    )
-                  }
-                  className="flex items-center gap-[6px] bg-[#F0EDE8] border border-[#D4CEC5] px-[14px] py-2 text-[11px] font-semibold text-[#555555] hover:bg-canvas-divide transition-colors"
-                  style={{ borderRadius: 2 }}>
-                  <FileText size={14} />
-                  MD
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await downloadMarkdownAsPdf(
-                        docs.coverLetterContent,
-                        docs.coverLetterFilename
-                      )
-                    } catch (error) {
-                      console.error("PDF export failed:", error)
-                      alert("Failed to generate PDF. Please try again.")
-                    }
-                  }}
-                  className="flex items-center gap-[6px] bg-sidebar-accent px-[14px] py-2 text-[11px] font-semibold text-white hover:opacity-90 transition-opacity"
-                  style={{ borderRadius: 2 }}>
-                  <Download size={14} />
-                  PDF
-                </button>
-              </div>
-            </div>
-          </div>
-          )}
-
-          {/* CTA Row — Save is secondary (outline), View Saved is tertiary (text link) */}
-          <div className="flex flex-col gap-2 pb-2">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => openSaveForm("success")}
-                className="flex-1 flex items-center justify-center py-[14px] bg-canvas border-2 border-ink text-ink text-[13px] font-semibold hover:bg-canvas-divide transition-colors"
-                style={{ borderRadius: 2 }}>
-                Save Application
-              </button>
-              <button
-                onClick={() => setView("applicationsList")}
-                className="text-[13px] font-semibold text-ink-secondary hover:text-ink transition-colors">
-                View Saved Applications
-              </button>
-            </div>
-            <p className="text-[12px] text-ink-muted">
-              You can come back to this analysis anytime from Saved
-              Applications.
-            </p>
-          </div>
         </div>
       </div>
     )
@@ -1723,6 +1774,37 @@ function IndexDialog() {
             {saveFormError && (
               <p className="text-sm text-red-500">{saveFormError}</p>
             )}
+
+            {/* Generate documents — for applications saved "for later"
+                without a CV/cover letter yet, but with the job description
+                persisted at save time */}
+            {editingApplication?.jobDescription &&
+              !editingApplication.resumeContent && (
+                <div className="border-t border-canvas-divide pt-5">
+                  <button
+                    onClick={generateDocumentsForApplication}
+                    disabled={generatingDocsForApp}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3
+                             bg-sidebar-accent text-white text-[11px] font-semibold tracking-[0.1em]
+                             hover:opacity-90 transition-opacity
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                    {generatingDocsForApp ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>GENERATING DOCUMENTS...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={15} />
+                        <span>GENERATE CV + COVER LETTER</span>
+                      </>
+                    )}
+                  </button>
+                  {docsGenError && (
+                    <p className="mt-2 text-sm text-red-500">{docsGenError}</p>
+                  )}
+                </div>
+              )}
 
             {/* Preparation Plan */}
             {isInterviewStage(saveFormData.status) &&

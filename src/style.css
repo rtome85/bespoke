@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -69,6 +69,72 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* ---------------------------------------------------------------------
+     ApplyAI design system — tokens authored on the Pencil canvas.
+     Consumed via the `aa-*` scales in tailwind.config.js.
+     --------------------------------------------------------------------- */
+
+  /* Brand & semantic */
+  --aa-primary: #ff683d;
+  --aa-primary-hover: #e65a2e;
+  --aa-primary-pressed: #cc4c24;
+  --aa-primary-soft: #fff3ee;
+  --aa-secondary: #2563eb;
+  --aa-success: #22c55e;
+  --aa-success-soft: #e7f8ec;
+  --aa-success-strong: #15803d;
+  --aa-warning: #f59e0b;
+  --aa-warning-soft: #fef4e6;
+  --aa-warning-strong: #b45309;
+  --aa-error: #ef4444;
+  --aa-error-soft: #fdecec;
+  --aa-error-strong: #b91c1c;
+  --aa-info: #2563eb;
+  --aa-purple: #7c3aed;
+
+  /* Neutrals */
+  --aa-neutral-50: #fafafb;
+  --aa-neutral-100: #f3f4f6;
+  --aa-neutral-200: #e5e7eb;
+  --aa-neutral-300: #d1d5db;
+  --aa-neutral-400: #9ca3af;
+  --aa-neutral-500: #6b7280;
+  --aa-neutral-600: #4b5563;
+  --aa-neutral-700: #374151;
+  --aa-neutral-800: #1f2937;
+  --aa-neutral-900: #111827;
+
+  /* Surfaces, borders, text */
+  --aa-surface: #ffffff;
+  --aa-surface-subtle: #fafafb;
+  --aa-surface-brand-soft: #fff3ee;
+  --aa-border: #e5e7eb;
+  --aa-border-subtle: #f1f5f9;
+  --aa-text-primary: #111827;
+  --aa-text-secondary: #6b7280;
+  --aa-text-on-primary: #ffffff;
+  --aa-text-link: #2563eb;
+  --aa-text-disabled: #9ca3af;
+
+  /* Type, spacing, radius */
+  --aa-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  --aa-space-1: 4px;
+  --aa-space-2: 8px;
+  --aa-space-3: 12px;
+  --aa-space-4: 16px;
+  --aa-space-5: 20px;
+  --aa-space-6: 24px;
+  --aa-space-8: 32px;
+  --aa-space-10: 40px;
+  --aa-space-12: 48px;
+  --aa-space-16: 64px;
+  --aa-radius-sm: 4px;
+  --aa-radius-md: 8px;
+  --aa-radius-lg: 12px;
+  --aa-radius-xl: 16px;
+  --aa-radius-pill: 9999px;
 }
 
 body {
