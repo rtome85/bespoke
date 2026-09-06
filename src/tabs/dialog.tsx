@@ -1541,8 +1541,12 @@ function IndexDialog() {
 
   // Save form screen
   if (view === "saveForm") {
+    const sfLabel =
+      "block text-[12px] font-semibold text-aa-text-secondary mb-1.5"
+    const sfInput =
+      "w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm placeholder:text-aa-neutral-400 focus:outline-none focus:border-aa-primary transition-colors"
     return (
-      <div className="min-h-screen bg-canvas flex flex-col">
+      <div className="min-h-screen bg-aa-surface-subtle flex flex-col font-aa text-aa-text-primary">
         <PreparationPlanModal
           isOpen={preparationPlanModalOpen}
           onClose={() => setPreparationPlanModalOpen(false)}
@@ -1553,65 +1557,58 @@ function IndexDialog() {
         />
 
         {/* Top Bar */}
-        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
-          <div className="flex flex-col gap-[3px]">
-            <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none">
-              {editingApplication ? "EDIT APPLICATION" : "TRACK APPLICATION"}
+        <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-[17px] font-bold tracking-[-0.3px] text-aa-text-primary leading-none">
+              {editingApplication ? "Edit application" : "Track application"}
             </h1>
-            <p className="text-[13px] text-ink-secondary leading-none">
-              Track your job application
+            <p className="text-[12px] text-aa-text-secondary leading-none">
+              Keep your pipeline up to date
             </p>
           </div>
           <button
             onClick={() => setView(saveFormOrigin)}
-            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
-            <X size={18} />
+            aria-label="Close"
+            className="w-8 h-8 grid place-items-center rounded-aa-md bg-aa-neutral-100 text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+            <X size={16} />
           </button>
         </div>
 
         {/* Form Content */}
-        <div className="flex-1 px-12 py-10 overflow-auto flex justify-center">
+        <div className="flex-1 px-6 py-8 overflow-auto flex justify-center">
           <div className="w-full max-w-lg space-y-5">
             {/* Fields */}
             <div className="space-y-4">
               {/* Company */}
               <div>
-                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                  Company *
-                </label>
+                <label className={sfLabel}>Company *</label>
                 <input
                   type="text"
                   value={saveFormData.company}
                   onChange={(e) =>
                     setSaveFormData((d) => ({ ...d, company: e.target.value }))
                   }
-                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                             focus:outline-none focus:border-ink-secondary transition-colors"
+                  className={sfInput}
                 />
               </div>
 
               {/* Job Title */}
               <div>
-                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                  Job Title *
-                </label>
+                <label className={sfLabel}>Job title *</label>
                 <input
                   type="text"
                   value={saveFormData.jobTitle}
                   onChange={(e) =>
                     setSaveFormData((d) => ({ ...d, jobTitle: e.target.value }))
                   }
-                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                             focus:outline-none focus:border-ink-secondary transition-colors"
+                  className={sfInput}
                 />
               </div>
 
               {/* Status + Date (2 columns) */}
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                    Status
-                  </label>
+                  <label className={sfLabel}>Status</label>
                   <select
                     value={saveFormData.status}
                     onChange={(e) =>
@@ -1620,8 +1617,7 @@ function IndexDialog() {
                         status: e.target.value as ApplicationStatus
                       }))
                     }
-                    className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                               focus:outline-none focus:border-ink-secondary transition-colors">
+                    className={sfInput}>
                     {APPLICATION_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -1630,41 +1626,35 @@ function IndexDialog() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                    Date Applied *
-                  </label>
+                  <label className={sfLabel}>Date applied *</label>
                   <input
                     type="date"
                     value={saveFormData.date}
                     onChange={(e) =>
                       setSaveFormData((d) => ({ ...d, date: e.target.value }))
                     }
-                    className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                               focus:outline-none focus:border-ink-secondary transition-colors"
+                    className={sfInput}
                   />
                 </div>
               </div>
 
               {/* Job URL */}
               <div>
-                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                  Job Posting URL
-                </label>
+                <label className={sfLabel}>Job posting URL</label>
                 <input
                   type="url"
                   value={saveFormData.jobUrl}
                   onChange={(e) =>
                     setSaveFormData((d) => ({ ...d, jobUrl: e.target.value }))
                   }
-                  placeholder="https://..."
-                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                             placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                  placeholder="https://…"
+                  className={sfInput}
                 />
               </div>
             </div>
 
             {/* Divider */}
-            <div className="border-t border-canvas-divide" />
+            <div className="border-t border-aa-border" />
 
             {/* Favourite toggle */}
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -1677,18 +1667,16 @@ function IndexDialog() {
                     isFavorite: e.target.checked
                   }))
                 }
-                className="border-canvas-input-border text-sidebar-accent focus:ring-sidebar-accent"
+                className="w-4 h-4 accent-aa-primary"
               />
-              <span className="text-[13px] text-ink">
-                <span className="text-sidebar-accent">★</span> Mark as favourite
+              <span className="text-[13px] text-aa-text-primary">
+                <span className="text-aa-primary">★</span> Mark as favourite
               </span>
             </label>
 
             {/* Tags */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-2">
-                Tags
-              </label>
+              <label className={`${sfLabel} mb-2`}>Tags</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {PRESET_TAGS.map((tag) => {
                   const active = saveFormData.tags.includes(tag)
@@ -1704,10 +1692,10 @@ function IndexDialog() {
                             : [...f.tags, tag]
                         }))
                       }
-                      className={`px-3 py-1 text-[11px] font-medium tracking-[0.05em] border transition-colors ${
+                      className={`px-3 py-1 rounded-aa-pill text-[11px] font-semibold border transition-colors ${
                         active
-                          ? "bg-ink text-white border-ink"
-                          : "border-canvas-input-border text-ink-secondary hover:text-ink hover:border-ink-secondary"
+                          ? "bg-aa-primary text-aa-text-on-primary border-aa-primary"
+                          : "border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:border-aa-neutral-400"
                       }`}>
                       {tag}
                     </button>
@@ -1721,7 +1709,7 @@ function IndexDialog() {
                   .map((t) => (
                     <span
                       key={t}
-                      className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-sidebar-accent border border-canvas-divide">
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-aa-pill text-[11px] text-aa-text-secondary border border-aa-border">
                       {t}
                       <button
                         type="button"
@@ -1731,7 +1719,7 @@ function IndexDialog() {
                             tags: f.tags.filter((x) => x !== t)
                           }))
                         }
-                        className="hover:text-ink transition-colors leading-none">
+                        className="hover:text-aa-text-primary transition-colors leading-none">
                         ×
                       </button>
                     </span>
@@ -1740,8 +1728,7 @@ function IndexDialog() {
               <input
                 type="text"
                 placeholder="Add custom tag, press Enter"
-                className="w-full px-4 py-2.5 bg-canvas border border-canvas-input-border text-ink text-sm
-                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                className={sfInput}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault()
@@ -1757,9 +1744,7 @@ function IndexDialog() {
 
             {/* Notes */}
             <div>
-              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                Notes
-              </label>
+              <label className={sfLabel}>Notes</label>
               <textarea
                 rows={3}
                 value={saveFormData.notes}
@@ -1767,26 +1752,25 @@ function IndexDialog() {
                   setSaveFormData((f) => ({ ...f, notes: e.target.value }))
                 }
                 placeholder="Interview notes, contacts, reminders…"
-                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors resize-none"
+                className={`${sfInput} resize-none`}
               />
             </div>
 
             {/* Save docs checkbox (only from success flow) */}
             {saveFormOrigin === "success" && result?.resumeContent && (
-              <label className="flex items-center gap-2.5 text-[13px] text-ink cursor-pointer">
+              <label className="flex items-center gap-2.5 text-[13px] text-aa-text-primary cursor-pointer">
                 <input
                   type="checkbox"
                   checked={saveDocs}
                   onChange={(e) => setSaveDocs(e.target.checked)}
-                  className="border-canvas-input-border text-sidebar-accent focus:ring-sidebar-accent"
+                  className="w-4 h-4 accent-aa-primary"
                 />
                 Save resume and cover letter
               </label>
             )}
 
             {saveFormError && (
-              <p className="text-sm text-red-500">{saveFormError}</p>
+              <p className="text-sm text-aa-error-strong">{saveFormError}</p>
             )}
 
             {/* Generate documents — for applications saved "for later"
@@ -1794,28 +1778,30 @@ function IndexDialog() {
                 persisted at save time */}
             {editingApplication?.jobDescription &&
               !editingApplication.resumeContent && (
-                <div className="border-t border-canvas-divide pt-5">
+                <div className="border-t border-aa-border pt-5">
                   <button
                     onClick={generateDocumentsForApplication}
                     disabled={generatingDocsForApp}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3
-                             bg-sidebar-accent text-white text-[11px] font-semibold tracking-[0.1em]
-                             hover:opacity-90 transition-opacity
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                             bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
+                             hover:bg-aa-primary-hover transition-colors
                              disabled:opacity-50 disabled:cursor-not-allowed">
                     {generatingDocsForApp ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>GENERATING DOCUMENTS...</span>
+                        <div className="w-4 h-4 border-2 border-aa-text-on-primary/30 border-t-aa-text-on-primary rounded-full animate-spin" />
+                        <span>Generating documents…</span>
                       </>
                     ) : (
                       <>
                         <Sparkles size={15} />
-                        <span>GENERATE CV + COVER LETTER</span>
+                        <span>Generate CV + cover letter</span>
                       </>
                     )}
                   </button>
                   {docsGenError && (
-                    <p className="mt-2 text-sm text-red-500">{docsGenError}</p>
+                    <p className="mt-2 text-sm text-aa-error-strong">
+                      {docsGenError}
+                    </p>
                   )}
                 </div>
               )}
@@ -1824,16 +1810,16 @@ function IndexDialog() {
             {isInterviewStage(saveFormData.status) &&
               editingApplication &&
               perplexityConfig?.preparationPlanEnabled && (
-                <div className="border-t border-canvas-divide pt-5">
+                <div className="border-t border-aa-border pt-5">
                   {editingApplication.preparationPlan &&
                   editingApplication.preparationPlan.interviewType ===
                     saveFormData.status ? (
-                    <div className="flex items-center gap-3 p-3 bg-canvas border border-canvas-divide">
+                    <div className="flex items-center gap-3 p-3 rounded-aa-md bg-aa-surface border border-aa-border">
                       <Lightbulb
                         size={16}
-                        className="text-sidebar-accent shrink-0"
+                        className="text-aa-primary shrink-0"
                       />
-                      <span className="text-[13px] text-ink flex-1">
+                      <span className="text-[13px] text-aa-text-primary flex-1">
                         Preparation plan already generated
                       </span>
                       <button
@@ -1843,33 +1829,35 @@ function IndexDialog() {
                           )
                           setPreparationPlanModalOpen(true)
                         }}
-                        className="text-[11px] font-semibold tracking-[0.05em] text-sidebar-accent hover:text-ink transition-colors">
-                        VIEW PLAN
+                        className="text-[11px] font-semibold text-aa-primary hover:underline transition-colors">
+                        View plan
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => generatePreparationPlan()}
                       disabled={generatingPlan}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3
-                               bg-sidebar-accent text-white text-[11px] font-semibold tracking-[0.1em]
-                               hover:opacity-90 transition-opacity
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                               bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
+                               hover:bg-aa-primary-hover transition-colors
                                disabled:opacity-50 disabled:cursor-not-allowed">
                       {generatingPlan ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>GENERATING PLAN...</span>
+                          <div className="w-4 h-4 border-2 border-aa-text-on-primary/30 border-t-aa-text-on-primary rounded-full animate-spin" />
+                          <span>Generating plan…</span>
                         </>
                       ) : (
                         <>
                           <Sparkles size={15} />
-                          <span>GENERATE PREPARATION PLAN</span>
+                          <span>Generate preparation plan</span>
                         </>
                       )}
                     </button>
                   )}
                   {planError && (
-                    <p className="mt-2 text-sm text-red-500">{planError}</p>
+                    <p className="mt-2 text-sm text-aa-error-strong">
+                      {planError}
+                    </p>
                   )}
                 </div>
               )}
@@ -1878,15 +1866,15 @@ function IndexDialog() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={handleSaveApplication}
-                className="flex-1 px-4 py-3 bg-ink text-white text-[11px] font-semibold tracking-[0.1em]
-                           hover:opacity-80 transition-opacity">
-                SAVE
+                className="flex-1 px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
+                           hover:bg-aa-primary-hover transition-colors">
+                Save
               </button>
               <button
                 onClick={() => setView(saveFormOrigin)}
-                className="flex-1 px-4 py-3 border border-canvas-input-border text-ink-secondary text-[11px] font-semibold tracking-[0.1em]
-                           hover:text-ink hover:border-ink-secondary transition-colors">
-                CANCEL
+                className="flex-1 px-4 py-2.5 border border-aa-border text-aa-text-secondary rounded-aa-md text-[13px] font-semibold
+                           hover:text-aa-text-primary hover:border-aa-neutral-400 transition-colors">
+                Cancel
               </button>
             </div>
           </div>
@@ -2393,90 +2381,82 @@ function IndexDialog() {
   }
 
   // Form screen (default)
+  const fieldLabel =
+    "block text-[12px] font-semibold text-aa-text-secondary mb-1.5"
+  const fieldInput =
+    "w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm placeholder:text-aa-neutral-400 focus:outline-none focus:border-aa-primary transition-colors"
   return (
-    <div className="min-h-screen bg-canvas flex flex-col">
+    <div className="min-h-screen bg-aa-surface-subtle flex flex-col font-aa text-aa-text-primary">
       {/* Top Bar */}
-      <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
-        <div className="flex flex-col gap-[3px]">
-          <h1 className="text-[20px] font-bold tracking-[0.1em] text-ink leading-none">
-            CHECK YOUR MATCH
+      <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-[17px] font-bold tracking-[-0.3px] text-aa-text-primary leading-none">
+            Check your match
           </h1>
-          <p className="text-[13px] text-ink-secondary leading-none">
-            Confirm the job details, then analyze your match
+          <p className="text-[12px] text-aa-text-secondary leading-none">
+            Confirm the job details, then analyze
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={closeSidePanel}
-            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
-            <X size={18} />
-          </button>
-        </div>
+        <button
+          onClick={closeSidePanel}
+          aria-label="Close"
+          className="w-8 h-8 grid place-items-center rounded-aa-md bg-aa-neutral-100 text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+          <X size={16} />
+        </button>
       </div>
 
       {/* Form Content */}
-      <div className="flex-1 px-12 py-10 overflow-auto flex justify-center">
+      <div className="flex-1 px-6 py-8 overflow-auto flex justify-center">
         <div className="w-full max-w-lg">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                Company Name *
-              </label>
+              <label className={fieldLabel}>Company name *</label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="e.g., Google, Microsoft"
+                placeholder="e.g. Google, Microsoft"
                 required
-                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                className={fieldInput}
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                Job Title *
-              </label>
+              <label className={fieldLabel}>Job title *</label>
               <input
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                placeholder="e.g., Senior Software Engineer"
+                placeholder="e.g. Senior Software Engineer"
                 required
-                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                           placeholder:text-ink-muted focus:outline-none focus:border-ink-secondary transition-colors"
+                className={fieldInput}
               />
             </div>
 
             {jobDescription && (
               <div>
-                <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                  Job Description (Extracted)
-                </label>
+                <label className={fieldLabel}>Job description (extracted)</label>
                 <textarea
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   rows={8}
-                  className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                             focus:outline-none focus:border-ink-secondary transition-colors resize-y"
+                  className={`${fieldInput} resize-y`}
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
-                AI Model
-              </label>
-              <div className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-sm space-y-1">
+              <label className={fieldLabel}>AI model</label>
+              <div className="w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-sm space-y-1">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-ink-muted">Match scoring</span>
-                  <span className="font-medium text-ink">
+                  <span className="text-aa-text-secondary">Match scoring</span>
+                  <span className="font-medium text-aa-text-primary">
                     {routingLabels.scoring ?? "Set in Settings"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-ink-muted">Document drafting</span>
-                  <span className="font-medium text-ink">
+                  <span className="text-aa-text-secondary">Document drafting</span>
+                  <span className="font-medium text-aa-text-primary">
                     {routingLabels.drafting ?? "Set in Settings"}
                   </span>
                 </div>
@@ -2484,13 +2464,13 @@ function IndexDialog() {
               <button
                 type="button"
                 onClick={() => chrome.runtime.openOptionsPage()}
-                className="mt-1.5 text-[11px] font-semibold text-ink-secondary underline hover:text-ink transition-colors">
+                className="mt-1.5 text-[11px] font-semibold text-aa-primary hover:underline">
                 Change in Settings → Model routing
               </button>
             </div>
 
-            <div className="border-t border-canvas-divide pt-4">
-              <p className="text-[12px] text-ink-muted">
+            <div className="border-t border-aa-border pt-4">
+              <p className="text-[12px] text-aa-text-secondary">
                 Profile: {userProfile.skills?.length ?? 0} skills,{" "}
                 {userProfile.workExperience?.length ?? 0} experiences,{" "}
                 {userProfile.personalProjects?.length ?? 0} projects,{" "}
@@ -2500,9 +2480,8 @@ function IndexDialog() {
 
             <button
               type="submit"
-              className="w-full px-4 py-3 bg-ink text-white text-[11px] font-semibold tracking-[0.1em]
-                         hover:opacity-80 transition-opacity">
-              ANALYZE MATCH
+              className="w-full px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold hover:bg-aa-primary-hover transition-colors">
+              Analyze match
             </button>
           </form>
 
@@ -2512,8 +2491,8 @@ function IndexDialog() {
                 status.includes("failed") ||
                 status.includes("error") ||
                 status.includes("Error")
-                  ? "text-red-500"
-                  : "text-sidebar-accent"
+                  ? "text-aa-error-strong"
+                  : "text-aa-primary"
               }`}>
               {status}
             </p>
