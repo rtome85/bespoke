@@ -905,6 +905,7 @@ function IndexDialog() {
           }
         : {}
 
+    const now = new Date().toISOString()
     const updated: SavedApplication[] = editingApplication
       ? savedApplications.map((a) =>
           a.id === editingApplication.id
@@ -912,6 +913,11 @@ function IndexDialog() {
                 ...a,
                 ...saveFormData,
                 jobUrl: saveFormData.jobUrl || undefined,
+                // Bump only when the status actually changed
+                statusUpdatedAt:
+                  saveFormData.status !== a.status
+                    ? now
+                    : a.statusUpdatedAt ?? a.createdAt,
                 // Preserve existing preparation plan
                 preparationPlan: a.preparationPlan
               }
@@ -925,7 +931,8 @@ function IndexDialog() {
             ...docs,
             ...matchData,
             id: crypto.randomUUID(),
-            createdAt: new Date().toISOString()
+            createdAt: now,
+            statusUpdatedAt: now
           }
         ]
     chrome.storage.local.set({ savedApplications: updated })

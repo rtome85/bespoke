@@ -111,30 +111,20 @@ function IndexPopup() {
     }
   }
 
-  const openAnalytics = () => {
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/analytics.html"),
-      type: "popup",
-      width: 900,
-      height: 600,
-      focused: true
+  const openAppShell = (params = "") => {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("options.html" + params)
     })
     window.close()
   }
+
+  const openAnalytics = () =>
+    openAppShell("?section=applications&view=overview")
+
+  const openApplications = () => openAppShell("?section=applications")
 
   const openOptions = () => {
     chrome.runtime.openOptionsPage()
-  }
-
-  const openApplications = () => {
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/dialog.html") + "?view=applicationsList",
-      type: "popup",
-      width: 700,
-      height: 520,
-      focused: true
-    })
-    window.close()
   }
 
   return (

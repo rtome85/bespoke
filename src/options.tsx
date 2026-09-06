@@ -18,6 +18,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 
 import { AppBar, type AppSection } from "~components/AppBar"
+import { ApplicationsList } from "~components/ApplicationsList"
+import { ApplicationsOverview } from "~components/ApplicationsOverview"
 import { CertificateEditor } from "~components/CertificateEditor"
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
@@ -51,7 +53,11 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
-import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
+import {
+  DEFAULT_USER_PROFILE,
+  type SavedApplication,
+  type UserProfile
+} from "~types/userProfile"
 import {
   authorize,
   pull,
@@ -331,11 +337,22 @@ const SAMPLE_BULLETS: Record<
   }
 }
 
+const URL_PARAMS =
+  typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search)
+    : new URLSearchParams()
+
 function Options() {
-  const [section, setSection] = useState<AppSection>("settings")
+  const [section, setSection] = useState<AppSection>(
+    URL_PARAMS.get("section") === "applications" ? "applications" : "settings"
+  )
   const [activeTab, setActiveTab] = useState("providers")
+  const appsStartOnOverview = URL_PARAMS.get("view") === "overview"
 
   useEffect(() => {
+    // A ?section= deep link (from the popup / retired analytics tab) wins
+    // over the last-used section.
+    if (URL_PARAMS.get("section")) return
     chrome.storage.local.get("optionsSection", (res) => {
       if (res.optionsSection === "applications" || res.optionsSection === "settings") {
         setSection(res.optionsSection)
@@ -2079,7 +2096,7 @@ function Options() {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto px-10 py-8">
-            <ApplicationsPlaceholder />
+            <ApplicationsSection initialOverview={appsStartOnOverview} />
           </div>
         )}
       </div>
@@ -2111,41 +2128,110 @@ function Options() {
   )
 }
 
+/** Opens the side panel's dialog page in a standalone window. */
+function openDialogWindow(view: "saveForm" | "applicationsList") {
+  chrome.windows.create({
+    url: chrome.runtime.getURL(`tabs/dialog.html?view=${view}`),
+    type: "popup",
+    width: 720,
+    height: 560,
+    focused: true
+  })
+}
+
 /**
- * Phase 1 placeholder — the real applications list + Overview land here in
- * Phase 4. Until then this points at the side panel.
+ * Applications area of the app shell — the tracked-application list and the
+ * Overview (analytics), replacing the side-panel list and the standalone
+ * analytics tab.
  */
-function ApplicationsPlaceholder() {
-  const [count, setCount] = useState<number | null>(null)
+function ApplicationsSection({
+  initialOverview
+}: {
+  initialOverview?: boolean
+}) {
+  const [apps, setApps] = useState<SavedApplication[]>([])
+  const [view, setView] = useState<"all" | "overview">(
+    initialOverview ? "overview" : "all"
+  )
+
   useEffect(() => {
     chrome.storage.local.get("savedApplications", (res) => {
-      setCount(
-        Array.isArray(res.savedApplications) ? res.savedApplications.length : 0
-      )
+      if (Array.isArray(res.savedApplications)) setApps(res.savedApplications)
     })
+    const listener = (
+      changes: { [k: string]: chrome.storage.StorageChange },
+      area: string
+    ) => {
+      if (area === "local" && changes.savedApplications) {
+        setApps(changes.savedApplications.newValue ?? [])
+      }
+    }
+    chrome.storage.onChanged.addListener(listener)
+    return () => chrome.storage.onChanged.removeListener(listener)
   }, [])
 
+  const persist = (next: SavedApplication[]) => {
+    setApps(next)
+    chrome.storage.local.set({ savedApplications: next })
+  }
+
+  const updateApplication = (id: string, patch: Partial<SavedApplication>) => {
+    const now = new Date().toISOString()
+    persist(
+      apps.map((a) => {
+        if (a.id !== id) return a
+        const bumped =
+          "status" in patch && patch.status !== a.status
+            ? { statusUpdatedAt: now }
+            : {}
+        return { ...a, ...patch, ...bumped }
+      })
+    )
+  }
+
+  const deleteApplication = (id: string) =>
+    persist(apps.filter((a) => a.id !== id))
+
   return (
-    <div className="max-w-xl">
-      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
-        Applications
-      </h1>
-      <p className="mt-1 text-[14px] text-aa-text-secondary">
-        {count === null
-          ? "Loading…"
-          : count === 0
-            ? "No tracked applications yet."
-            : `${count} tracked application${count === 1 ? "" : "s"}.`}
-      </p>
-      <div className="mt-6 bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 text-[13px] text-aa-neutral-700 leading-relaxed">
-        The full applications list and Overview move into this tab in an upcoming
-        release. For now, open the side panel from the toolbar popup, or
-        right-click a job posting →{" "}
-        <span className="font-semibold text-aa-text-primary">
-          Check my match
-        </span>
-        .
+    <div>
+      <div className="inline-flex rounded-aa-md border border-aa-border p-[3px] mb-5">
+        {(
+          [
+            { id: "all", label: "All" },
+            { id: "overview", label: "Overview" }
+          ] as const
+        ).map((t) => {
+          const on = view === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setView(t.id)}
+              className={`px-4 py-1.5 rounded-aa-sm text-[12px] font-semibold transition-colors ${
+                on
+                  ? "bg-aa-primary text-aa-text-on-primary"
+                  : "text-aa-text-secondary hover:text-aa-text-primary"
+              }`}>
+              {t.label}
+            </button>
+          )
+        })}
       </div>
+
+      {view === "all" ? (
+        <ApplicationsList
+          applications={apps}
+          onUpdate={updateApplication}
+          onDelete={deleteApplication}
+          onTrackNew={() => openDialogWindow("saveForm")}
+          onOpenSidePanel={() => openDialogWindow("applicationsList")}
+        />
+      ) : (
+        <ApplicationsOverview
+          applications={apps}
+          onOpen={() => openDialogWindow("applicationsList")}
+        />
+      )}
     </div>
   )
 }
