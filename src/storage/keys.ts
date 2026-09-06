@@ -9,6 +9,8 @@ export const STORAGE_KEYS = {
   SAVED_APPLICATIONS: "savedApplications",
   LLM_TUNING: "llmTuning",
   SYNC_CONFIG: "syncConfig",
+  PROVIDERS: "providers",
+  MODEL_ROUTING: "modelRouting",
 } as const
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS]
@@ -21,6 +23,8 @@ export const SYNC_KEYS = [
   "customPrompts",
   "llmTuning",
   "savedApplications",
+  "providers",
+  "modelRouting",
 ] as const
 
 export type SyncKey = typeof SYNC_KEYS[number]
