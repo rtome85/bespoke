@@ -23,13 +23,15 @@ export function AppBar({
   const version = chrome.runtime.getManifest().version
 
   return (
-    <header className="sticky top-0 z-30 h-[52px] shrink-0 bg-aa-neutral-900 flex items-center gap-8 px-5">
+    <header className="sticky top-0 z-30 h-[52px] shrink-0 bg-aa-neutral-900 flex items-center gap-4 sm:gap-8 px-4 sm:px-5">
       <div className="flex items-center gap-2">
         <div className="w-[22px] h-[22px] rounded-aa-sm bg-aa-primary flex items-center justify-center">
           <Triangle size={11} className="text-aa-text-on-primary" fill="currentColor" />
         </div>
         <span className="text-[14px] font-bold text-aa-surface">Bespoke</span>
-        <span className="text-[11px] text-aa-neutral-500">v{version}</span>
+        <span className="hidden sm:inline text-[11px] text-aa-neutral-500">
+          v{version}
+        </span>
       </div>
 
       <nav className="flex items-stretch gap-4 h-full">
@@ -59,9 +61,11 @@ export function AppBar({
       <div className="flex-1" />
 
       {email ? (
-        <div className="flex items-center gap-2">
-          <span className="text-[12px] text-aa-neutral-400">{email}</span>
-          <div className="w-[26px] h-[26px] rounded-aa-pill bg-aa-neutral-700 flex items-center justify-center text-[11px] font-bold text-aa-surface">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="hidden md:inline text-[12px] text-aa-neutral-400 truncate max-w-[200px]">
+            {email}
+          </span>
+          <div className="w-[26px] h-[26px] shrink-0 rounded-aa-pill bg-aa-neutral-700 flex items-center justify-center text-[11px] font-bold text-aa-surface">
             {email[0]?.toUpperCase() ?? "?"}
           </div>
         </div>
