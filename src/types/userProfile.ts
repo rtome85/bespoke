@@ -110,6 +110,14 @@ export interface SavedApplication {
 
   matchPercentage?: number // Match % calculated by the LLM
 
+  // Optional — persisted from the success screen so documents can be
+  // (re)generated later from the applications list without re-scraping.
+  jobDescription?: string
+  matchSummary?: string
+  matchStrengths?: string[]
+  matchWeaknesses?: string[]
+  matchImprovements?: string[]
+
   // Optional — present only when saved from the success screen
   resumeContent?: string
   resumeFilename?: string
