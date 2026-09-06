@@ -1,7 +1,22 @@
+import {
+  Briefcase,
+  CloudCog,
+  FileText,
+  Folder,
+  Globe,
+  GraduationCap,
+  LayoutTemplate,
+  Languages as LanguagesIcon,
+  Server,
+  Target,
+  User,
+  Zap
+} from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
+import { AppBar, type AppSection } from "~components/AppBar"
 import { CertificateEditor } from "~components/CertificateEditor"
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
@@ -9,6 +24,7 @@ import { LanguageEditor } from "~components/LanguageEditor"
 import { PersonalInfo } from "~components/PersonalInfo"
 import { ProjectEditor } from "~components/ProjectEditor"
 import { PromptDialog } from "~components/PromptDialog"
+import { SettingsRail } from "~components/SettingsRail"
 import { SkillEditor } from "~components/SkillEditor"
 import {
   AVAILABLE_MODELS,
@@ -33,86 +49,96 @@ import {
 
 import "./style.css"
 
-const EXTENSION_VERSION = chrome.runtime.getManifest().version
-
 const NAV_GROUPS = [
   {
-    label: "AI PROVIDERS",
+    label: "AI Providers",
     items: [
       {
-        label: "OLLAMA",
+        label: "Ollama",
         value: "ai-settings",
-        subtitle: "Configure API access and select your model"
+        subtitle: "Configure API access and select your model",
+        icon: Server
       },
       {
-        label: "MATCH MODEL",
+        label: "Match model",
         value: "match-model",
-        subtitle: "Pick the model used to score your profile against a job"
+        subtitle: "Pick the model used to score your profile against a job",
+        icon: Target
       },
       {
-        label: "PERPLEXITY",
+        label: "Perplexity",
         value: "perplexity",
-        subtitle: "Configure company research and interview preparation"
+        subtitle: "Configure company research and interview preparation",
+        icon: Globe
       }
     ]
   },
   {
-    label: "CONTENT",
+    label: "Content",
     items: [
       {
-        label: "PROMPTS",
+        label: "Prompts",
         value: "prompts",
-        subtitle: "Fine-tune model behaviour and custom prompts"
+        subtitle: "Fine-tune model behaviour and custom prompts",
+        icon: FileText
       },
       {
-        label: "TEMPLATES",
+        label: "Templates",
         value: "templates",
-        subtitle: "Apply preset prompt configurations"
+        subtitle: "Apply preset prompt configurations",
+        icon: LayoutTemplate
       }
     ]
   },
   {
-    label: "PROFILE",
+    label: "Profile",
     items: [
       {
-        label: "PERSONAL INFO",
+        label: "Personal info",
         value: "personal-info",
-        subtitle: "Your contact and personal details"
+        subtitle: "Your contact and personal details",
+        icon: User
       },
       {
-        label: "EDUCATION",
+        label: "Education",
         value: "education",
-        subtitle: "Degrees, certificates, and training"
+        subtitle: "Degrees, certificates, and training",
+        icon: GraduationCap
       },
       {
-        label: "SKILLS",
+        label: "Skills",
         value: "skills",
-        subtitle: "Technical and soft skills"
+        subtitle: "Technical and soft skills",
+        icon: Zap
       },
       {
-        label: "EXPERIENCE",
+        label: "Experience",
         value: "experience",
-        subtitle: "Work history and achievements"
+        subtitle: "Work history and achievements",
+        icon: Briefcase
       },
       {
-        label: "PROJECTS",
+        label: "Projects",
         value: "projects",
-        subtitle: "Personal and open-source projects"
+        subtitle: "Personal and open-source projects",
+        icon: Folder
       },
       {
-        label: "LANGUAGES",
+        label: "Languages",
         value: "languages",
-        subtitle: "Languages you speak"
+        subtitle: "Languages you speak",
+        icon: LanguagesIcon
       }
     ]
   },
   {
-    label: "SYSTEM",
+    label: "System",
     items: [
       {
-        label: "BACKUP & SYNC",
+        label: "Backup & sync",
         value: "backup-sync",
-        subtitle: "Export, import, and Google Drive sync"
+        subtitle: "Export, import, and Google Drive sync",
+        icon: CloudCog
       }
     ]
   }
@@ -176,63 +202,77 @@ function useDebouncedStorage<T>(
   return [local, setValue]
 }
 
-// ── Style helpers ──────────────────────────────────────────────────────────────
-const card = "bg-white border-2 border-ink p-8"
+// ── Style helpers (ApplyAI tokens) ────────────────────────────────────────────
+const card = "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
 
 const inputCls =
-  "w-full px-4 py-3 bg-white border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+  "w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors"
 
 const textareaCls =
-  "w-full px-4 py-3 bg-white border border-canvas-input-border text-ink text-sm font-mono focus:outline-none focus:border-ink transition-colors"
+  "w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-secondary text-xs font-mono leading-relaxed focus:outline-none focus:border-aa-primary transition-colors"
 
 const labelCls =
-  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+  "block text-[12px] font-semibold text-aa-text-secondary mb-2"
 
-const hintCls = "text-[11px] text-ink-secondary mt-1"
+const hintCls = "text-[11px] text-aa-text-secondary mt-1"
 
 const sectionHeadCls =
-  "text-[11px] font-bold uppercase tracking-widest text-ink mb-4"
+  "text-[16px] font-semibold tracking-[-0.2px] text-aa-text-primary mb-3"
 
 const btnOutline =
-  "px-5 py-2.5 bg-white border-2 border-ink text-ink text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-colors hover:bg-canvas"
+  "px-4 py-[9px] bg-aa-surface border border-aa-primary text-aa-primary rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-soft"
 
 const btnAccent =
-  "px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-opacity hover:opacity-90"
+  "px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-hover"
 
 const btnSecondary =
-  "px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 transition-opacity hover:opacity-90"
+  "px-4 py-[9px] bg-aa-surface border border-aa-border text-aa-text-secondary rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-neutral-100"
 
 const successMsg =
-  "bg-[#f0fdf4] border border-[#86efac] text-[#166534] px-4 py-3 text-sm"
+  "bg-aa-success-soft text-aa-success-strong px-4 py-3 rounded-aa-md text-sm"
 
 const errorMsg =
-  "bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3 text-sm"
+  "bg-aa-error-soft text-aa-error-strong px-4 py-3 rounded-aa-md text-sm"
 
 const infoMsg =
-  "bg-[#eff6ff] border border-[#93c5fd] text-[#1e40af] px-4 py-3 text-sm"
+  "bg-aa-neutral-50 border border-aa-border text-aa-neutral-700 px-4 py-3 rounded-aa-md text-sm"
 
-const divider = "border-0 border-t border-canvas-divide my-6"
+const divider = "border-0 border-t border-aa-border my-5"
 
 const costBadgeCls: Record<"low" | "medium" | "high", string> = {
-  low: "bg-[#f0fdf4] text-[#166534] border-[#86efac]",
-  medium: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
-  high: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]"
+  low: "bg-aa-success-soft text-aa-success-strong border-aa-success-strong",
+  medium: "bg-aa-neutral-100 text-aa-text-secondary border-aa-border",
+  high: "bg-aa-error-soft text-aa-error-strong border-aa-error-strong"
 }
 
 const speedBadgeCls: Record<"fast" | "medium" | "slow", string> = {
-  fast: "bg-[#f0fdf4] text-[#166534] border-[#86efac]",
-  medium: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
-  slow: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]"
+  fast: "bg-aa-success-soft text-aa-success-strong border-aa-success-strong",
+  medium: "bg-aa-neutral-100 text-aa-text-secondary border-aa-border",
+  slow: "bg-aa-warning-soft text-aa-warning-strong border-aa-warning-strong"
 }
 
 const scoringBadgeCls: Record<"strict" | "balanced" | "generous", string> = {
-  strict: "bg-[#fef2f2] text-[#991b1b] border-[#fca5a5]",
-  balanced: "bg-[#eff6ff] text-[#1e40af] border-[#93c5fd]",
-  generous: "bg-[#f0fdf4] text-[#166534] border-[#86efac]"
+  strict: "bg-aa-error-soft text-aa-error-strong border-aa-error-strong",
+  balanced: "bg-aa-neutral-100 text-aa-text-secondary border-aa-border",
+  generous: "bg-aa-success-soft text-aa-success-strong border-aa-success-strong"
 }
 
 function Options() {
+  const [section, setSection] = useState<AppSection>("settings")
   const [activeTab, setActiveTab] = useState("ai-settings")
+
+  useEffect(() => {
+    chrome.storage.local.get("optionsSection", (res) => {
+      if (res.optionsSection === "applications" || res.optionsSection === "settings") {
+        setSection(res.optionsSection)
+      }
+    })
+  }, [])
+
+  const changeSection = (next: AppSection) => {
+    setSection(next)
+    chrome.storage.local.set({ optionsSection: next })
+  }
 
   const [userProfile, setUserProfile] = useDebouncedStorage<UserProfile>(
     "userProfile",
@@ -675,7 +715,7 @@ function Options() {
                 href="https://ollama.com/settings/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sidebar-accent hover:underline">
+                className="text-aa-primary hover:underline">
                 ollama.com/settings/keys
               </a>
             </p>
@@ -727,19 +767,19 @@ function Options() {
                 onClick={() => setMatchModel(model.id)}
                 className={`w-full text-left p-4 border-2 transition-colors ${
                   isSelected
-                    ? "border-ink bg-canvas"
-                    : "border-canvas-input-border bg-white hover:border-ink-secondary"
+                    ? "border-aa-border bg-aa-neutral-50"
+                    : "border-aa-border bg-aa-surface hover:border-aa-border-secondary"
                 }`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-ink text-sm">
+                    <span className="font-semibold text-aa-text-primary text-sm">
                       {model.name}
                     </span>
-                    <span className="text-ink-muted text-xs">
+                    <span className="text-aa-text-secondary text-xs">
                       {model.size}
                     </span>
                     {model.recommended && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-sidebar-accent text-white px-2 py-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-aa-primary text-aa-text-on-primary px-2 py-0.5">
                         Recommended
                       </span>
                     )}
@@ -747,13 +787,13 @@ function Options() {
                   <div
                     className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
                       isSelected
-                        ? "border-ink bg-ink"
-                        : "border-canvas-input-border"
+                        ? "border-aa-border bg-ink"
+                        : "border-aa-border"
                     }`}
                   />
                 </div>
 
-                <p className="text-sm text-ink-secondary mt-1.5">
+                <p className="text-sm text-aa-text-secondary mt-1.5">
                   {model.description}
                 </p>
 
@@ -781,7 +821,7 @@ function Options() {
     perplexity: (
       <div className={card}>
         <h2 className={sectionHeadCls}>Perplexity Sonar Configuration</h2>
-        <p className="text-sm text-ink-secondary mb-6">
+        <p className="text-sm text-aa-text-secondary mb-6">
           Configure Perplexity Sonar to research companies and display
           information in the results. This enables the "About Company" section
           with industry, size, projects, and ratings from Glassdoor, Indeed, and
@@ -801,11 +841,11 @@ function Options() {
                   enabled: e.target.checked
                 })
               }
-              className="w-4 h-4 accent-sidebar-accent"
+              className="w-4 h-4 accent-aa-primary"
             />
             <label
               htmlFor="perplexityEnabled"
-              className="text-sm font-medium text-ink">
+              className="text-sm font-medium text-aa-text-primary">
               Enable Company Research
             </label>
           </div>
@@ -830,7 +870,7 @@ function Options() {
                 href="https://www.perplexity.ai/settings/api"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sidebar-accent hover:underline">
+                className="text-aa-primary hover:underline">
                 perplexity.ai/settings/api
               </a>
             </p>
@@ -857,7 +897,7 @@ function Options() {
                 onClick={() =>
                   openPerplexityDialog("Research Prompt", "research")
                 }
-                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-sidebar-accent text-white border-0 hover:opacity-90 transition-opacity">
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
                 Expand
               </button>
             </div>
@@ -867,7 +907,7 @@ function Options() {
 
           <div>
             <h3 className={sectionHeadCls}>Interview Preparation Plan</h3>
-            <p className="text-sm text-ink-secondary mb-4">
+            <p className="text-sm text-aa-text-secondary mb-4">
               Generate AI-powered technical interview preparation plans for HR
               and technical interviews.
             </p>
@@ -884,11 +924,11 @@ function Options() {
                       preparationPlanEnabled: e.target.checked
                     })
                   }
-                  className="w-4 h-4 accent-sidebar-accent"
+                  className="w-4 h-4 accent-aa-primary"
                 />
                 <label
                   htmlFor="preparationPlanEnabled"
-                  className="text-sm font-medium text-ink">
+                  className="text-sm font-medium text-aa-text-primary">
                   Enable Preparation Plan Generation
                 </label>
               </div>
@@ -919,7 +959,7 @@ function Options() {
                         "preparation"
                       )
                     }
-                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-sidebar-accent text-white border-0 hover:opacity-90 transition-opacity">
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
                     Expand
                   </button>
                 </div>
@@ -966,7 +1006,7 @@ function Options() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className={sectionHeadCls}>LLM Fine-tuning</h2>
-              <p className="text-sm text-ink-secondary">
+              <p className="text-sm text-aa-text-secondary">
                 Adjust model behaviour and document generation style. Changes
                 apply to the next generation.
               </p>
@@ -985,10 +1025,10 @@ function Options() {
               <div className="space-y-5">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-ink">
+                    <label className="text-sm font-medium text-aa-text-primary">
                       Temperature
                     </label>
-                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-10 text-right">
+                    <span className="text-sm font-mono font-semibold text-aa-primary w-10 text-right">
                       {(llmTuning ?? DEFAULT_LLM_TUNING).temperature.toFixed(1)}
                     </span>
                   </div>
@@ -1004,9 +1044,9 @@ function Options() {
                         temperature: parseFloat(e.target.value)
                       })
                     }
-                    className="w-full accent-sidebar-accent"
+                    className="w-full accent-aa-primary"
                   />
-                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
                     <span>0.1 — Precise</span>
                     <span>1.5 — Creative</span>
                   </div>
@@ -1014,10 +1054,10 @@ function Options() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-ink">
+                    <label className="text-sm font-medium text-aa-text-primary">
                       Top P
                     </label>
-                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-10 text-right">
+                    <span className="text-sm font-mono font-semibold text-aa-primary w-10 text-right">
                       {(llmTuning ?? DEFAULT_LLM_TUNING).topP.toFixed(2)}
                     </span>
                   </div>
@@ -1033,9 +1073,9 @@ function Options() {
                         topP: parseFloat(e.target.value)
                       })
                     }
-                    className="w-full accent-sidebar-accent"
+                    className="w-full accent-aa-primary"
                   />
-                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
                     <span>0.5 — Conservative</span>
                     <span>1.0 — Full diversity</span>
                   </div>
@@ -1043,10 +1083,10 @@ function Options() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-sm font-medium text-ink">
+                    <label className="text-sm font-medium text-aa-text-primary">
                       Max Output Tokens
                     </label>
-                    <span className="text-sm font-mono font-semibold text-sidebar-accent w-16 text-right">
+                    <span className="text-sm font-mono font-semibold text-aa-primary w-16 text-right">
                       {(
                         llmTuning ?? DEFAULT_LLM_TUNING
                       ).maxTokens.toLocaleString()}
@@ -1064,9 +1104,9 @@ function Options() {
                         maxTokens: parseInt(e.target.value)
                       })
                     }
-                    className="w-full accent-sidebar-accent"
+                    className="w-full accent-aa-primary"
                   />
-                  <div className="flex justify-between text-[10px] text-ink-muted mt-0.5">
+                  <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
                     <span>1 024 — Concise</span>
                     <span>8 192 — Detailed</span>
                   </div>
@@ -1080,14 +1120,14 @@ function Options() {
               <h3 className={sectionHeadCls}>Analysis &amp; Style</h3>
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
                     Profile Match Strictness
                   </label>
-                  <p className="text-[11px] text-ink-muted mb-2">
+                  <p className="text-[11px] text-aa-text-secondary mb-2">
                     How rigorously the AI scores your profile against
                     requirements.
                   </p>
-                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
                     {(["strict", "balanced", "generous"] as const).map(
                       (opt) => (
                         <button
@@ -1101,8 +1141,8 @@ function Options() {
                           className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
                           ${(llmTuning ?? DEFAULT_LLM_TUNING)
                               .matchStrictness === opt
-                              ? "bg-ink text-white"
-                              : "bg-white text-ink hover:bg-canvas"
+                              ? "bg-ink text-aa-text-on-primary"
+                              : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
                             }`}>
                           {opt === "strict"
                             ? "Strict"
@@ -1113,7 +1153,7 @@ function Options() {
                       )
                     )}
                   </div>
-                  <p className="mt-2 text-[11px] text-ink-muted">
+                  <p className="mt-2 text-[11px] text-aa-text-secondary">
                     {
                       {
                         strict: "Gaps and missing skills are weighted heavily.",
@@ -1126,13 +1166,13 @@ function Options() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
                     Writing Tone
                   </label>
-                  <p className="text-[11px] text-ink-muted mb-2">
+                  <p className="text-[11px] text-aa-text-secondary mb-2">
                     Applies to both resumes and cover letters.
                   </p>
-                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
                     {(
                       ["formal", "professional", "conversational"] as const
                     ).map((opt) => (
@@ -1147,8 +1187,8 @@ function Options() {
                         className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
                           ${(llmTuning ?? DEFAULT_LLM_TUNING).writingTone ===
                             opt
-                            ? "bg-ink text-white"
-                            : "bg-white text-ink hover:bg-canvas"
+                            ? "bg-ink text-aa-text-on-primary"
+                            : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
                           }`}>
                         {opt.charAt(0).toUpperCase() + opt.slice(1)}
                       </button>
@@ -1157,13 +1197,13 @@ function Options() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink mb-1">
+                  <label className="block text-sm font-medium text-aa-text-primary mb-1">
                     Resume Focus
                   </label>
-                  <p className="text-[11px] text-ink-muted mb-2">
+                  <p className="text-[11px] text-aa-text-secondary mb-2">
                     Which section the model leads with and emphasises most.
                   </p>
-                  <div className="inline-flex border-2 border-ink overflow-hidden text-sm">
+                  <div className="inline-flex border border-aa-border overflow-hidden text-sm">
                     {(["skills", "balanced", "experience"] as const).map(
                       (opt) => (
                         <button
@@ -1177,8 +1217,8 @@ function Options() {
                           className={`px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors
                           ${(llmTuning ?? DEFAULT_LLM_TUNING).resumeFocus ===
                               opt
-                              ? "bg-ink text-white"
-                              : "bg-white text-ink hover:bg-canvas"
+                              ? "bg-ink text-aa-text-on-primary"
+                              : "bg-aa-surface text-aa-text-primary hover:bg-aa-neutral-100"
                             }`}>
                           {opt === "skills"
                             ? "Skills-first"
@@ -1200,7 +1240,7 @@ function Options() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className={sectionHeadCls}>Custom Prompts</h2>
-              <p className="text-sm text-ink-secondary">
+              <p className="text-sm text-aa-text-secondary">
                 Override the system and user prompts sent to the model.
               </p>
             </div>
@@ -1246,7 +1286,7 @@ function Options() {
                   <p className={hintCls}>{hint}</p>
                   <button
                     onClick={() => openPromptDialog(label, key)}
-                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-sidebar-accent text-white border-0 hover:opacity-90 transition-opacity">
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
                     Expand
                   </button>
                 </div>
@@ -1260,7 +1300,7 @@ function Options() {
     templates: (
       <div className={card}>
         <h2 className={sectionHeadCls}>Prompt Templates</h2>
-        <p className="text-sm text-ink-secondary mb-6">
+        <p className="text-sm text-aa-text-secondary mb-6">
           Apply a preset to instantly configure your Custom Prompts for a
           specific role type.
         </p>
@@ -1273,19 +1313,19 @@ function Options() {
               <div
                 key={template.id}
                 className={`flex flex-col border-2 p-5 transition-all
-                  ${isActive ? "border-sidebar-accent bg-[#fdf5f2]" : "border-canvas-input-border bg-white hover:border-ink"}`}>
+                  ${isActive ? "border-aa-primary bg-aa-primary-soft" : "border-aa-border bg-aa-surface hover:border-aa-border"}`}>
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-ink text-sm">
+                  <h3 className="font-semibold text-aa-text-primary text-sm">
                     {template.name}
                   </h3>
                   {isActive && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-[#f0fdf4] text-[#166534] border border-[#86efac] px-2 py-0.5 shrink-0 ml-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-aa-success-soft text-aa-success-strong border border-aa-success-strong px-2 py-0.5 shrink-0 ml-2">
                       Active
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-ink-secondary mb-4">
+                <p className="text-xs text-aa-text-secondary mb-4">
                   {template.tagLine}
                 </p>
 
@@ -1293,8 +1333,8 @@ function Options() {
                   {template.bullets.map((b) => (
                     <li
                       key={b}
-                      className="flex items-start gap-2 text-xs text-ink-secondary">
-                      <span className="text-sidebar-accent mt-0.5 shrink-0">
+                      className="flex items-start gap-2 text-xs text-aa-text-secondary">
+                      <span className="text-aa-primary mt-0.5 shrink-0">
                         •
                       </span>
                       {b}
@@ -1307,8 +1347,8 @@ function Options() {
                   disabled={isActive}
                   className={`w-full py-2 text-[11px] font-bold uppercase tracking-widest transition-colors
                     ${isActive
-                      ? "bg-canvas text-ink-muted cursor-default border border-canvas-input-border"
-                      : "bg-sidebar-accent text-white border-0 hover:opacity-90"
+                      ? "bg-aa-neutral-50 text-aa-text-secondary cursor-default border border-aa-border"
+                      : "bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90"
                     }`}>
                   {isActive ? "Applied" : "Apply Template"}
                 </button>
@@ -1347,7 +1387,7 @@ function Options() {
 
         <div className={card}>
           <h2 className={sectionHeadCls}>Certificates</h2>
-          <p className="text-sm text-ink-secondary mb-4">
+          <p className="text-sm text-aa-text-secondary mb-4">
             Certifications, online courses, bootcamps and professional training.
           </p>
           <CertificateEditor
@@ -1414,7 +1454,7 @@ function Options() {
       <div className="space-y-6">
         <div className={card}>
           <h2 className={sectionHeadCls}>Google Drive Sync</h2>
-          <p className="text-sm text-ink-secondary mb-6">
+          <p className="text-sm text-aa-text-secondary mb-6">
             Sync your profile, settings, and saved applications across
             computers. Data is stored privately in your Google Drive app folder
             — only Bespoke can access it.
@@ -1443,7 +1483,7 @@ function Options() {
                 <button
                   onClick={handleConnectDrive}
                   disabled={syncStatus.type === "loading"}
-                  className="px-6 py-3 bg-[#1d4ed8] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 hover:bg-[#1e40af] transition-colors">
+                  className="px-6 py-3 bg-aa-secondary text-aa-text-on-primary border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 hover:opacity-90 transition-colors">
                   {syncStatus.type === "loading"
                     ? "Connecting..."
                     : "Connect Google Drive"}
@@ -1452,26 +1492,26 @@ function Options() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="bg-[#f0fdf4] border border-[#86efac] p-4">
+              <div className="bg-aa-success-soft border border-aa-success-strong p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest text-[#166534]">
+                  <div className="w-2 h-2 rounded-full bg-aa-success" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-aa-success-strong">
                     Connected
                   </span>
                 </div>
                 {syncConfig.lastSynced && (
-                  <p className="text-xs text-[#166534]">
+                  <p className="text-xs text-aa-success-strong">
                     Last synced:{" "}
                     {new Date(syncConfig.lastSynced).toLocaleString()}
                   </p>
                 )}
                 {!syncConfig.lastSynced && (
-                  <p className="text-xs text-[#166534]">
+                  <p className="text-xs text-aa-success-strong">
                     Sync will happen automatically when you make changes.
                   </p>
                 )}
                 {syncConfig.error && (
-                  <p className="text-xs text-[#991b1b] mt-1">
+                  <p className="text-xs text-aa-error-strong mt-1">
                     Last sync error: {syncConfig.error}
                   </p>
                 )}
@@ -1506,7 +1546,7 @@ function Options() {
 
         <div className={card}>
           <h2 className={sectionHeadCls}>Manual Export / Import</h2>
-          <p className="text-sm text-ink-secondary mb-6">
+          <p className="text-sm text-aa-text-secondary mb-6">
             Download a full backup or restore from a previously exported file.
             Includes profile, settings, and all saved applications with
             generated CVs and cover letters.
@@ -1515,12 +1555,12 @@ function Options() {
           <div className="flex gap-3">
             <button
               onClick={handleExportData}
-              className="px-5 py-2.5 bg-[#16a34a] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#15803d] transition-colors">
+              className="px-5 py-2.5 bg-aa-success-strong text-aa-text-on-primary border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-colors">
               Export Data
             </button>
             <button
               onClick={handleImportData}
-              className="px-5 py-2.5 bg-[#1d4ed8] text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#1e40af] transition-colors">
+              className="px-5 py-2.5 bg-aa-secondary text-aa-text-on-primary border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-colors">
               Import Data
             </button>
           </div>
@@ -1532,78 +1572,59 @@ function Options() {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-canvas">
-        {/* ── Topbar ──────────────────────────────────────────────────────── */}
-        <div className="bg-sidebar border-b-2 border-sidebar-accent px-8 py-8 h-[52px] flex items-center justify-between shrink-0">
-          <div className="flex items-baseline gap-2">
-            <span className="text-white font-bold text-[13px] tracking-[0.12em]">
-              BESPOKE
-            </span>
-            <span className="text-sidebar-accent text-[11px]">
-              v{EXTENSION_VERSION}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={handleSaveSettings} className={btnAccent}>
-              Save Settings
-            </button>
-            {saveStatus && (
-              <span className="text-[#166534] text-xs font-semibold">
-                {saveStatus}
-              </span>
-            )}
-          </div>
-        </div>
+      <div className="flex flex-col min-h-screen bg-aa-neutral-50 font-aa text-aa-text-primary">
+        <AppBar
+          section={section}
+          onSection={changeSection}
+          email={userProfile.personalInfo?.email || undefined}
+        />
 
-        {/* ── Sidebar + Main ───────────────────────────────────────────────── */}
-        <div className="flex flex-1">
-          {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-          <aside className="flex-shrink-0 flex flex-col overflow-y-auto w-60 min-h-screen bg-sidebar sticky top-0 h-screen">
-            {/* Nav */}
-            <nav className="flex-1 pt-4 pb-6">
-              {NAV_GROUPS.map((group, gi) => (
-                <div key={group.label}>
-                  {gi > 0 && <div className="h-px bg-sidebar-hover my-2" />}
-                  <div className="text-sidebar-label text-[10px] font-semibold tracking-[0.1em] px-5 pt-3 pb-1">
-                    {group.label}
-                  </div>
-                  {group.items.map((item) => {
-                    const isActive = activeTab === item.value
-                    return (
-                      <button
-                        key={item.value}
-                        onClick={() => setActiveTab(item.value)}
-                        className={`block w-full text-left py-[10px] pr-5 pl-[17px] text-[11px] font-semibold tracking-[0.08em] cursor-pointer border-0 border-solid border-l-4 outline-none transition-colors ${isActive
-                          ? "bg-sidebar-hover text-white border-l-sidebar-accent"
-                          : "bg-transparent text-sidebar-item border-l-transparent"
-                          }`}>
-                        {item.label}
-                      </button>
-                    )
-                  })}
+        {section === "settings" ? (
+          <div className="flex flex-1">
+            <SettingsRail
+              groups={NAV_GROUPS}
+              active={activeTab}
+              onSelect={setActiveTab}
+            />
+
+            <div className="flex-1 flex flex-col min-w-0">
+              {/* Section sub-topbar */}
+              <div className="h-14 shrink-0 bg-aa-surface border-b border-aa-border px-8 flex items-center justify-between gap-4">
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <h1 className="text-[18px] font-semibold text-aa-text-primary shrink-0">
+                    {activeNav?.label ?? ""}
+                  </h1>
+                  <p className="text-[13px] text-aa-text-secondary truncate">
+                    {activeNav?.subtitle ?? ""}
+                  </p>
                 </div>
-              ))}
-            </nav>
-          </aside>
+                <div className="flex items-center gap-3 shrink-0">
+                  {saveStatus ? (
+                    <span className="text-[12px] font-semibold text-aa-success-strong">
+                      {saveStatus}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-aa-neutral-500">
+                      All changes saved
+                    </span>
+                  )}
+                  <button onClick={handleSaveSettings} className={btnAccent}>
+                    Save changes
+                  </button>
+                </div>
+              </div>
 
-          {/* ── Main area ───────────────────────────────────────────────────── */}
-          <div className="flex-1 flex flex-col min-h-screen">
-            {/* Top bar */}
-            <div className="bg-canvas px-12 py-5">
-              <h1 className="text-2xl text-ink font-bold tracking-[0.1em] m-0 uppercase">
-                {activeNav?.label ?? ""}
-              </h1>
-              <p className="text-ink-secondary text-xs mt-[3px]">
-                {activeNav?.subtitle ?? ""}
-              </p>
-            </div>
-
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-12 pb-12">
-              {tabContent[activeTab]}
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-8 py-8">
+                {tabContent[activeTab]}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto px-10 py-8">
+            <ApplicationsPlaceholder />
+          </div>
+        )}
       </div>
 
       <PromptDialog
@@ -1630,6 +1651,45 @@ function Options() {
         onSave={savePerplexityPromptFromDialog}
       />
     </>
+  )
+}
+
+/**
+ * Phase 1 placeholder — the real applications list + Overview land here in
+ * Phase 4. Until then this points at the side panel.
+ */
+function ApplicationsPlaceholder() {
+  const [count, setCount] = useState<number | null>(null)
+  useEffect(() => {
+    chrome.storage.local.get("savedApplications", (res) => {
+      setCount(
+        Array.isArray(res.savedApplications) ? res.savedApplications.length : 0
+      )
+    })
+  }, [])
+
+  return (
+    <div className="max-w-xl">
+      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
+        Applications
+      </h1>
+      <p className="mt-1 text-[14px] text-aa-text-secondary">
+        {count === null
+          ? "Loading…"
+          : count === 0
+            ? "No tracked applications yet."
+            : `${count} tracked application${count === 1 ? "" : "s"}.`}
+      </p>
+      <div className="mt-6 bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 text-[13px] text-aa-neutral-700 leading-relaxed">
+        The full applications list and Overview move into this tab in an upcoming
+        release. For now, open the side panel from the toolbar popup, or
+        right-click a job posting →{" "}
+        <span className="font-semibold text-aa-text-primary">
+          Check my match
+        </span>
+        .
+      </div>
+    </div>
   )
 }
 
