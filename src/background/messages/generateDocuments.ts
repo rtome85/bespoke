@@ -1,7 +1,11 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
-import { OllamaClient } from "~api/ollamaClient"
-import { prepareGenerateRequest } from "~background/prepareGenerateRequest"
+import { getLLMClient } from "~api/llm"
+import { LLMService } from "~api/llmService"
+import {
+  prepareGenerateRequest,
+  type ResolvedRoute
+} from "~background/prepareGenerateRequest"
 import { STORAGE_KEYS } from "~storage/keys"
 import {
   formatMarkdownContent,
@@ -14,21 +18,35 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const { companyName, jobTitle } = req.body
 
   try {
-    const prepared = await prepareGenerateRequest(req.body)
+    const prepared = await prepareGenerateRequest(req.body, "drafting")
 
     if (prepared.ok === false) {
       res.send({ success: false, message: prepared.message })
       return
     }
 
-    const client = new OllamaClient(prepared.ollamaConfig)
     const generatedAt = new Date()
 
-    const { resume, coverLetter } = await client.generateResumeAndCoverLetter(
-      prepared.request
-    )
+    const run = (route: ResolvedRoute) => {
+      const service = new LLMService(
+        getLLMClient(route.provider, route.clientConfig)
+      )
+      return service.generateResumeAndCoverLetter({
+        ...prepared.request,
+        model: route.model
+      })
+    }
 
-    const selectedModel = prepared.request.model
+    let resume: string
+    let coverLetter: string
+    let selectedModel = prepared.primary.model
+    try {
+      ;({ resume, coverLetter } = await run(prepared.primary))
+    } catch (err) {
+      if (!prepared.fallback) throw err
+      ;({ resume, coverLetter } = await run(prepared.fallback))
+      selectedModel = prepared.fallback.model
+    }
 
     const resumeFilename = generateFilename(
       "resume",

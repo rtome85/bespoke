@@ -319,3 +319,95 @@ export interface GenerateRequest {
   userProfile?: UserProfile
   llmTuning?: LLMTuningConfig
 }
+
+// ── Multi-provider ───────────────────────────────────────────────────────────
+
+export type LLMProviderId = "ollama" | "openai" | "anthropic" | "google"
+
+/** Per-provider account: credentials, endpoint override, cached model list. */
+export interface ProviderConfig {
+  apiKey: string
+  /** Endpoint override. Ollama: local URL or the cloud API; others rarely set. */
+  baseUrl?: string
+  enabled: boolean
+  /** Model ids last fetched from the provider. */
+  models?: string[]
+  lastTested?: { ok: boolean; at: string; message: string }
+}
+
+export type ProvidersConfig = Partial<Record<LLMProviderId, ProviderConfig>>
+
+/** An AI job routed to a specific provider + model. */
+export type RoutableJob = "scoring" | "drafting"
+
+export interface RouteTarget {
+  provider: LLMProviderId
+  model: string
+}
+
+export interface ModelRouting {
+  scoring: RouteTarget
+  drafting: RouteTarget
+  fallback: { enabled: boolean; target: RouteTarget }
+}
+
+export interface ProviderMeta {
+  id: LLMProviderId
+  name: string
+  /** true = runs locally and free; false = usage-based paid API. */
+  local: boolean
+  /** Where the user gets an API key. */
+  keyUrl?: string
+  /** Default endpoint. Empty for providers with a fixed URL. */
+  defaultBaseUrl?: string
+  /** Fallback model list when the provider has no list endpoint / it fails. */
+  fallbackModels: string[]
+}
+
+export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
+  ollama: {
+    id: "ollama",
+    name: "Ollama",
+    local: true,
+    keyUrl: "https://ollama.com/settings/keys",
+    defaultBaseUrl: "https://ollama.com/api",
+    fallbackModels: AVAILABLE_MODELS.map((m) => m.id)
+  },
+  openai: {
+    id: "openai",
+    name: "OpenAI",
+    local: false,
+    keyUrl: "https://platform.openai.com/api-keys",
+    defaultBaseUrl: "https://api.openai.com/v1",
+    fallbackModels: ["gpt-4o-mini", "gpt-4o", "o4-mini"]
+  },
+  anthropic: {
+    id: "anthropic",
+    name: "Anthropic",
+    local: false,
+    keyUrl: "https://console.anthropic.com/settings/keys",
+    defaultBaseUrl: "https://api.anthropic.com/v1",
+    fallbackModels: [
+      "claude-sonnet-4-20250514",
+      "claude-3-5-haiku-20241022",
+      "claude-opus-4-20250514"
+    ]
+  },
+  google: {
+    id: "google",
+    name: "Google Gemini",
+    local: false,
+    keyUrl: "https://aistudio.google.com/apikey",
+    defaultBaseUrl: "https://generativelanguage.googleapis.com/v1beta",
+    fallbackModels: ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-flash"]
+  }
+}
+
+export const DEFAULT_MODEL_ROUTING: ModelRouting = {
+  scoring: { provider: "ollama", model: "gpt-oss:20b-cloud" },
+  drafting: { provider: "ollama", model: "gpt-oss:20b-cloud" },
+  fallback: {
+    enabled: false,
+    target: { provider: "ollama", model: "gpt-oss:20b-cloud" }
+  }
+}
