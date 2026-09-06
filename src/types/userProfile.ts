@@ -105,6 +105,7 @@ export interface SavedApplication {
   status: ApplicationStatus
   date: string // "YYYY-MM-DD"
   createdAt: string // ISO timestamp, set once on save
+  statusUpdatedAt?: string // ISO timestamp, bumped whenever `status` changes; read as `?? createdAt`
 
   jobUrl?: string // URL of the job posting
 
