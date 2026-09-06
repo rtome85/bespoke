@@ -19,7 +19,6 @@ import type { UserProfile } from "~types/userProfile"
 interface MessageBody {
   companyName: string
   jobTitle: string
-  model?: string
   userProfile?: UserProfile
   jobDescription?: string
 }
@@ -136,11 +135,9 @@ export async function prepareGenerateRequest(
     routing = storedRouting ?? m.routing
   }
 
-  const primaryTarget: RouteTarget = body.model
-    ? { ...routing[job], model: body.model }
-    : routing[job]
-
-  const primary = resolve(primaryTarget, providers)
+  // The Model routing page is the single source of truth for which
+  // provider + model runs each job. Callers no longer pass a model.
+  const primary = resolve(routing[job], providers)
   if ("error" in primary) {
     return { ok: false, message: primary.error }
   }

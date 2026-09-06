@@ -24,8 +24,8 @@ import { sendToBackground } from "@plasmohq/messaging"
 import type { CompanyInfo } from "~api/perplexityClient"
 import { PreparationPlanModal } from "~components/PreparationPlanModal"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
-import { AVAILABLE_MODELS } from "~types/config"
-import type { PerplexityConfig } from "~types/config"
+import { PROVIDER_META } from "~types/config"
+import type { PerplexityConfig, RouteTarget } from "~types/config"
 import {
   APPLICATION_STATUSES,
   DEFAULT_USER_PROFILE,
@@ -214,7 +214,10 @@ function IndexDialog() {
   const [view, setView] = useState<View>(initialView ?? "form")
   const [companyName, setCompanyName] = useState("")
   const [jobTitle, setJobTitle] = useState("")
-  const [selectedModel, setSelectedModel] = useState("gpt-oss:20b-cloud")
+  const [routingLabels, setRoutingLabels] = useState<{
+    scoring?: string
+    drafting?: string
+  }>({})
   const [userProfile, setUserProfile] =
     useState<UserProfile>(DEFAULT_USER_PROFILE)
   const [status, setStatus] = useState("")
@@ -299,14 +302,23 @@ function IndexDialog() {
   useEffect(() => {
     chrome.storage.local.get(
       [
-        "lastSelectedModel",
         "userProfile",
         "pendingJobData",
         "savedApplications",
-        "perplexityConfig"
+        "perplexityConfig",
+        "modelRouting"
       ],
       (res) => {
-        if (res.lastSelectedModel) setSelectedModel(res.lastSelectedModel)
+        if (res.modelRouting) {
+          const fmt = (t?: RouteTarget) =>
+            t
+              ? `${PROVIDER_META[t.provider]?.name ?? t.provider} · ${t.model}`
+              : undefined
+          setRoutingLabels({
+            scoring: fmt(res.modelRouting.scoring),
+            drafting: fmt(res.modelRouting.drafting)
+          })
+        }
         if (res.userProfile) setUserProfile(res.userProfile)
         if (res.savedApplications) setSavedApplications(res.savedApplications)
         if (res.perplexityConfig) setPerplexityConfig(res.perplexityConfig)
@@ -681,15 +693,12 @@ function IndexDialog() {
     setDocsError("")
     setTriageDecision(null)
 
-    chrome.storage.local.set({ lastSelectedModel: selectedModel })
-
     try {
       const response = await sendToBackground({
         name: "analyzeMatch",
         body: {
           companyName: company,
           jobTitle: title,
-          model: selectedModel,
           userProfile,
           jobDescription: description || undefined
         }
@@ -755,7 +764,6 @@ function IndexDialog() {
         body: {
           companyName,
           jobTitle,
-          model: selectedModel,
           userProfile,
           jobDescription: jobDescription || undefined
         }
@@ -796,7 +804,6 @@ function IndexDialog() {
         body: {
           companyName: editingApplication.company,
           jobTitle: editingApplication.jobTitle,
-          model: selectedModel,
           userProfile,
           jobDescription: editingApplication.jobDescription
         }
@@ -2453,19 +2460,26 @@ function IndexDialog() {
               <label className="block text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-1.5">
                 AI Model
               </label>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-ink text-sm
-                           focus:outline-none focus:border-ink-secondary transition-colors">
-                {AVAILABLE_MODELS.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name}
-                    {model.recommended ? " (Recommended)" : ""} —{" "}
-                    {model.description}
-                  </option>
-                ))}
-              </select>
+              <div className="w-full px-4 py-3 bg-canvas border border-canvas-input-border text-sm space-y-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-ink-muted">Match scoring</span>
+                  <span className="font-medium text-ink">
+                    {routingLabels.scoring ?? "Set in Settings"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-ink-muted">Document drafting</span>
+                  <span className="font-medium text-ink">
+                    {routingLabels.drafting ?? "Set in Settings"}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => chrome.runtime.openOptionsPage()}
+                className="mt-1.5 text-[11px] font-semibold text-ink-secondary underline hover:text-ink transition-colors">
+                Change in Settings → Model routing
+              </button>
             </div>
 
             <div className="border-t border-canvas-divide pt-4">
