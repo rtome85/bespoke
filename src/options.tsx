@@ -1,12 +1,14 @@
 import {
+  Boxes,
   Briefcase,
+  ChevronDown,
   CloudCog,
   FileText,
   Folder,
-  Globe,
   GraduationCap,
   Languages as LanguagesIcon,
-  Server,
+  RefreshCw,
+  Route,
   SlidersHorizontal,
   User,
   Zap
@@ -29,15 +31,25 @@ import { Spectrum } from "~components/Spectrum"
 import {
   AVAILABLE_MODELS,
   DEFAULT_LLM_TUNING,
+  DEFAULT_MODEL_ROUTING,
   DEFAULT_PERPLEXITY_PROMPT,
   DEFAULT_PREPARATION_PLAN_PROMPT,
   DEFAULT_PROMPTS,
+  MODEL_COST_PER_MTOK,
   PROMPT_TEMPLATES,
   PROMPTS_VERSION,
+  PROVIDER_META,
+  RUN_TOKENS,
   type CustomPrompts,
+  type LLMProviderId,
   type LLMTuningConfig,
+  type ModelRouting,
   type PerplexityConfig,
-  type PromptTemplate
+  type PromptTemplate,
+  type ProviderConfig,
+  type ProvidersConfig,
+  type RoutableJob,
+  type RouteTarget
 } from "~types/config"
 import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
 import {
@@ -54,16 +66,16 @@ const NAV_GROUPS = [
     label: "AI Models",
     items: [
       {
-        label: "Ollama",
-        value: "ai-settings",
-        subtitle: "Connection, model and generation parameters",
-        icon: Server
+        label: "Providers",
+        value: "providers",
+        subtitle: "Model accounts and API keys",
+        icon: Boxes
       },
       {
-        label: "Perplexity",
-        value: "perplexity",
-        subtitle: "Company research and interview data",
-        icon: Globe
+        label: "Model routing",
+        value: "model-routing",
+        subtitle: "Which model runs each job",
+        icon: Route
       }
     ]
   },
@@ -251,6 +263,29 @@ const scoringBadgeCls: Record<"strict" | "balanced" | "generous", string> = {
   generous: "bg-aa-success-soft text-aa-success-strong border-aa-success-strong"
 }
 
+// ── Model routing helpers ────────────────────────────────────────────────────
+const PROVIDER_IDS: LLMProviderId[] = ["ollama", "openai", "anthropic", "google"]
+
+const encodeRoute = (t: RouteTarget) => `${t.provider}::${t.model}`
+
+const decodeRoute = (v: string): RouteTarget => {
+  const i = v.indexOf("::")
+  return {
+    provider: v.slice(0, i) as LLMProviderId,
+    model: v.slice(i + 2)
+  }
+}
+
+/** Rough $/run for the cost hint; null when the model has no price (local). */
+const runCost = (model: string, job: RoutableJob): number | null => {
+  const per = MODEL_COST_PER_MTOK[model]
+  if (per == null) return null
+  return (per * RUN_TOKENS[job]) / 1_000_000
+}
+
+const fmtCost = (n: number) =>
+  n < 0.01 ? `<$0.01` : `$${n.toFixed(n < 1 ? 3 : 2)}`
+
 // Output style — the three spectrum/segment axes.
 const STRICTNESS = ["strict", "balanced", "generous"] as const
 const TONE = ["formal", "professional", "conversational"] as const
@@ -298,7 +333,7 @@ const SAMPLE_BULLETS: Record<
 
 function Options() {
   const [section, setSection] = useState<AppSection>("settings")
-  const [activeTab, setActiveTab] = useState("ai-settings")
+  const [activeTab, setActiveTab] = useState("providers")
 
   useEffect(() => {
     chrome.storage.local.get("optionsSection", (res) => {
@@ -348,6 +383,142 @@ function Options() {
     "gpt-oss:20b-cloud"
   )
 
+  const [providers, setProviders] = useDebouncedStorage<ProvidersConfig>(
+    "providers",
+    {}
+  )
+  const [modelRouting, setModelRouting] = useDebouncedStorage<ModelRouting>(
+    "modelRouting",
+    DEFAULT_MODEL_ROUTING
+  )
+
+  // One-time migration: seed providers + routing from the legacy Ollama
+  // config so the new pages reflect the current setup.
+  useEffect(() => {
+    chrome.storage.local.get(
+      ["providers", "modelRouting", "ollamaConfig", "lastSelectedModel"],
+      (res) => {
+        if (res.providers) return
+        const model = res.lastSelectedModel || DEFAULT_MODEL_ROUTING.scoring.model
+        const seededProviders: ProvidersConfig = {
+          ollama: {
+            apiKey: res.ollamaConfig?.apiKey ?? "",
+            baseUrl: res.ollamaConfig?.baseUrl ?? PROVIDER_META.ollama.defaultBaseUrl,
+            enabled: true
+          }
+        }
+        const seededRouting: ModelRouting = res.modelRouting ?? {
+          scoring: { provider: "ollama", model },
+          drafting: { provider: "ollama", model },
+          fallback: { enabled: false, target: { provider: "ollama", model } }
+        }
+        chrome.storage.local.set({
+          providers: seededProviders,
+          modelRouting: seededRouting
+        })
+        setProviders(seededProviders)
+        setModelRouting(seededRouting)
+      }
+    )
+  }, [])
+
+  const providerModels = (id: LLMProviderId): string[] => {
+    const stored = providers[id]?.models
+    if (stored?.length) return stored
+    if (id === "ollama") return AVAILABLE_MODELS.map((m) => m.id)
+    return PROVIDER_META[id].fallbackModels
+  }
+
+  const connectedProviders = (): LLMProviderId[] =>
+    (["ollama", "openai", "anthropic", "google"] as LLMProviderId[]).filter(
+      (id) => {
+        const c = providers[id]
+        if (!c || c.enabled === false) return false
+        return PROVIDER_META[id].local || !!c.apiKey
+      }
+    )
+
+  const updateProvider = (id: LLMProviderId, patch: Partial<ProviderConfig>) =>
+    setProviders({
+      ...providers,
+      [id]: {
+        apiKey: "",
+        enabled: true,
+        ...providers[id],
+        ...patch
+      }
+    })
+
+  const [providerTest, setProviderTest] = useState<
+    Partial<Record<LLMProviderId, { type: "idle" | "loading" | "ok" | "err"; message: string }>>
+  >({})
+
+  const [openProvider, setOpenProvider] = useState<string | null>("ollama")
+
+  const setRoute = (job: RoutableJob | "fallback", v: string) => {
+    const target = decodeRoute(v)
+    setModelRouting(
+      job === "fallback"
+        ? { ...modelRouting, fallback: { ...modelRouting.fallback, target } }
+        : { ...modelRouting, [job]: target }
+    )
+  }
+
+  const testProvider = async (id: LLMProviderId) => {
+    setProviderTest((s) => ({ ...s, [id]: { type: "loading", message: "" } }))
+    try {
+      const r = await sendToBackground({
+        name: "testOllamaConnection",
+        body: {
+          provider: id,
+          apiKey: providers[id]?.apiKey ?? "",
+          baseUrl: providers[id]?.baseUrl
+        }
+      })
+      setProviderTest((s) => ({
+        ...s,
+        [id]: {
+          type: r?.success ? "ok" : "err",
+          message: r?.message ?? (r?.success ? "Connected." : "Failed.")
+        }
+      }))
+    } catch {
+      setProviderTest((s) => ({
+        ...s,
+        [id]: { type: "err", message: "Connection failed." }
+      }))
+    }
+  }
+
+  const refreshProviderModels = async (id: LLMProviderId) => {
+    setProviderTest((s) => ({ ...s, [id]: { type: "loading", message: "" } }))
+    try {
+      const r = await sendToBackground({
+        name: "listProviderModels",
+        body: {
+          provider: id,
+          apiKey: providers[id]?.apiKey ?? "",
+          baseUrl: providers[id]?.baseUrl
+        }
+      })
+      if (Array.isArray(r?.models)) updateProvider(id, { models: r.models })
+      setProviderTest((s) => ({
+        ...s,
+        [id]: {
+          type: r?.success ? "ok" : "err",
+          message: r?.success
+            ? `${r.models.length} models`
+            : (r?.message ?? "Failed to list models")
+        }
+      }))
+    } catch {
+      setProviderTest((s) => ({
+        ...s,
+        [id]: { type: "err", message: "Failed to list models." }
+      }))
+    }
+  }
+
   useEffect(() => {
     chrome.storage.local.get("promptsVersion", (res) => {
       if (res.promptsVersion !== PROMPTS_VERSION) {
@@ -359,11 +530,6 @@ function Options() {
       }
     })
   }, [])
-
-  const [testStatus, setTestStatus] = useState<{
-    type: "idle" | "loading" | "success" | "error"
-    message: string
-  }>({ type: "idle", message: "" })
 
   const [perplexityTestStatus, setPerplexityTestStatus] = useState<{
     type: "idle" | "loading" | "success" | "error"
@@ -404,38 +570,6 @@ function Options() {
     title: string
     promptType: "research" | "preparation" | null
   }>({ isOpen: false, title: "", promptType: null })
-
-  const handleTestOllama = async () => {
-    if (!ollamaConfig.apiKey) {
-      setTestStatus({ type: "error", message: "Please enter API key first" })
-      return
-    }
-
-    setTestStatus({ type: "loading", message: "Testing connection..." })
-
-    try {
-      const response = await sendToBackground({
-        name: "testOllamaConnection",
-        body: { apiKey: ollamaConfig.apiKey, baseUrl: ollamaConfig.baseUrl }
-      })
-
-      if (response?.success) {
-        setTestStatus({ type: "success", message: response.message })
-      } else {
-        setTestStatus({
-          type: "error",
-          message: response?.message || "Connection failed."
-        })
-      }
-    } catch (error) {
-      setTestStatus({
-        type: "error",
-        message: "Connection failed. Please check your internet connection."
-      })
-    }
-
-    setTimeout(() => setTestStatus({ type: "idle", message: "" }), 5000)
-  }
 
   const handleTestPerplexity = async () => {
     if (!perplexityConfig.apiKey) {
@@ -506,7 +640,9 @@ function Options() {
       customPrompts,
       userProfile,
       llmTuning,
-      lastSelectedModel: matchModel
+      lastSelectedModel: matchModel,
+      providers,
+      modelRouting
     })
     setSaveStatus("Settings saved successfully!")
     setTimeout(() => setSaveStatus(""), 3000)
@@ -591,6 +727,9 @@ function Options() {
         version: "1.0.0",
         exportDate: new Date().toISOString(),
         ollamaConfig,
+        perplexityConfig,
+        providers,
+        modelRouting,
         customPrompts,
         userProfile,
         llmTuning,
@@ -641,6 +780,9 @@ function Options() {
           )
         ) {
           if (data.ollamaConfig) setOllamaConfig(data.ollamaConfig)
+          if (data.perplexityConfig) setPerplexityConfig(data.perplexityConfig)
+          if (data.providers) setProviders(data.providers)
+          if (data.modelRouting) setModelRouting(data.modelRouting)
           if (data.customPrompts) setCustomPrompts(data.customPrompts)
           if (data.userProfile) setUserProfile(data.userProfile)
           if (data.llmTuning) setLlmTuning(data.llmTuning)
@@ -731,188 +873,567 @@ function Options() {
 
   // ── Tab content ──────────────────────────────────────────────────────────────
   const tabContent: Record<string, React.ReactNode> = {
-    "ai-settings": (
-      <div className="space-y-6">
-        {/* Connection */}
-        <div className={card}>
-          <h2 className={sectionHeadCls}>Connection</h2>
-          <hr className={divider} />
-          <div className="space-y-6">
-            <div>
-              <label className={labelCls}>API Key *</label>
-              <input
-                type="password"
-                value={ollamaConfig.apiKey}
-                onChange={(e) =>
-                  setOllamaConfig({ ...ollamaConfig, apiKey: e.target.value })
-                }
-                placeholder="oll-..."
-                className={inputCls}
-              />
-              <p className={hintCls}>
-                Get your API key from{" "}
-                <a
-                  href="https://ollama.com/settings/keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-aa-primary hover:underline">
-                  ollama.com/settings/keys
-                </a>
-              </p>
-            </div>
-
-            <div>
-              <label className={labelCls}>Base URL</label>
-              <input
-                type="text"
-                value={ollamaConfig.baseUrl}
-                onChange={(e) =>
-                  setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })
-                }
-                placeholder="https://ollama.com/api"
-                className={inputCls}
-              />
-              <p className={hintCls}>Default is fine for most users.</p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleTestOllama}
-                disabled={testStatus.type === "loading"}
-                className={btnOutline}>
-                {testStatus.type === "loading"
-                  ? "Testing..."
-                  : "Test Connection"}
-              </button>
-            </div>
-
-            {testStatus.type === "success" && (
-              <div className={successMsg}>{testStatus.message}</div>
-            )}
-            {testStatus.type === "error" && (
-              <div className={errorMsg}>{testStatus.message}</div>
-            )}
-          </div>
-        </div>
-
-        {/* Model */}
-        <div className={card}>
-          <h2 className={sectionHeadCls}>Model</h2>
-          <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
-            The model used to score your profile and draft documents.
-          </p>
-          <hr className={divider} />
-          <div className="space-y-3">
-            {AVAILABLE_MODELS.map((model) => {
-              const isSelected = matchModel === model.id
-              return (
+    providers: (() => {
+      const connected = connectedProviders()
+      return (
+        <div className="space-y-6">
+          {PROVIDER_IDS.map((id) => {
+            const meta = PROVIDER_META[id]
+            const cfg = providers[id]
+            const isOpen = openProvider === id
+            const isConnected = connected.includes(id)
+            const test = providerTest[id]
+            const models = providerModels(id)
+            return (
+              <div
+                key={id}
+                className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
                 <button
-                  key={model.id}
                   type="button"
-                  onClick={() => setMatchModel(model.id)}
-                  className={`w-full text-left p-4 rounded-aa-md border transition-colors ${
-                    isSelected
-                      ? "border-aa-primary bg-aa-primary-soft"
-                      : "border-aa-border bg-aa-surface hover:border-aa-neutral-400"
-                  }`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  onClick={() => setOpenProvider(isOpen ? null : id)}
+                  className="w-full flex items-center gap-4 p-aa-5 text-left hover:bg-aa-neutral-50 transition-colors">
+                  <span className="grid place-items-center w-9 h-9 rounded-aa-md bg-aa-primary-soft text-aa-primary font-bold text-sm shrink-0">
+                    {meta.name[0]}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-2">
                       <span className="font-semibold text-aa-text-primary text-sm">
-                        {model.name}
+                        {meta.name}
                       </span>
-                      <span className="text-aa-text-secondary text-xs">
-                        {model.size}
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border ${
+                          meta.local
+                            ? "bg-aa-success-soft text-aa-success-strong border-aa-success-strong"
+                            : "bg-aa-neutral-100 text-aa-text-secondary border-aa-border"
+                        }`}>
+                        {meta.local ? "Free" : "Paid"}
                       </span>
-                      {model.recommended && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-pill bg-aa-primary-soft text-aa-primary px-2 py-0.5">
-                          Recommended
+                    </span>
+                    <span className="block text-[12px] text-aa-text-secondary mt-0.5">
+                      {meta.local
+                        ? "Local or Ollama Cloud — no per-token cost"
+                        : `Usage-based API · ${models.length} models`}
+                    </span>
+                  </span>
+                  <span
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${
+                      isConnected
+                        ? "text-aa-success-strong"
+                        : "text-aa-text-secondary"
+                    }`}>
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isConnected ? "bg-aa-success" : "bg-aa-neutral-400"
+                      }`}
+                    />
+                    {isConnected ? "Connected" : "Not connected"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-aa-text-secondary shrink-0 transition-transform ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="border-t border-aa-border p-aa-5 space-y-5">
+                    {meta.local && (
+                      <div>
+                        <span className={labelCls}>Endpoint</span>
+                        <div className="inline-flex rounded-aa-md border border-aa-border p-[3px]">
+                          {[
+                            {
+                              label: "Ollama Cloud",
+                              url: meta.defaultBaseUrl as string
+                            },
+                            {
+                              label: "Local",
+                              url: "http://localhost:11434/api"
+                            }
+                          ].map((opt) => {
+                            const on =
+                              (cfg?.baseUrl ?? meta.defaultBaseUrl) === opt.url
+                            return (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                onClick={() =>
+                                  updateProvider(id, { baseUrl: opt.url })
+                                }
+                                className={`px-3 py-1.5 rounded-aa-sm text-[12px] font-semibold transition-colors ${
+                                  on
+                                    ? "bg-aa-primary text-aa-text-on-primary"
+                                    : "text-aa-text-secondary hover:text-aa-text-primary"
+                                }`}>
+                                {opt.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className={labelCls}>
+                        API key{meta.local ? " (cloud only)" : " *"}
+                      </label>
+                      <input
+                        type="password"
+                        value={cfg?.apiKey ?? ""}
+                        onChange={(e) =>
+                          updateProvider(id, { apiKey: e.target.value })
+                        }
+                        placeholder={
+                          id === "ollama"
+                            ? "oll-…"
+                            : id === "openai"
+                              ? "sk-…"
+                              : id === "anthropic"
+                                ? "sk-ant-…"
+                                : "AIza…"
+                        }
+                        className={inputCls}
+                      />
+                      {meta.keyUrl && (
+                        <p className={hintCls}>
+                          Get a key from{" "}
+                          <a
+                            href={meta.keyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-aa-primary hover:underline">
+                            {meta.keyUrl.replace(/^https?:\/\//, "")}
+                          </a>
+                        </p>
+                      )}
+                    </div>
+
+                    {!meta.local && (
+                      <div>
+                        <label className={labelCls}>Base URL</label>
+                        <input
+                          type="text"
+                          value={cfg?.baseUrl ?? ""}
+                          onChange={(e) =>
+                            updateProvider(id, { baseUrl: e.target.value })
+                          }
+                          placeholder={meta.defaultBaseUrl}
+                          className={inputCls}
+                        />
+                        <p className={hintCls}>
+                          Leave blank unless you use a proxy or gateway.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => testProvider(id)}
+                        disabled={test?.type === "loading"}
+                        className={btnOutline}>
+                        {test?.type === "loading"
+                          ? "Testing…"
+                          : "Test connection"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => refreshProviderModels(id)}
+                        disabled={test?.type === "loading"}
+                        className={btnSecondary}>
+                        <RefreshCw className="w-3.5 h-3.5 inline -mt-0.5 mr-1.5" />
+                        Refresh models
+                      </button>
+                      {test && test.type !== "loading" && test.message && (
+                        <span
+                          className={`text-[12px] font-semibold ${
+                            test.type === "ok"
+                              ? "text-aa-success-strong"
+                              : "text-aa-error-strong"
+                          }`}>
+                          {test.message}
                         </span>
                       )}
                     </div>
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                        isSelected
-                          ? "border-aa-primary bg-aa-primary"
-                          : "border-aa-neutral-400"
-                      }`}
-                    />
-                  </div>
 
-                  <p className="text-sm text-aa-text-secondary mt-1.5">
-                    {model.description}
+                    <div>
+                      <span className={labelCls}>Available models</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {models.map((m) => (
+                          <span
+                            key={m}
+                            className="text-[11px] font-mono rounded-aa-sm border border-aa-border bg-aa-neutral-50 px-2 py-1 text-aa-text-secondary">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                      {!cfg?.models?.length && (
+                        <p className={hintCls}>
+                          Built-in list. Test the connection, then refresh to
+                          pull the live catalogue.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {/* Perplexity — research / interview only */}
+          <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() =>
+                setOpenProvider(
+                  openProvider === "perplexity" ? null : "perplexity"
+                )
+              }
+              className="w-full flex items-center gap-4 p-aa-5 text-left hover:bg-aa-neutral-50 transition-colors">
+              <span className="grid place-items-center w-9 h-9 rounded-aa-md bg-aa-primary-soft text-aa-primary font-bold text-sm shrink-0">
+                P
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="flex items-center gap-2">
+                  <span className="font-semibold text-aa-text-primary text-sm">
+                    Perplexity Sonar
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border bg-aa-neutral-100 text-aa-text-secondary border-aa-border">
+                    Paid
+                  </span>
+                </span>
+                <span className="block text-[12px] text-aa-text-secondary mt-0.5">
+                  Company research and interview prep only — never scoring or
+                  drafting
+                </span>
+              </span>
+              <span
+                className={`flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${
+                  perplexityConfig.enabled && perplexityConfig.apiKey
+                    ? "text-aa-success-strong"
+                    : "text-aa-text-secondary"
+                }`}>
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    perplexityConfig.enabled && perplexityConfig.apiKey
+                      ? "bg-aa-success"
+                      : "bg-aa-neutral-400"
+                  }`}
+                />
+                {perplexityConfig.enabled && perplexityConfig.apiKey
+                  ? "Connected"
+                  : "Not connected"}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-aa-text-secondary shrink-0 transition-transform ${
+                  openProvider === "perplexity" ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {openProvider === "perplexity" && (
+              <div className="border-t border-aa-border p-aa-5 space-y-5">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={perplexityConfig.enabled}
+                    onChange={(e) =>
+                      setPerplexityConfig({
+                        ...perplexityConfig,
+                        enabled: e.target.checked
+                      })
+                    }
+                    className="w-4 h-4 accent-aa-primary"
+                  />
+                  <span className="text-sm font-medium text-aa-text-primary">
+                    Enable company research
+                  </span>
+                </label>
+
+                <div>
+                  <label className={labelCls}>API key *</label>
+                  <input
+                    type="password"
+                    value={perplexityConfig.apiKey}
+                    onChange={(e) =>
+                      setPerplexityConfig({
+                        ...perplexityConfig,
+                        apiKey: e.target.value
+                      })
+                    }
+                    placeholder="pplx-…"
+                    className={inputCls}
+                  />
+                  <p className={hintCls}>
+                    Get a key from{" "}
+                    <a
+                      href="https://www.perplexity.ai/settings/api"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-aa-primary hover:underline">
+                      perplexity.ai/settings/api
+                    </a>
                   </p>
+                </div>
 
-                  <div className="flex flex-wrap gap-1.5 mt-2.5">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${costBadgeCls[model.costProfile]}`}>
-                      Token cost: {model.costProfile}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleTestPerplexity}
+                    disabled={perplexityTestStatus.type === "loading"}
+                    className={btnOutline}>
+                    {perplexityTestStatus.type === "loading"
+                      ? "Testing…"
+                      : "Test connection"}
+                  </button>
+                  {perplexityTestStatus.type === "success" && (
+                    <span className="text-[12px] font-semibold text-aa-success-strong">
+                      {perplexityTestStatus.message}
                     </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${speedBadgeCls[model.speedProfile]}`}>
-                      Speed: {model.speedProfile}
+                  )}
+                  {perplexityTestStatus.type === "error" && (
+                    <span className="text-[12px] font-semibold text-aa-error-strong">
+                      {perplexityTestStatus.message}
                     </span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-2 py-0.5 border ${scoringBadgeCls[model.scoringProfile]}`}>
-                      Scoring: {model.scoringProfile}
-                    </span>
-                  </div>
-                </button>
-              )
-            })}
+                  )}
+                </div>
+
+                <p className={hintCls}>
+                  The research and interview-prep prompts live on the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("prompts")}
+                    className="text-aa-primary hover:underline bg-transparent border-0 p-0 cursor-pointer font-semibold">
+                    Prompts
+                  </button>{" "}
+                  page.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Fine-tuning */}
-        <div className={card}>
-          <div className="flex items-start justify-between gap-4">
+          <p className="text-[12px] text-aa-text-secondary flex items-start gap-2">
+            <span className="text-aa-primary mt-px">•</span>
+            Keys are stored locally in this browser and sent only to the provider
+            you enable — never to Bespoke.
+          </p>
+        </div>
+      )
+    })(),
+
+    "model-routing": (() => {
+      const connected = connectedProviders()
+      const tuning = llmTuning ?? DEFAULT_LLM_TUNING
+      const noProviders = connected.length === 0
+
+      const routeSelect = (
+        job: RoutableJob | "fallback",
+        target: RouteTarget,
+        disabled: boolean
+      ) => (
+        <select
+          value={encodeRoute(target)}
+          disabled={disabled}
+          onChange={(e) => setRoute(job, e.target.value)}
+          className={`${inputCls} disabled:opacity-50 disabled:cursor-not-allowed`}>
+          {!connected.includes(target.provider) && (
+            <option value={encodeRoute(target)}>
+              {PROVIDER_META[target.provider].name} · {target.model} (not
+              connected)
+            </option>
+          )}
+          {connected.map((pid) => (
+            <optgroup key={pid} label={PROVIDER_META[pid].name}>
+              {providerModels(pid).map((m) => (
+                <option key={`${pid}::${m}`} value={`${pid}::${m}`}>
+                  {PROVIDER_META[pid].name} · {m}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      )
+
+      const jobRow = (label: string, sub: string, job: RoutableJob) => {
+        const target = modelRouting[job]
+        const cost = runCost(target.model, job)
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr,minmax(0,320px)] gap-3 sm:items-start py-4 border-b border-aa-border last:border-0 last:pb-0">
             <div>
-              <h2 className={sectionHeadCls}>Fine-tuning</h2>
-              <p className="text-sm text-aa-text-secondary -mt-1">
-                Generation parameters. Defaults suit most cases.
+              <p className="text-sm font-semibold text-aa-text-primary">
+                {label}
+              </p>
+              <p className="text-[12px] text-aa-text-secondary mt-0.5">{sub}</p>
+            </div>
+            <div className="space-y-1.5">
+              {routeSelect(job, target, noProviders)}
+              <p className="text-[11px] text-aa-text-secondary">
+                {noProviders
+                  ? "Connect a provider to route this job."
+                  : cost == null
+                    ? "No per-token cost on this model."
+                    : `≈ ${fmtCost(cost)} per run`}
               </p>
             </div>
-            <button
-              onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
-              className={btnOutline}>
-              Reset to defaults
-            </button>
           </div>
-          <hr className={divider} />
-          <div className="space-y-5">
-            {[
-              {
-                label: "Temperature",
-                key: "temperature" as const,
-                min: 0.1,
-                max: 1.5,
-                step: 0.1,
-                fmt: (v: number) => v.toFixed(1),
-                lo: "0.1 — Precise",
-                hi: "1.5 — Creative"
-              },
-              {
-                label: "Top P",
-                key: "topP" as const,
-                min: 0.5,
-                max: 1.0,
-                step: 0.05,
-                fmt: (v: number) => v.toFixed(2),
-                lo: "0.5 — Conservative",
-                hi: "1.0 — Full diversity"
-              },
-              {
-                label: "Max output tokens",
-                key: "maxTokens" as const,
-                min: 1024,
-                max: 8192,
-                step: 256,
-                fmt: (v: number) => v.toLocaleString(),
-                lo: "1 024 — Concise",
-                hi: "8 192 — Detailed"
-              }
-            ].map(({ label, key, min, max, step, fmt, lo, hi }) => {
-              const tuning = llmTuning ?? DEFAULT_LLM_TUNING
-              return (
+        )
+      }
+
+      const lockedRow = (label: string, sub: string) => (
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr,minmax(0,320px)] gap-3 sm:items-start py-4 border-b border-aa-border last:border-0 last:pb-0">
+          <div>
+            <p className="text-sm font-semibold text-aa-text-primary">{label}</p>
+            <p className="text-[12px] text-aa-text-secondary mt-0.5">{sub}</p>
+          </div>
+          <div className="space-y-1.5">
+            <div
+              className={`${inputCls} flex items-center gap-2 text-aa-text-secondary bg-aa-neutral-50`}>
+              <Route className="w-3.5 h-3.5 shrink-0" />
+              Perplexity Sonar
+            </div>
+            <p className="text-[11px] text-aa-text-secondary">
+              Fixed — configure it on the Providers page.
+            </p>
+          </div>
+        </div>
+      )
+
+      return (
+        <div className="space-y-6 max-w-3xl">
+          {noProviders && (
+            <div className={infoMsg}>
+              No AI provider is connected yet. Add one on the{" "}
+              <button
+                type="button"
+                onClick={() => setActiveTab("providers")}
+                className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-aa-neutral-700">
+                Providers
+              </button>{" "}
+              page to route scoring and drafting.
+            </div>
+          )}
+
+          {/* Assignments */}
+          <div className={card}>
+            <h2 className={sectionHeadCls}>Assignments</h2>
+            <p className="text-sm text-aa-text-secondary -mt-1">
+              Which model runs each job.
+            </p>
+            <hr className={divider} />
+            <div>
+              {jobRow(
+                "Match scoring",
+                "Scores your profile against the job and writes the gap analysis.",
+                "scoring"
+              )}
+              {jobRow(
+                "Document drafting",
+                "Writes the tailored CV and the cover letter.",
+                "drafting"
+              )}
+              {lockedRow(
+                "Company research",
+                "Pulls the company facts shown in the report."
+              )}
+              {lockedRow(
+                "Interview prep",
+                "Generates the HR and technical interview plan."
+              )}
+            </div>
+          </div>
+
+          {/* Fallback */}
+          <div className={card}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className={sectionHeadCls}>Fallback</h2>
+                <p className="text-sm text-aa-text-secondary -mt-1">
+                  Retry on a second model when the primary one errors or times
+                  out.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={modelRouting.fallback.enabled}
+                  onChange={(e) =>
+                    setModelRouting({
+                      ...modelRouting,
+                      fallback: {
+                        ...modelRouting.fallback,
+                        enabled: e.target.checked
+                      }
+                    })
+                  }
+                  className="w-4 h-4 accent-aa-primary"
+                />
+                <span className="text-[12px] font-semibold text-aa-text-secondary">
+                  {modelRouting.fallback.enabled ? "On" : "Off"}
+                </span>
+              </label>
+            </div>
+            {modelRouting.fallback.enabled && (
+              <>
+                <hr className={divider} />
+                <label className={labelCls}>Fallback model</label>
+                {routeSelect(
+                  "fallback",
+                  modelRouting.fallback.target,
+                  noProviders
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Generation parameters */}
+          <div className={card}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className={sectionHeadCls}>Generation parameters</h2>
+                <p className="text-sm text-aa-text-secondary -mt-1">
+                  Applied to every routed model. Defaults suit most cases.
+                </p>
+              </div>
+              <button
+                onClick={() => setLlmTuning(DEFAULT_LLM_TUNING)}
+                className={btnOutline}>
+                Reset to defaults
+              </button>
+            </div>
+            <hr className={divider} />
+            <div className="space-y-5">
+              {[
+                {
+                  label: "Temperature",
+                  key: "temperature" as const,
+                  min: 0.1,
+                  max: 1.5,
+                  step: 0.1,
+                  fmt: (v: number) => v.toFixed(1),
+                  lo: "0.1 — Precise",
+                  hi: "1.5 — Creative"
+                },
+                {
+                  label: "Top P",
+                  key: "topP" as const,
+                  min: 0.5,
+                  max: 1.0,
+                  step: 0.05,
+                  fmt: (v: number) => v.toFixed(2),
+                  lo: "0.5 — Conservative",
+                  hi: "1.0 — Full diversity"
+                },
+                {
+                  label: "Max output tokens",
+                  key: "maxTokens" as const,
+                  min: 1024,
+                  max: 8192,
+                  step: 256,
+                  fmt: (v: number) => v.toLocaleString(),
+                  lo: "1 024 — Concise",
+                  hi: "8 192 — Detailed"
+                }
+              ].map(({ label, key, min, max, step, fmt, lo, hi }) => (
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-sm font-medium text-aa-text-primary">
@@ -944,129 +1465,12 @@ function Options() {
                     <span>{hi}</span>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    ),
-
-    perplexity: (
-      <div className={card}>
-        <h2 className={sectionHeadCls}>Perplexity Sonar Configuration</h2>
-        <p className="text-sm text-aa-text-secondary mb-6">
-          Configure Perplexity Sonar to research companies and display
-          information in the results. This enables the "About Company" section
-          with industry, size, projects, and ratings from Glassdoor, Indeed, and
-          Teamlyzer.
-        </p>
-        <hr className={divider} />
-
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="perplexityEnabled"
-              checked={perplexityConfig.enabled}
-              onChange={(e) =>
-                setPerplexityConfig({
-                  ...perplexityConfig,
-                  enabled: e.target.checked
-                })
-              }
-              className="w-4 h-4 accent-aa-primary"
-            />
-            <label
-              htmlFor="perplexityEnabled"
-              className="text-sm font-medium text-aa-text-primary">
-              Enable Company Research
-            </label>
-          </div>
-
-          <div>
-            <label className={labelCls}>API Key *</label>
-            <input
-              type="password"
-              value={perplexityConfig.apiKey}
-              onChange={(e) =>
-                setPerplexityConfig({
-                  ...perplexityConfig,
-                  apiKey: e.target.value
-                })
-              }
-              placeholder="pplx-..."
-              className={inputCls}
-            />
-            <p className={hintCls}>
-              Get your API key from{" "}
-              <a
-                href="https://www.perplexity.ai/settings/api"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-aa-primary hover:underline">
-                perplexity.ai/settings/api
-              </a>
-            </p>
-          </div>
-
-          <div>
-            <label className={labelCls}>Research Prompt</label>
-            <textarea
-              value={perplexityConfig.customPrompt}
-              onChange={(e) =>
-                setPerplexityConfig({
-                  ...perplexityConfig,
-                  customPrompt: e.target.value
-                })
-              }
-              rows={6}
-              className={textareaCls}
-            />
-            <div className="flex items-center justify-between mt-1">
-              <p className={hintCls}>
-                Use {"{{companyName}}"} as a placeholder for the company name.
-              </p>
-              <button
-                onClick={() =>
-                  openPerplexityDialog("Research Prompt", "research")
-                }
-                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 hover:opacity-90 transition-opacity">
-                Expand
-              </button>
+              ))}
             </div>
           </div>
-
-          <div className={infoMsg}>
-            <h3 className="text-[11px] font-bold uppercase tracking-widest mb-1">
-              Pricing
-            </h3>
-            <p className="text-xs">
-              Perplexity Sonar costs $1 per 1M input tokens and $1 per 1M output
-              tokens. A typical company research query costs approximately
-              $0.0008.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleTestPerplexity}
-              disabled={perplexityTestStatus.type === "loading"}
-              className={btnOutline}>
-              {perplexityTestStatus.type === "loading"
-                ? "Testing..."
-                : "Test Connection"}
-            </button>
-          </div>
-
-          {perplexityTestStatus.type === "success" && (
-            <div className={successMsg}>{perplexityTestStatus.message}</div>
-          )}
-          {perplexityTestStatus.type === "error" && (
-            <div className={errorMsg}>{perplexityTestStatus.message}</div>
-          )}
         </div>
-      </div>
-    ),
+      )
+    })(),
 
     prompts: (
       <div className="space-y-6">
@@ -1184,6 +1588,42 @@ function Options() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Company research */}
+        <div className={card}>
+          <h2 className={sectionHeadCls}>Company research</h2>
+          <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
+            Runs on Perplexity Sonar to fill the "About the company" section of
+            the report. Connect Perplexity on the Providers page.
+          </p>
+          <hr className={divider} />
+          <div>
+            <label className={labelCls}>Research prompt</label>
+            <textarea
+              value={perplexityConfig.customPrompt}
+              onChange={(e) =>
+                setPerplexityConfig({
+                  ...perplexityConfig,
+                  customPrompt: e.target.value
+                })
+              }
+              rows={6}
+              className={textareaCls}
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className={hintCls}>
+                Use {"{{companyName}}"} as a placeholder for the company name.
+              </p>
+              <button
+                onClick={() =>
+                  openPerplexityDialog("Research Prompt", "research")
+                }
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
+                Expand
+              </button>
+            </div>
           </div>
         </div>
 

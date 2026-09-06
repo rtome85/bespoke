@@ -411,3 +411,28 @@ export const DEFAULT_MODEL_ROUTING: ModelRouting = {
     target: { provider: "ollama", model: "gpt-oss:20b-cloud" }
   }
 }
+
+/**
+ * Rough blended $/1M tokens (input+output) for a rule-of-thumb per-run
+ * cost hint on the Model routing page. Not billing-accurate.
+ */
+export const MODEL_COST_PER_MTOK: Record<string, number> = {
+  // OpenAI
+  "gpt-4o-mini": 0.4,
+  "gpt-4o": 6,
+  "o4-mini": 2.2,
+  // Anthropic
+  "claude-3-5-haiku-20241022": 2.4,
+  "claude-sonnet-4-20250514": 9,
+  "claude-opus-4-20250514": 45,
+  // Google
+  "gemini-2.0-flash": 0.2,
+  "gemini-1.5-flash": 0.2,
+  "gemini-2.0-pro": 5
+}
+
+/** Approx. tokens a scoring or drafting run spends, for the cost hint. */
+export const RUN_TOKENS: Record<RoutableJob, number> = {
+  scoring: 4000,
+  drafting: 9000
+}
