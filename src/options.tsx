@@ -1260,7 +1260,7 @@ function Options() {
             ? "Experience-first"
             : "Balanced"
       return (
-        <div className="space-y-8 max-w-3xl">
+        <div className="space-y-8 max-w-4xl">
           {/* Scoring */}
           <section className="space-y-4">
             <div>
@@ -1304,7 +1304,7 @@ function Options() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-10 pt-1">
+            <div className="flex flex-row gap-10 pt-1">
               <div className="space-y-8">
                 <div className="space-y-3">
                   <span className="block text-[12px] font-semibold text-aa-text-secondary">
@@ -1348,7 +1348,7 @@ function Options() {
                 </div>
               </div>
 
-              <div className="w-[340px] rounded-aa-lg border border-aa-border bg-aa-surface p-5 space-y-3">
+              <div className="w-sm rounded-aa-lg border border-aa-border bg-aa-surface p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-aa-text-secondary">
                     Sample bullet
