@@ -1,11 +1,25 @@
-import { useMemo, useState } from "react"
-import { ChevronRight, ExternalLink, Search, Star, X } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { sendToBackground } from "@plasmohq/messaging"
+import {
+  ChevronRight,
+  Download,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Search,
+  Sparkles,
+  Star,
+  X
+} from "lucide-react"
 
+import { downloadMarkdownAsPdf } from "~lib/pdf"
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
-  type SavedApplication
+  type SavedApplication,
+  type UserProfile
 } from "~types/userProfile"
+import { downloadMarkdownFile } from "~utils/documentFormatter"
 
 interface Props {
   applications: SavedApplication[]
@@ -54,6 +68,13 @@ export function ApplicationsList({
   )
   const [openId, setOpenId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [genError, setGenError] = useState("")
+
+  useEffect(() => {
+    setGenerating(false)
+    setGenError("")
+  }, [openId])
 
   const presentStatuses = useMemo(
     () =>
@@ -84,6 +105,47 @@ export function ApplicationsList({
   const open = openId
     ? applications.find((a) => a.id === openId) ?? null
     : null
+
+  // "Saved for later" applications keep the job description but no documents —
+  // let the user generate them here without reopening the side panel.
+  const canGenerate =
+    !!open?.jobDescription && !open.resumeContent && !open.coverLetterContent
+
+  const generateDocuments = async () => {
+    if (!open?.jobDescription) return
+    setGenerating(true)
+    setGenError("")
+    try {
+      const { userProfile } = (await chrome.storage.local.get("userProfile")) as {
+        userProfile?: UserProfile
+      }
+      const response = await sendToBackground({
+        name: "generateDocuments",
+        body: {
+          companyName: open.company,
+          jobTitle: open.jobTitle,
+          userProfile,
+          jobDescription: open.jobDescription
+        }
+      })
+      if (response?.success) {
+        onUpdate(open.id, {
+          resumeContent: response.data.resumeContent,
+          resumeFilename: response.data.resumeFilename,
+          coverLetterContent: response.data.coverLetterContent,
+          coverLetterFilename: response.data.coverLetterFilename
+        })
+      } else {
+        setGenError(response?.message || "Generation failed. Please try again.")
+      }
+    } catch (error) {
+      setGenError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      )
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
     <div className="max-w-4xl">
@@ -228,39 +290,46 @@ export function ApplicationsList({
             </div>
 
             <div className="p-5 space-y-5">
-              <div>
-                <div className="flex items-start justify-between gap-3">
+              <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-4">
+                <div className="flex items-center justify-between gap-3.5">
                   <div className="min-w-0">
-                    <h2 className="text-[16px] font-bold text-aa-text-primary">
-                      {open.company}
-                    </h2>
-                    <p className="text-[13px] text-aa-text-secondary">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h2 className="text-[20px] font-bold text-aa-text-primary truncate">
+                        {open.company}
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdate(open.id, { isFavorite: !open.isFavorite })
+                        }
+                        aria-label="Toggle favourite"
+                        className="shrink-0 grid place-items-center rounded-aa-sm hover:bg-aa-neutral-100 transition-colors">
+                        <Star
+                          className={`w-4 h-4 ${
+                            open.isFavorite
+                              ? "text-aa-primary"
+                              : "text-aa-neutral-400"
+                          }`}
+                          fill={open.isFavorite ? "currentColor" : "none"}
+                        />
+                      </button>
+                    </div>
+                    <p className="text-[13px] text-aa-text-secondary leading-relaxed">
                       {open.jobTitle}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onUpdate(open.id, { isFavorite: !open.isFavorite })
-                    }
-                    aria-label="Toggle favourite"
-                    className="shrink-0 w-8 h-8 grid place-items-center rounded-aa-md hover:bg-aa-neutral-100 transition-colors">
-                    <Star
-                      className={`w-4 h-4 ${
-                        open.isFavorite
-                          ? "text-aa-primary"
-                          : "text-aa-neutral-400"
-                      }`}
-                      fill={open.isFavorite ? "currentColor" : "none"}
-                    />
-                  </button>
+                  {open.matchPercentage != null && (
+                    <span className="shrink-0 grid place-items-center w-[52px] h-[52px] rounded-full bg-aa-primary-soft text-[13px] font-bold text-aa-primary">
+                      {open.matchPercentage}%
+                    </span>
+                  )}
                 </div>
                 {open.jobUrl && (
                   <a
                     href={open.jobUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 mt-2 text-[12px] font-semibold text-aa-primary hover:underline">
+                    className="inline-flex items-center gap-1.5 mt-2.5 text-[13px] font-semibold text-aa-primary hover:underline">
                     <ExternalLink className="w-3.5 h-3.5" />
                     Job posting
                   </a>
@@ -286,11 +355,7 @@ export function ApplicationsList({
                   ))}
                 </select>
                 <p className="text-[11px] text-aa-text-secondary mt-1">
-                  Last change {relTime(open.statusUpdatedAt ?? open.createdAt)} ·
-                  match{" "}
-                  {open.matchPercentage == null
-                    ? "not scored"
-                    : `${open.matchPercentage}%`}
+                  Last change {relTime(open.statusUpdatedAt ?? open.createdAt)}
                 </p>
               </div>
 
@@ -335,15 +400,98 @@ export function ApplicationsList({
                 </div>
               )}
 
-              {(open.resumeContent || open.coverLetterContent) && (
+              {(open.resumeContent || open.coverLetterContent || canGenerate) && (
                 <div>
                   <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                     Documents
                   </span>
-                  <p className="text-[12px] text-aa-text-secondary">
-                    Saved with this application. Open the side panel to download
-                    or regenerate.
-                  </p>
+
+                  {open.resumeContent || open.coverLetterContent ? (
+                    <div className="bg-aa-surface border border-aa-border rounded-aa-md overflow-hidden">
+                      {[
+                        {
+                          label: "Resume",
+                          filename: open.resumeFilename,
+                          content: open.resumeContent
+                        },
+                        {
+                          label: "Cover letter",
+                          filename: open.coverLetterFilename,
+                          content: open.coverLetterContent
+                        }
+                      ]
+                        .filter((f) => f.content && f.filename)
+                        .map((f, i) => (
+                          <div
+                            key={f.label}
+                            className={`flex items-center justify-between px-3 py-2.5 ${
+                              i === 0 ? "border-b border-aa-border" : ""
+                            }`}>
+                            <span className="text-[13px] font-semibold text-aa-text-primary">
+                              {f.label}
+                            </span>
+                            <span className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  downloadMarkdownFile(f.filename!, f.content!)
+                                }
+                                className="flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-3 py-1.5 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+                                <FileText className="w-3.5 h-3.5" />
+                                MD
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    await downloadMarkdownAsPdf(
+                                      f.content!,
+                                      f.filename!
+                                    )
+                                  } catch {
+                                    alert(
+                                      "Failed to generate PDF. Please try again."
+                                    )
+                                  }
+                                }}
+                                className="flex items-center gap-1.5 rounded-aa-sm bg-aa-primary px-3 py-1.5 text-[11px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+                                <Download className="w-3.5 h-3.5" />
+                                PDF
+                              </button>
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[12px] text-aa-text-secondary">
+                        Saved for later — no CV or cover letter yet.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={generateDocuments}
+                        disabled={generating}
+                        className="inline-flex items-center gap-2 rounded-aa-md bg-aa-primary px-3.5 py-2 text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+                        {generating ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Generating…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Generate CV + cover letter
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {genError && (
+                    <p className="text-[12px] text-aa-error-strong mt-2">
+                      {genError}
+                    </p>
+                  )}
                 </div>
               )}
 
