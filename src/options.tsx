@@ -24,6 +24,11 @@ import { ApplicationsRail } from "~components/ApplicationsRail"
 import { CertificateEditor } from "~components/CertificateEditor"
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
+import {
+  AddRoundDrawer,
+  type AddRoundEditRef
+} from "~components/interviews/AddRoundDrawer"
+import { SchedulePage } from "~components/interviews/SchedulePage"
 import { LanguageEditor } from "~components/LanguageEditor"
 import { PersonalInfo } from "~components/PersonalInfo"
 import { ProjectEditor } from "~components/ProjectEditor"
@@ -54,9 +59,17 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
+import {
+  clearAllReminderAlarms,
+  resyncAllReminderAlarms
+} from "~lib/interviews/reminders"
 import { useHashRoute } from "~lib/router"
 import { useSavedApplications } from "~lib/useSavedApplications"
-import { mutateSavedApplications } from "~storage/savedApplications"
+import { STORAGE_KEYS } from "~storage/keys"
+import {
+  mutateSavedApplications,
+  setApplicationStatus
+} from "~storage/savedApplications"
 import {
   DEFAULT_USER_PROFILE,
   type SavedApplication,
@@ -355,6 +368,32 @@ const RAIL_HASH: Record<string, string> = {
 function Options() {
   const { route, navigate } = useHashRoute()
   const apps = useSavedApplications()
+
+  // Add / edit round drawer (overlays the whole shell).
+  const [roundDrawer, setRoundDrawer] = useState<
+    | { mode: "create"; editRef?: undefined }
+    | { mode: "edit"; editRef: AddRoundEditRef }
+    | null
+  >(null)
+
+  // Interview reminder alarms (default on).
+  const [remindersOn, setRemindersOn] = useState(true)
+  useEffect(() => {
+    chrome.storage.local.get(
+      STORAGE_KEYS.INTERVIEW_REMINDERS_ENABLED,
+      (res) => {
+        setRemindersOn(res[STORAGE_KEYS.INTERVIEW_REMINDERS_ENABLED] !== false)
+      }
+    )
+  }, [])
+  const toggleReminders = async (next: boolean) => {
+    setRemindersOn(next)
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.INTERVIEW_REMINDERS_ENABLED]: next
+    })
+    if (next) await resyncAllReminderAlarms(apps)
+    else await clearAllReminderAlarms()
+  }
 
   // AppBar still switches between two top-level sections; Interviews lives under
   // the Applications umbrella.
@@ -1938,6 +1977,25 @@ function Options() {
     "backup-sync": (
       <div className="space-y-6">
         <div className={card}>
+          <h2 className={sectionHeadCls}>Interview reminders</h2>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={remindersOn}
+              onChange={(e) => void toggleReminders(e.target.checked)}
+              className="w-4 h-4 accent-aa-primary"
+            />
+            <span className="text-sm text-aa-text-primary">
+              Notify me before a scheduled interview — 1 day and 1 hour ahead
+            </span>
+          </label>
+          <p className={hintCls}>
+            Uses your browser's notifications for rounds that have a date and
+            time. Turn off to clear all pending reminders.
+          </p>
+        </div>
+
+        <div className={card}>
           <h2 className={sectionHeadCls}>Google Drive Sync</h2>
           <p className="text-sm text-aa-text-secondary mb-6">
             Sync your profile, settings, and saved applications across
@@ -2119,6 +2177,12 @@ function Options() {
                   apps={apps}
                   view={route.view === "overview" ? "overview" : "all"}
                 />
+              ) : route.view === "schedule" ? (
+                <SchedulePage
+                  apps={apps}
+                  onAdd={() => setRoundDrawer({ mode: "create" })}
+                  onEdit={(editRef) => setRoundDrawer({ mode: "edit", editRef })}
+                />
               ) : (
                 <InterviewsPlaceholder view={route.view} param={route.param} />
               )}
@@ -2150,6 +2214,15 @@ function Options() {
         onClose={closePerplexityDialog}
         onSave={savePerplexityPromptFromDialog}
       />
+
+      {roundDrawer && (
+        <AddRoundDrawer
+          mode={roundDrawer.mode}
+          apps={apps}
+          editRef={roundDrawer.editRef}
+          onClose={() => setRoundDrawer(null)}
+        />
+      )}
     </>
   )
 }
@@ -2204,17 +2277,16 @@ function ApplicationsSection({
   // stored array before applying the change; `useSavedApplications` picks the
   // result up via `storage.onChanged`, so there's no local snapshot to keep.
   const updateApplication = (id: string, patch: Partial<SavedApplication>) => {
-    const now = new Date().toISOString()
-    void mutateSavedApplications((current) =>
-      current.map((a) => {
-        if (a.id !== id) return a
-        const bumped =
-          "status" in patch && patch.status !== a.status
-            ? { statusUpdatedAt: now }
-            : {}
-        return { ...a, ...patch, ...bumped }
-      })
-    )
+    const { status, ...rest } = patch
+    // Status changes route through the shared helper so the round
+    // reconciliation (auto-create on entering Interviewing, prune the stub on
+    // rollback) can't be bypassed.
+    if (status) void setApplicationStatus(id, status)
+    if (Object.keys(rest).length) {
+      void mutateSavedApplications((current) =>
+        current.map((a) => (a.id === id ? { ...a, ...rest } : a))
+      )
+    }
   }
 
   const deleteApplication = (id: string) => {
