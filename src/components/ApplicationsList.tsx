@@ -32,10 +32,7 @@ interface Props {
 const STATUS_PILL: Record<ApplicationStatus, string> = {
   Saved: "bg-aa-neutral-100 text-aa-text-secondary",
   Applied: "bg-aa-primary-soft text-aa-primary",
-  "HR Interview": "bg-aa-warning-soft text-aa-warning-strong",
-  "1st Technical Interview": "bg-aa-warning-soft text-aa-warning-strong",
-  "2nd Technical Interview": "bg-aa-warning-soft text-aa-warning-strong",
-  "Final Interview": "bg-aa-warning-soft text-aa-warning-strong",
+  Interviewing: "bg-aa-warning-soft text-aa-warning-strong",
   Offer: "bg-aa-success-soft text-aa-success-strong",
   Reject: "bg-aa-error-soft text-aa-error-strong"
 }

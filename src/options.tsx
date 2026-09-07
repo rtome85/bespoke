@@ -53,6 +53,7 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
+import { migrateInterviewsSchema } from "~lib/interviews/migrate"
 import { mutateSavedApplications } from "~storage/savedApplications"
 import {
   DEFAULT_USER_PROFILE,
@@ -2156,9 +2157,6 @@ function ApplicationsSection({
   )
 
   useEffect(() => {
-    chrome.storage.local.get("savedApplications", (res) => {
-      if (Array.isArray(res.savedApplications)) setApps(res.savedApplications)
-    })
     const listener = (
       changes: { [k: string]: chrome.storage.StorageChange },
       area: string
@@ -2168,6 +2166,15 @@ function ApplicationsSection({
       }
     }
     chrome.storage.onChanged.addListener(listener)
+    // Run the interviews migration before the first read so labels don't flash
+    // the legacy status set. Idempotent + version-guarded.
+    migrateInterviewsSchema()
+      .catch(() => {})
+      .finally(() => {
+        chrome.storage.local.get("savedApplications", (res) => {
+          if (Array.isArray(res.savedApplications)) setApps(res.savedApplications)
+        })
+      })
     return () => chrome.storage.onChanged.removeListener(listener)
   }, [])
 

@@ -11,21 +11,9 @@ interface Props {
   onOpen: (app: SavedApplication) => void
 }
 
-const RESPONDED: ApplicationStatus[] = [
-  "HR Interview",
-  "1st Technical Interview",
-  "2nd Technical Interview",
-  "Final Interview",
-  "Offer",
-  "Reject"
-]
+const RESPONDED: ApplicationStatus[] = ["Interviewing", "Offer", "Reject"]
 
-const INTERVIEW: ApplicationStatus[] = [
-  "HR Interview",
-  "1st Technical Interview",
-  "2nd Technical Interview",
-  "Final Interview"
-]
+const INTERVIEW: ApplicationStatus[] = ["Interviewing"]
 
 const TERMINAL: ApplicationStatus[] = ["Offer", "Reject"]
 

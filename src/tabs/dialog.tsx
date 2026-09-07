@@ -199,9 +199,7 @@ function statusTextClass(status: ApplicationStatus): string {
       return "text-red-500"
     case "Applied":
       return "text-ink"
-    case "HR Interview":
-    case "1st Technical Interview":
-    case "2nd Technical Interview":
+    case "Interviewing":
       return "text-sidebar-accent"
     default:
       return "text-ink-secondary"
@@ -948,13 +946,8 @@ function IndexDialog() {
   }
 
   // Check if current status is an interview stage that needs preparation plan
-  const isInterviewStage = (status: ApplicationStatus): boolean => {
-    return [
-      "HR Interview",
-      "1st Technical Interview",
-      "2nd Technical Interview"
-    ].includes(status)
-  }
+  const isInterviewStage = (status: ApplicationStatus): boolean =>
+    status === "Interviewing"
 
   // Generate preparation plan using Perplexity
   const generatePreparationPlan = async (app?: SavedApplication) => {
@@ -1811,9 +1804,7 @@ function IndexDialog() {
               editingApplication &&
               perplexityConfig?.preparationPlanEnabled && (
                 <div className="border-t border-aa-border pt-5">
-                  {editingApplication.preparationPlan &&
-                  editingApplication.preparationPlan.interviewType ===
-                    saveFormData.status ? (
+                  {editingApplication.preparationPlan ? (
                     <div className="flex items-center gap-3 p-3 rounded-aa-md bg-aa-surface border border-aa-border">
                       <Lightbulb
                         size={16}
