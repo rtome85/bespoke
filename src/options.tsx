@@ -53,6 +53,7 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
+import { mutateSavedApplications } from "~storage/savedApplications"
 import {
   DEFAULT_USER_PROFILE,
   type SavedApplication,
@@ -2170,15 +2171,13 @@ function ApplicationsSection({
     return () => chrome.storage.onChanged.removeListener(listener)
   }, [])
 
-  const persist = (next: SavedApplication[]) => {
-    setApps(next)
-    chrome.storage.local.set({ savedApplications: next })
-  }
-
+  // Mutations go through the shared serialized writer, which re-reads the
+  // stored array before applying the change; the onChanged listener above
+  // then syncs `apps`, so there's no local snapshot to keep in step here.
   const updateApplication = (id: string, patch: Partial<SavedApplication>) => {
     const now = new Date().toISOString()
-    persist(
-      apps.map((a) => {
+    void mutateSavedApplications((current) =>
+      current.map((a) => {
         if (a.id !== id) return a
         const bumped =
           "status" in patch && patch.status !== a.status
@@ -2189,8 +2188,9 @@ function ApplicationsSection({
     )
   }
 
-  const deleteApplication = (id: string) =>
-    persist(apps.filter((a) => a.id !== id))
+  const deleteApplication = (id: string) => {
+    void mutateSavedApplications((current) => current.filter((a) => a.id !== id))
+  }
 
   return (
     <div>

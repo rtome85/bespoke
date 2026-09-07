@@ -24,6 +24,7 @@ import { sendToBackground } from "@plasmohq/messaging"
 import type { CompanyInfo } from "~api/perplexityClient"
 import { PreparationPlanModal } from "~components/PreparationPlanModal"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
+import { mutateSavedApplications } from "~storage/savedApplications"
 import { PROVIDER_META } from "~types/config"
 import type { PerplexityConfig, RouteTarget } from "~types/config"
 import {
@@ -814,10 +815,9 @@ function IndexDialog() {
           ...editingApplication,
           ...response.data
         }
-        const updatedList = savedApplications.map((a) =>
-          a.id === updatedApp.id ? updatedApp : a
+        const updatedList = await mutateSavedApplications((current) =>
+          current.map((a) => (a.id === updatedApp.id ? updatedApp : a))
         )
-        chrome.storage.local.set({ savedApplications: updatedList })
         setSavedApplications(updatedList)
         setEditingApplication(updatedApp)
       } else {
@@ -906,44 +906,44 @@ function IndexDialog() {
         : {}
 
     const now = new Date().toISOString()
-    const updated: SavedApplication[] = editingApplication
-      ? savedApplications.map((a) =>
-          a.id === editingApplication.id
-            ? {
-                ...a,
-                ...saveFormData,
-                jobUrl: saveFormData.jobUrl || undefined,
-                // Bump only when the status actually changed
-                statusUpdatedAt:
-                  saveFormData.status !== a.status
-                    ? now
-                    : a.statusUpdatedAt ?? a.createdAt,
-                // Preserve existing preparation plan
-                preparationPlan: a.preparationPlan
-              }
-            : a
-        )
-      : [
-          ...savedApplications,
-          {
-            ...saveFormData,
-            jobUrl: saveFormData.jobUrl || undefined,
-            ...docs,
-            ...matchData,
-            id: crypto.randomUUID(),
-            createdAt: now,
-            statusUpdatedAt: now
-          }
-        ]
-    chrome.storage.local.set({ savedApplications: updated })
-    setSavedApplications(updated)
+    void mutateSavedApplications((current) =>
+      editingApplication
+        ? current.map((a) =>
+            a.id === editingApplication.id
+              ? {
+                  ...a,
+                  ...saveFormData,
+                  jobUrl: saveFormData.jobUrl || undefined,
+                  // Bump only when the status actually changed
+                  statusUpdatedAt:
+                    saveFormData.status !== a.status
+                      ? now
+                      : a.statusUpdatedAt ?? a.createdAt,
+                  // Preserve existing preparation plan
+                  preparationPlan: a.preparationPlan
+                }
+              : a
+          )
+        : [
+            ...current,
+            {
+              ...saveFormData,
+              jobUrl: saveFormData.jobUrl || undefined,
+              ...docs,
+              ...matchData,
+              id: crypto.randomUUID(),
+              createdAt: now,
+              statusUpdatedAt: now
+            }
+          ]
+    ).then(setSavedApplications)
     setView("applicationsList")
   }
 
   const handleDeleteApplication = (id: string) => {
-    const updated = savedApplications.filter((a) => a.id !== id)
-    chrome.storage.local.set({ savedApplications: updated })
-    setSavedApplications(updated)
+    void mutateSavedApplications((current) =>
+      current.filter((a) => a.id !== id)
+    ).then(setSavedApplications)
     setDeleteConfirmId(null)
   }
 
@@ -1004,27 +1004,27 @@ function IndexDialog() {
   const savePreparationPlan = () => {
     if (!editingApplication || !preparationPlanContent) return
 
-    const updated: SavedApplication[] = savedApplications.map((a) =>
-      a.id === editingApplication.id
-        ? {
-            ...a,
-            preparationPlan: {
-              content: preparationPlanContent,
-              generatedAt: new Date().toISOString(),
-              interviewType: saveFormData.status as
-                | "HR Interview"
-                | "1st Technical Interview"
-                | "2nd Technical Interview"
+    const editingId = editingApplication.id
+    void mutateSavedApplications((current) =>
+      current.map((a) =>
+        a.id === editingId
+          ? {
+              ...a,
+              preparationPlan: {
+                content: preparationPlanContent,
+                generatedAt: new Date().toISOString(),
+                interviewType: saveFormData.status as
+                  | "HR Interview"
+                  | "1st Technical Interview"
+                  | "2nd Technical Interview"
+              }
             }
-          }
-        : a
-    )
-
-    chrome.storage.local.set({ savedApplications: updated })
-    setSavedApplications(updated)
-    setEditingApplication(
-      updated.find((a) => a.id === editingApplication.id) || null
-    )
+          : a
+      )
+    ).then((updated) => {
+      setSavedApplications(updated)
+      setEditingApplication(updated.find((a) => a.id === editingId) || null)
+    })
     setPreparationPlanModalOpen(false)
   }
 
