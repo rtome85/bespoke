@@ -2,6 +2,7 @@ import {
   createContextMenu,
   handleContextMenuClick
 } from "~background/context-menu"
+import { migrateInterviewsSchema } from "~lib/interviews/migrate"
 import { SYNC_KEYS } from "~storage/keys"
 import { push } from "~utils/googleDriveSync"
 
@@ -10,11 +11,13 @@ chrome.contextMenus.onClicked.addListener(handleContextMenuClick)
 
 chrome.runtime.onInstalled.addListener(async () => {
   await createContextMenu()
+  await migrateInterviewsSchema()
 })
 
 // Re-create context menu on startup (service worker restart)
 chrome.runtime.onStartup.addListener(async () => {
   await createContextMenu()
+  await migrateInterviewsSchema()
 })
 
 // Auto-sync: push to Google Drive after any change to syncable keys

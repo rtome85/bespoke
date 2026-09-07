@@ -11,7 +11,14 @@ export const STORAGE_KEYS = {
   SYNC_CONFIG: "syncConfig",
   PROVIDERS: "providers",
   MODEL_ROUTING: "modelRouting",
+  INTERVIEWS_SCHEMA_VERSION: "interviewsSchemaVersion",
+  COMPANY_RESEARCH_CACHE: "companyResearchCache",
+  INTERVIEW_REMINDERS_ENABLED: "interviewRemindersEnabled",
+  LAST_ROUTE: "lastRoute",
 } as const
+
+/** Current interviews data-schema version (see interviews/migrate). */
+export const INTERVIEWS_SCHEMA_VERSION = 1
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS]
 

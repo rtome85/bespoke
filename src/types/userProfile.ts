@@ -71,24 +71,31 @@ export interface UserProfile {
 export type ApplicationStatus =
   | "Saved"
   | "Applied"
-  | "HR Interview"
-  | "1st Technical Interview"
-  | "2nd Technical Interview"
-  | "Final Interview"
+  | "Interviewing"
   | "Offer"
   | "Reject"
 
 export const APPLICATION_STATUSES: ApplicationStatus[] = [
   "Saved",
   "Applied",
-  "HR Interview",
-  "1st Technical Interview",
-  "2nd Technical Interview",
-  "Final Interview",
+  "Interviewing",
   "Offer",
   "Reject"
 ]
 
+/** Legacy statuses that collapsed into "Interviewing" (see interviews/migrate). */
+export const LEGACY_INTERVIEW_STATUSES = [
+  "HR Interview",
+  "1st Technical Interview",
+  "2nd Technical Interview",
+  "Final Interview"
+] as const
+
+/**
+ * @deprecated Superseded by per-round `InterviewRound.prep`. Field is stripped
+ * from stored records by the interviews migration and removed from the UI in a
+ * later phase.
+ */
 export interface PreparationPlan {
   content: string
   generatedAt: string
@@ -96,6 +103,54 @@ export interface PreparationPlan {
     | "HR Interview"
     | "1st Technical Interview"
     | "2nd Technical Interview"
+}
+
+// ── Interview rounds ───────────────────────────────────────────────────────────
+
+export type RoundType = "HR" | "Technical" | "Final" | "Custom"
+export type RoundFormat = "phone" | "video" | "onsite"
+
+/** A single line item in the "likely topics" / "talking points" checklists. */
+export interface PrepItem {
+  text: string
+  checked?: boolean // "feel ready" / "rehearsed"
+  pinned?: boolean // starred
+  userAdded?: boolean // typed by the user, not model-seeded
+}
+
+export interface RoundPrep {
+  companyResearch?: string // markdown; copied from companyResearchCache at generate time
+  companyResearchAt?: string // ISO
+  likelyTopics?: PrepItem[]
+  talkingPoints?: PrepItem[]
+  topicsPointsAt?: string // ISO — last LLM generation of the two checklists
+  notes?: string // user free text; never overwritten by regeneration
+}
+
+export type DebriefOutcome = "advance" | "offer" | "reject" | "waiting"
+
+export interface Debrief {
+  rating?: 1 | 2 | 3 | 4 | 5
+  assessment?: string // the one-line "how it went" note
+  questionsAsked?: string
+  followUps?: { text: string; done?: boolean }[]
+  outcome?: DebriefOutcome
+  loggedAt?: string // ISO — presence === "logged"
+  updatedAt?: string // ISO — last edit
+}
+
+export interface InterviewRound {
+  id: string // "rnd_" + crypto.randomUUID()
+  type: RoundType
+  customLabel?: string // when type === "Custom"
+  date?: string // "YYYY-MM-DD"; absent === unscheduled
+  time?: string // "HH:mm"; absent === time TBD
+  format?: RoundFormat
+  interviewers?: string // freeform, newline-separated (one person per line)
+  createdAt: string // ISO
+  synthesized?: boolean // migration-created from a legacy interview status
+  prep?: RoundPrep
+  debrief?: Debrief
 }
 
 export interface SavedApplication {
@@ -125,12 +180,16 @@ export interface SavedApplication {
   coverLetterContent?: string
   coverLetterFilename?: string
 
-  // Optional — preparation plan for interview stages
+  // Scheduled interview rounds for this application (see interviews/*).
+  rounds?: InterviewRound[]
+
+  /** @deprecated Stripped by the interviews migration; UI removed in a later phase. */
   preparationPlan?: PreparationPlan
 
   // Feature 1.3 — Tags, Notes & Favourites
   tags?: string[]
   notes?: string
+  /** @deprecated Favourites removed; field stripped by the interviews migration. */
   isFavorite?: boolean
 }
 
