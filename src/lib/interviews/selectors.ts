@@ -1,5 +1,6 @@
 import type {
   InterviewRound,
+  RoundFormat,
   RoundType,
   SavedApplication
 } from "~types/userProfile"
@@ -29,6 +30,22 @@ export function roundLabel(round: InterviewRound): string {
   return ROUND_TYPE_LABEL[round.type]
 }
 
+/** Short tag shown on agenda rows / notifications. */
+export function roundTypeTag(round: InterviewRound): string {
+  if (round.type === "Custom") return round.customLabel?.trim() || "Custom"
+  return round.type
+}
+
+const ROUND_FORMAT_LABEL: Record<RoundFormat, string> = {
+  phone: "Phone call",
+  video: "Video call",
+  onsite: "On-site"
+}
+
+export function formatLabel(format?: RoundFormat): string {
+  return format ? ROUND_FORMAT_LABEL[format] : ""
+}
+
 // ── date helpers (local-day, never construct Date from a bare "YYYY-MM-DD") ────
 
 /** Local calendar day as "YYYY-MM-DD". */
@@ -44,6 +61,36 @@ export function addDaysISO(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number)
   const dt = new Date(y, m - 1, d + days)
   return todayISO(dt)
+}
+
+/** Whole calendar days from today to `dateISO` (negative = past). */
+export function daysUntil(dateISO: string, now: Date = new Date()): number {
+  const [ty, tm, td] = todayISO(now).split("-").map(Number)
+  const [y, m, d] = dateISO.split("-").map(Number)
+  const a = Date.UTC(ty, tm - 1, td)
+  const b = Date.UTC(y, m - 1, d)
+  return Math.round((b - a) / 86_400_000)
+}
+
+/** "in 2 days" / "tomorrow" / "today" / "3 days ago" for a "YYYY-MM-DD". */
+export function relativeDayLabel(
+  dateISO: string,
+  now: Date = new Date()
+): string {
+  const n = daysUntil(dateISO, now)
+  if (n === 0) return "today"
+  if (n === 1) return "tomorrow"
+  if (n === -1) return "yesterday"
+  return n > 0 ? `in ${n} days` : `${-n} days ago`
+}
+
+/** Local epoch ms for a round's start, or null when date/time is incomplete. */
+export function roundStartMs(round: InterviewRound): number | null {
+  if (!round.date || !round.time) return null
+  const [y, m, d] = round.date.split("-").map(Number)
+  const [hh, mm] = round.time.split(":").map(Number)
+  if ([y, m, d, hh, mm].some((v) => Number.isNaN(v))) return null
+  return new Date(y, m - 1, d, hh, mm, 0, 0).getTime()
 }
 
 const timeKey = (r: InterviewRound) => r.time ?? "99:99"
@@ -64,6 +111,36 @@ export function roundsWithApp(apps: SavedApplication[]): RoundRef[] {
     for (const round of app.rounds ?? []) out.push({ app, round })
   }
   return out
+}
+
+/**
+ * The application's single in-progress round, if any: a real (non-synthesized)
+ * round that has not been debriefed to completion. An application may have at
+ * most one of these at a time.
+ */
+export function openRound(app: SavedApplication): InterviewRound | undefined {
+  return (app.rounds ?? []).find((r) => !r.synthesized && !r.debrief?.loggedAt)
+}
+
+export function hasOpenRound(app: SavedApplication): boolean {
+  return openRound(app) !== undefined
+}
+
+/**
+ * A round with no user-entered content beyond its type — i.e. the bare stub
+ * auto-created when an application enters "Interviewing". Safe to remove when
+ * the status is rolled back.
+ */
+export function isPristineRound(r: InterviewRound): boolean {
+  return (
+    !r.date &&
+    !r.time &&
+    !r.format &&
+    !r.interviewers &&
+    !r.prep &&
+    !r.debrief &&
+    r.type !== "Custom"
+  )
 }
 
 export function scheduled(list: RoundRef[]): RoundRef[] {

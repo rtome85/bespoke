@@ -1,3 +1,9 @@
+import { clearRoundAlarms, syncRoundAlarms } from "~lib/interviews/reminders"
+import {
+  hasOpenRound,
+  isPristineRound,
+  openRound
+} from "~lib/interviews/selectors"
 import type {
   ApplicationStatus,
   Debrief,
@@ -75,21 +81,36 @@ const OUTCOME_STATUS: Partial<Record<DebriefOutcome, ApplicationStatus>> = {
   reject: "Reject"
 }
 
+export class OpenRoundError extends Error {
+  constructor() {
+    super(
+      "This application already has an open interview round. Debrief it before adding another."
+    )
+    this.name = "OpenRoundError"
+  }
+}
+
 /**
- * Append a new round. Promotes `Saved`/`Applied` → `Interviewing` (never
- * downgrades). Returns the created round (for navigation).
+ * Append a new round. Enforces one open round per application, promotes
+ * `Saved`/`Applied` → `Interviewing` (never downgrades), and returns the
+ * created round (for navigation). Throws `OpenRoundError` if a round is
+ * already open.
  */
 export async function addRound(
   appId: string,
-  partial: Omit<Partial<InterviewRound>, "id" | "createdAt"> & { type: RoundType }
+  partial: Omit<Partial<InterviewRound>, "id" | "createdAt"> & {
+    type: RoundType
+  }
 ): Promise<InterviewRound> {
   const round: InterviewRound = {
     id: `rnd_${crypto.randomUUID()}`,
     createdAt: new Date().toISOString(),
     ...partial
   }
-  await mutateSavedApplications((apps) =>
-    mapApp(apps, appId, (a) => {
+  await mutateSavedApplications((apps) => {
+    const app = apps.find((a) => a.id === appId)
+    if (app && hasOpenRound(app)) throw new OpenRoundError()
+    return mapApp(apps, appId, (a) => {
       const next: SavedApplication = {
         ...a,
         rounds: [...(a.rounds ?? []), round]
@@ -100,30 +121,87 @@ export async function addRound(
       }
       return next
     })
-  )
+  })
+  await syncRoundAlarms(round)
   return round
 }
 
-export function updateRound(
+/**
+ * Change an application's status and keep its round list consistent:
+ *
+ * - entering `Interviewing` with no open round → auto-create a first HR stub;
+ * - any other (non round-creating) status → drop a still-pristine open round,
+ *   so an accidental `Interviewing` that's rolled back leaves nothing behind.
+ *
+ * Idempotent: the round reconciliation runs from the resulting status even
+ * when the status itself didn't change, so callers that write the status
+ * elsewhere (e.g. the side panel form) can still call this for the side effect.
+ */
+export function setApplicationStatus(
+  appId: string,
+  status: ApplicationStatus
+): Promise<SavedApplication[]> {
+  const now = new Date().toISOString()
+  return mutateSavedApplications((apps) =>
+    mapApp(apps, appId, (a) => {
+      let next: SavedApplication =
+        a.status === status ? a : { ...a, status, statusUpdatedAt: now }
+
+      if (status === "Interviewing") {
+        if (!hasOpenRound(next)) {
+          next = {
+            ...next,
+            rounds: [
+              ...(next.rounds ?? []),
+              { id: `rnd_${crypto.randomUUID()}`, type: "HR", createdAt: now }
+            ]
+          }
+        }
+      } else {
+        const open = openRound(next)
+        if (open && isPristineRound(open)) {
+          next = {
+            ...next,
+            rounds: (next.rounds ?? []).filter((r) => r.id !== open.id)
+          }
+        }
+      }
+
+      return next
+    })
+  )
+}
+
+export async function updateRound(
   appId: string,
   roundId: string,
   patch: Partial<Omit<InterviewRound, "id" | "createdAt">>
 ): Promise<SavedApplication[]> {
-  return mutateSavedApplications((apps) =>
-    mapApp(apps, appId, (a) => mapRound(a, roundId, (r) => ({ ...r, ...patch })))
+  let updated: InterviewRound | undefined
+  const apps = await mutateSavedApplications((current) =>
+    mapApp(current, appId, (a) =>
+      mapRound(a, roundId, (r) => {
+        updated = { ...r, ...patch }
+        return updated
+      })
+    )
   )
+  if (updated) await syncRoundAlarms(updated)
+  return apps
 }
 
-export function deleteRound(
+export async function deleteRound(
   appId: string,
   roundId: string
 ): Promise<SavedApplication[]> {
-  return mutateSavedApplications((apps) =>
-    mapApp(apps, appId, (a) => ({
+  const apps = await mutateSavedApplications((current) =>
+    mapApp(current, appId, (a) => ({
       ...a,
       rounds: (a.rounds ?? []).filter((r) => r.id !== roundId)
     }))
   )
+  await clearRoundAlarms(roundId)
+  return apps
 }
 
 export function setRoundPrep(

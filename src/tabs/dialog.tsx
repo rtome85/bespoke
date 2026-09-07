@@ -24,7 +24,10 @@ import { sendToBackground } from "@plasmohq/messaging"
 import type { CompanyInfo } from "~api/perplexityClient"
 import { PreparationPlanModal } from "~components/PreparationPlanModal"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
-import { mutateSavedApplications } from "~storage/savedApplications"
+import {
+  mutateSavedApplications,
+  setApplicationStatus
+} from "~storage/savedApplications"
 import { PROVIDER_META } from "~types/config"
 import type { PerplexityConfig, RouteTarget } from "~types/config"
 import {
@@ -903,6 +906,13 @@ function IndexDialog() {
           }
         : {}
 
+    // A status change on an existing application needs the shared round
+    // reconciliation (auto-create the HR stub on entering "Interviewing",
+    // drop a still-pristine stub on rolling back out of it).
+    const editId = editingApplication?.id
+    const statusChanged =
+      !!editingApplication && editingApplication.status !== saveFormData.status
+
     const now = new Date().toISOString()
     void mutateSavedApplications((current) =>
       editingApplication
@@ -934,7 +944,17 @@ function IndexDialog() {
               statusUpdatedAt: now
             }
           ]
-    ).then(setSavedApplications)
+    ).then(async (list) => {
+      if (statusChanged && editId) {
+        await setApplicationStatus(editId, saveFormData.status)
+        const res = await chrome.storage.local.get("savedApplications")
+        setSavedApplications(
+          Array.isArray(res.savedApplications) ? res.savedApplications : list
+        )
+      } else {
+        setSavedApplications(list)
+      }
+    })
     setView("applicationsList")
   }
 
