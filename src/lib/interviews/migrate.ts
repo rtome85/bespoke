@@ -21,8 +21,8 @@ const LEGACY_STATUS_TO_ROUND_TYPE: Record<string, RoundType> = {
   "Final Interview": "Final"
 }
 
-function isoToDay(iso?: string): string | undefined {
-  if (!iso) return undefined
+function isoToDay(iso: unknown): string | undefined {
+  if (typeof iso !== "string") return undefined
   const day = iso.slice(0, 10)
   return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : undefined
 }
@@ -31,9 +31,17 @@ function isoToDay(iso?: string): string | undefined {
  * One record's migration. Pure and idempotent: a record with no legacy status
  * and no `preparationPlan`/`isFavorite` is returned untouched (same reference is
  * fine — callers replace the whole array).
+ *
+ * Storage is untrusted at runtime — a bad import or a hand-edit can leave a
+ * null / non-object entry or a non-string `status`/`createdAt`. Anything
+ * unexpected is passed straight through rather than throwing (which would abort
+ * the whole `apps.map` and brick the migration).
  */
 export function migrateApplication(app: SavedApplication): SavedApplication {
-  const isLegacyInterview = (app.status as string) in LEGACY_STATUS_MAP
+  if (!app || typeof app !== "object") return app
+
+  const isLegacyInterview =
+    typeof app.status === "string" && app.status in LEGACY_STATUS_MAP
   const hasDeadFields =
     app.preparationPlan !== undefined || app.isFavorite !== undefined
 
@@ -45,10 +53,10 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
     const legacyStatus = app.status as string
     next.status = LEGACY_STATUS_MAP[legacyStatus]
 
-    // Synthesize one past round so the stage isn't lost. Guarded on an empty
-    // `rounds` array so a concurrent re-run (options page + service worker on
-    // first load) that sees the first write can't double up.
-    if (!next.rounds || next.rounds.length === 0) {
+    // Synthesize one past round so the stage isn't lost. Guarded on a missing
+    // or empty `rounds` array so a concurrent re-run (options page + service
+    // worker on first load) that sees the first write can't double up.
+    if (!Array.isArray(next.rounds) || next.rounds.length === 0) {
       const round: InterviewRound = {
         id: `rnd_${crypto.randomUUID()}`,
         type: LEGACY_STATUS_TO_ROUND_TYPE[legacyStatus],
@@ -97,7 +105,17 @@ export async function migrateInterviewsSchema(): Promise<void> {
     ? appsRes[STORAGE_KEYS.SAVED_APPLICATIONS]
     : []
 
-  const migrated = apps.map(migrateApplication)
+  // Isolate each record: one malformed entry that still slips past the guards
+  // in `migrateApplication` must not abort the batch — valid records still get
+  // written back.
+  const migrated = apps.map((app) => {
+    try {
+      return migrateApplication(app)
+    } catch (err) {
+      console.warn("[interviews migration] leaving malformed record as-is", err)
+      return app
+    }
+  })
 
   await chrome.storage.local.set({
     [STORAGE_KEYS.SAVED_APPLICATIONS]: migrated,
