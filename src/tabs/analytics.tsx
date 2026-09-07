@@ -11,7 +11,7 @@ import "../style.css"
 function AnalyticsPage() {
   useEffect(() => {
     window.location.replace(
-      chrome.runtime.getURL("options.html#/applications/overview")
+      chrome.runtime.getURL("options.html?section=applications&view=overview")
     )
   }, [])
 

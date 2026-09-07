@@ -5,8 +5,6 @@ export type SettingsNavItem = {
   value: string
   subtitle: string
   icon: LucideIcon
-  /** Optional count shown right-aligned on the row (hidden when nullish). */
-  badge?: string | number
 }
 
 export type SettingsNavGroup = {
@@ -43,9 +41,7 @@ export function SettingsRail({
                 onClick={() => onSelect(item.value)}
                 title={item.label}
                 className={`w-full flex items-center justify-center lg:justify-start gap-3 px-2 lg:px-[10px] py-2 rounded-aa-md text-left border-0 cursor-pointer transition-colors ${
-                  on
-                    ? "bg-aa-neutral-800"
-                    : "bg-transparent hover:bg-aa-neutral-800"
+                  on ? "bg-aa-neutral-800" : "bg-transparent hover:bg-aa-neutral-800"
                 }`}>
                 <Icon
                   size={16}
@@ -59,14 +55,6 @@ export function SettingsRail({
                   }`}>
                   {item.label}
                 </span>
-                {item.badge != null && item.badge !== "" && (
-                  <span
-                    className={`hidden lg:inline ml-auto text-[11px] font-semibold tabular-nums ${
-                      on ? "text-aa-neutral-300" : "text-aa-neutral-500"
-                    }`}>
-                    {item.badge}
-                  </span>
-                )}
               </button>
             )
           })}

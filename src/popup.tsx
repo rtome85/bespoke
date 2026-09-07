@@ -44,12 +44,12 @@ function IndexPopup() {
             {
               label: "Applications",
               icon: Briefcase,
-              onClick: () => openShell("#/applications")
+              onClick: () => openShell("?section=applications")
             },
             {
               label: "Settings & profile",
               icon: Settings2,
-              onClick: () => openShell("#/settings")
+              onClick: () => openShell("?section=settings")
             }
           ].map(({ label, icon: Icon, onClick }) => (
             <button
