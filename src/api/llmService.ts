@@ -23,6 +23,101 @@ const EMPTY_MATCH: MatchAnalysis = {
 }
 
 /**
+ * Render a UserProfile to the markdown block prompts interpolate as
+ * `{{userProfile}}`. Pure — shared by LLMService and the per-round Prep engine.
+ */
+export function formatUserProfile(
+  profile: UserProfile,
+  includeYears = false
+): string {
+  if (!profile) return ""
+
+  const p = profile.personalInfo
+  const contactParts: string[] = []
+  if (p?.fullName) contactParts.push(`Name: ${p.fullName}`)
+  if (p?.email) contactParts.push(`Email: ${p.email}`)
+  if (p?.phone) contactParts.push(`Phone: ${p.phone}`)
+  if (p?.location) contactParts.push(`Location: ${p.location}`)
+  if (p?.website) contactParts.push(`Website: ${p.website}`)
+  if (p?.linkedin) contactParts.push(`LinkedIn: ${p.linkedin}`)
+  if (p?.github) contactParts.push(`GitHub: ${p.github}`)
+  const personalInfo =
+    contactParts.length > 0
+      ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
+      : ""
+
+  const education =
+    (profile.education?.length ?? 0) > 0
+      ? `**Education:**\n${profile.education
+          .map((e) => {
+            const dates = e.endDate
+              ? `${e.startDate} – ${e.endDate}`
+              : `${e.startDate} – Present`
+            const field = e.fieldOfStudy ? `, ${e.fieldOfStudy}` : ""
+            return `- ${e.degree}${field} at ${e.institution} (${dates})`
+          })
+          .join("\n")}`
+      : ""
+
+  const skills =
+    (profile.skills?.length ?? 0) > 0
+      ? profile.skills
+          .map((s) =>
+            includeYears
+              ? `- ${s.name} (${s.yearsOfExperience} years)`
+              : `- ${s.name}`
+          )
+          .join("\n")
+      : "No skills specified"
+
+  const experience =
+    (profile.workExperience?.length ?? 0) > 0
+      ? profile.workExperience
+          .map((exp) => {
+            const dateRange = exp.endDate
+              ? `${exp.startDate} - ${exp.endDate}`
+              : `${exp.startDate} - Present`
+            const achievements =
+              (exp.achievements?.length ?? 0) > 0
+                ? exp.achievements.map((a) => `  - ${a}`).join("\n")
+                : "  - No achievements specified"
+            return `**${exp.jobTitle}** at ${exp.company} (${dateRange})\n${achievements}`
+          })
+          .join("\n\n")
+      : "No work experience specified"
+
+  const projects =
+    (profile.personalProjects?.length ?? 0) > 0
+      ? profile.personalProjects
+          .map((project) => {
+            const links = []
+            if (project.liveDemoUrl) links.push(`Demo: ${project.liveDemoUrl}`)
+            if (project.githubRepoUrl)
+              links.push(`GitHub: ${project.githubRepoUrl}`)
+            const linkStr = links.length > 0 ? `\n  ${links.join("\n  ")}` : ""
+            return `**${project.title}**\n  ${project.description}${linkStr}`
+          })
+          .join("\n\n")
+      : "No personal projects specified"
+
+  const languages =
+    (profile.languages?.length ?? 0) > 0
+      ? `**Languages:**\n${profile.languages.map((l) => `- ${l.name}: ${l.level}`).join("\n")}`
+      : ""
+
+  return [
+    personalInfo,
+    education,
+    `**Skills:**\n${skills}`,
+    `**Work Experience:**\n${experience}`,
+    `**Personal Projects:**\n${projects}`,
+    languages
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+}
+
+/**
  * Provider-agnostic prompt building + response parsing. The only
  * provider-specific piece is the injected LLMClient.
  */
@@ -41,93 +136,7 @@ export class LLMService {
     profile: UserProfile,
     includeYears = false
   ): string {
-    if (!profile) return ""
-
-    const p = profile.personalInfo
-    const contactParts: string[] = []
-    if (p?.fullName) contactParts.push(`Name: ${p.fullName}`)
-    if (p?.email) contactParts.push(`Email: ${p.email}`)
-    if (p?.phone) contactParts.push(`Phone: ${p.phone}`)
-    if (p?.location) contactParts.push(`Location: ${p.location}`)
-    if (p?.website) contactParts.push(`Website: ${p.website}`)
-    if (p?.linkedin) contactParts.push(`LinkedIn: ${p.linkedin}`)
-    if (p?.github) contactParts.push(`GitHub: ${p.github}`)
-    const personalInfo =
-      contactParts.length > 0
-        ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
-        : ""
-
-    const education =
-      (profile.education?.length ?? 0) > 0
-        ? `**Education:**\n${profile.education
-            .map((e) => {
-              const dates = e.endDate
-                ? `${e.startDate} – ${e.endDate}`
-                : `${e.startDate} – Present`
-              const field = e.fieldOfStudy ? `, ${e.fieldOfStudy}` : ""
-              return `- ${e.degree}${field} at ${e.institution} (${dates})`
-            })
-            .join("\n")}`
-        : ""
-
-    const skills =
-      (profile.skills?.length ?? 0) > 0
-        ? profile.skills
-            .map((s) =>
-              includeYears
-                ? `- ${s.name} (${s.yearsOfExperience} years)`
-                : `- ${s.name}`
-            )
-            .join("\n")
-        : "No skills specified"
-
-    const experience =
-      (profile.workExperience?.length ?? 0) > 0
-        ? profile.workExperience
-            .map((exp) => {
-              const dateRange = exp.endDate
-                ? `${exp.startDate} - ${exp.endDate}`
-                : `${exp.startDate} - Present`
-              const achievements =
-                (exp.achievements?.length ?? 0) > 0
-                  ? exp.achievements.map((a) => `  - ${a}`).join("\n")
-                  : "  - No achievements specified"
-              return `**${exp.jobTitle}** at ${exp.company} (${dateRange})\n${achievements}`
-            })
-            .join("\n\n")
-        : "No work experience specified"
-
-    const projects =
-      (profile.personalProjects?.length ?? 0) > 0
-        ? profile.personalProjects
-            .map((project) => {
-              const links = []
-              if (project.liveDemoUrl)
-                links.push(`Demo: ${project.liveDemoUrl}`)
-              if (project.githubRepoUrl)
-                links.push(`GitHub: ${project.githubRepoUrl}`)
-              const linkStr =
-                links.length > 0 ? `\n  ${links.join("\n  ")}` : ""
-              return `**${project.title}**\n  ${project.description}${linkStr}`
-            })
-            .join("\n\n")
-        : "No personal projects specified"
-
-    const languages =
-      (profile.languages?.length ?? 0) > 0
-        ? `**Languages:**\n${profile.languages.map((l) => `- ${l.name}: ${l.level}`).join("\n")}`
-        : ""
-
-    return [
-      personalInfo,
-      education,
-      `**Skills:**\n${skills}`,
-      `**Work Experience:**\n${experience}`,
-      `**Personal Projects:**\n${projects}`,
-      languages
-    ]
-      .filter(Boolean)
-      .join("\n\n")
+    return formatUserProfile(profile, includeYears)
   }
 
   private tuningInstructions(tuning: LLMTuningConfig): {

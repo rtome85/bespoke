@@ -10,8 +10,16 @@ export interface PerplexityConfig {
   apiKey: string
   enabled: boolean
   customPrompt: string
+  /** @deprecated Old side-panel prep feature; removed in a later phase. */
   preparationPlanEnabled: boolean
+  /** @deprecated Old side-panel prep feature; removed in a later phase. */
   preparationPlanPrompt: string
+  /**
+   * Prompt for the per-round Prep engine (Interviews → Prep). Runs on the
+   * `drafting` LLM route and must return JSON `{ likelyTopics, talkingPoints }`.
+   * Optional in storage — consumers fall back to `DEFAULT_INTERVIEW_PREP_PROMPT`.
+   */
+  interviewPrepPrompt?: string
 }
 
 export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}} and return ONLY a raw JSON object. No markdown, no code fences, no explanation — just the JSON.
@@ -63,6 +71,25 @@ List 3-5 practical coding problems or algorithms commonly asked for this type of
 Identify 2-3 advanced topics specific to {{companyName}}'s tech stack or industry that might be discussed. Provide key concepts to review.
 
 IMPORTANT: Respond ONLY with the Markdown content. No introductory text, no explanations outside the document. Focus strictly on technical preparation content.`
+
+export const DEFAULT_INTERVIEW_PREP_PROMPT = `You are preparing a candidate for a {{roundType}} at {{companyName}} for the {{jobTitle}} role.
+
+Job description:
+{{jobDescription}}
+
+Candidate profile:
+{{userProfile}}
+
+Return ONLY a JSON object — no markdown fences, no prose:
+{
+  "likelyTopics": ["<something the interviewer is likely to probe in a {{roundType}}, specific to this role's stack and domain>", ...],
+  "talkingPoints": ["<a concrete, evidence-backed point the candidate should make, drawn from their real experience against this job's needs>", ...]
+}
+
+Rules:
+- likelyTopics: 4-7 items, specific to a {{roundType}} — not generic interview advice.
+- talkingPoints: 3-6 items, each tied to something real in the candidate profile and relevant to this job. No filler.
+- If the job description is missing, infer from the role title and company.`
 
 export interface ModelConfig {
   id: string

@@ -28,6 +28,8 @@ import {
   AddRoundDrawer,
   type AddRoundEditRef
 } from "~components/interviews/AddRoundDrawer"
+import { PrepListPage } from "~components/interviews/PrepListPage"
+import { PrepWorkspace } from "~components/interviews/PrepWorkspace"
 import { SchedulePage } from "~components/interviews/SchedulePage"
 import { LanguageEditor } from "~components/LanguageEditor"
 import { PersonalInfo } from "~components/PersonalInfo"
@@ -40,6 +42,7 @@ import {
   AVAILABLE_MODELS,
   DEFAULT_LLM_TUNING,
   DEFAULT_MODEL_ROUTING,
+  DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_PERPLEXITY_PROMPT,
   DEFAULT_PREPARATION_PLAN_PROMPT,
   DEFAULT_PROMPTS,
@@ -440,7 +443,8 @@ function Options() {
       enabled: false,
       customPrompt: DEFAULT_PERPLEXITY_PROMPT,
       preparationPlanEnabled: false,
-      preparationPlanPrompt: DEFAULT_PREPARATION_PLAN_PROMPT
+      preparationPlanPrompt: DEFAULT_PREPARATION_PLAN_PROMPT,
+      interviewPrepPrompt: DEFAULT_INTERVIEW_PREP_PROMPT
     })
 
   const [customPrompts, setCustomPrompts] = useDebouncedStorage<CustomPrompts>(
@@ -766,7 +770,7 @@ function Options() {
     } else if (perplexityDialogState.promptType === "preparation") {
       setPerplexityConfig({
         ...perplexityConfig,
-        preparationPlanPrompt: prompt
+        interviewPrepPrompt: prompt
       })
     }
   }
@@ -1705,56 +1709,40 @@ function Options() {
         <div className={card}>
           <h2 className={sectionHeadCls}>Interview prep</h2>
           <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
-            The plan generated for HR and technical interview stages.
+            Feeds the per-round Prep workspace (Interviews → Prep). Runs on your
+            Document&nbsp;drafting model and must return JSON with{" "}
+            <code className="text-[12px]">likelyTopics</code> and{" "}
+            <code className="text-[12px]">talkingPoints</code> arrays.
           </p>
           <hr className={divider} />
-          <div className="space-y-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={perplexityConfig.preparationPlanEnabled}
-                onChange={(e) =>
-                  setPerplexityConfig({
-                    ...perplexityConfig,
-                    preparationPlanEnabled: e.target.checked
-                  })
+          <div>
+            <label className={labelCls}>Prep prompt</label>
+            <textarea
+              value={
+                perplexityConfig.interviewPrepPrompt ??
+                DEFAULT_INTERVIEW_PREP_PROMPT
+              }
+              onChange={(e) =>
+                setPerplexityConfig({
+                  ...perplexityConfig,
+                  interviewPrepPrompt: e.target.value
+                })
+              }
+              rows={8}
+              className={textareaCls}
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className={hintCls}>
+                Use {"{{roundType}}"}, {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
+                {"{{jobDescription}}"}, and {"{{userProfile}}"} as placeholders.
+              </p>
+              <button
+                onClick={() =>
+                  openPerplexityDialog("Interview prep prompt", "preparation")
                 }
-                className="w-4 h-4 accent-aa-primary"
-              />
-              <span className="text-sm font-medium text-aa-text-primary">
-                Generate an interview preparation plan
-              </span>
-            </label>
-            <div>
-              <label className={labelCls}>Preparation plan prompt</label>
-              <textarea
-                value={perplexityConfig.preparationPlanPrompt}
-                onChange={(e) =>
-                  setPerplexityConfig({
-                    ...perplexityConfig,
-                    preparationPlanPrompt: e.target.value
-                  })
-                }
-                rows={6}
-                className={textareaCls}
-              />
-              <div className="flex items-center justify-between mt-1">
-                <p className={hintCls}>
-                  Use {"{{companyName}}"}, {"{{jobTitle}}"},{" "}
-                  {"{{jobDescription}}"}, and {"{{interviewType}}"} as
-                  placeholders.
-                </p>
-                <button
-                  onClick={() =>
-                    openPerplexityDialog(
-                      "Preparation Plan Prompt",
-                      "preparation"
-                    )
-                  }
-                  className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
-                  Expand
-                </button>
-              </div>
+                className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
+                Expand
+              </button>
             </div>
           </div>
         </div>
@@ -2190,6 +2178,20 @@ function Options() {
                   onAdd={() => setRoundDrawer({ mode: "create" })}
                   onEdit={(editRef) => setRoundDrawer({ mode: "edit", editRef })}
                 />
+              ) : route.view === "prep" ? (
+                route.param ? (
+                  <PrepWorkspace
+                    apps={apps}
+                    roundId={route.param}
+                    onBack={() => navigate("#/interviews/prep")}
+                    onViewInSchedule={() => navigate("#/interviews/schedule")}
+                  />
+                ) : (
+                  <PrepListPage
+                    apps={apps}
+                    onOpen={(id) => navigate(`#/interviews/prep/${id}`)}
+                  />
+                )
               ) : (
                 <InterviewsPlaceholder view={route.view} param={route.param} />
               )}
@@ -2215,7 +2217,8 @@ function Options() {
           perplexityDialogState.promptType === "research"
             ? perplexityConfig.customPrompt
             : perplexityDialogState.promptType === "preparation"
-              ? perplexityConfig.preparationPlanPrompt
+              ? perplexityConfig.interviewPrepPrompt ??
+                DEFAULT_INTERVIEW_PREP_PROMPT
               : ""
         }
         onClose={closePerplexityDialog}

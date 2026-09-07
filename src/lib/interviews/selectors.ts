@@ -126,6 +126,15 @@ export function hasOpenRound(app: SavedApplication): boolean {
   return openRound(app) !== undefined
 }
 
+/** Does this round have any generated prep content yet? */
+export function prepReady(round: InterviewRound): boolean {
+  const p = round.prep
+  return !!(
+    p &&
+    (p.companyResearch || p.likelyTopics?.length || p.talkingPoints?.length)
+  )
+}
+
 /**
  * A round with no user-entered content beyond its type — i.e. the bare stub
  * auto-created when an application enters "Interviewing". Safe to remove when

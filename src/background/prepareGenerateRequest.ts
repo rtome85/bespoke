@@ -88,6 +88,52 @@ function resolve(
 }
 
 /**
+ * Load the providers map + routing table from storage, applying the legacy
+ * `ollamaConfig` migration shim so existing users keep working.
+ */
+async function loadProvidersAndRouting(): Promise<{
+  providers: ProvidersConfig
+  routing: ModelRouting
+}> {
+  const s = await new Promise<any>((res) => {
+    chrome.storage.local.get(
+      [
+        STORAGE_KEYS.PROVIDERS,
+        STORAGE_KEYS.MODEL_ROUTING,
+        STORAGE_KEYS.OLLAMA_CONFIG,
+        STORAGE_KEYS.LAST_SELECTED_MODEL
+      ],
+      res
+    )
+  })
+  const storedProviders = s[STORAGE_KEYS.PROVIDERS] as ProvidersConfig | undefined
+  const storedRouting = s[STORAGE_KEYS.MODEL_ROUTING] as ModelRouting | undefined
+  if (storedProviders && storedRouting) {
+    return { providers: storedProviders, routing: storedRouting }
+  }
+  const m = migrate(
+    s[STORAGE_KEYS.OLLAMA_CONFIG],
+    s[STORAGE_KEYS.LAST_SELECTED_MODEL]
+  )
+  return {
+    providers: { ...m.providers, ...(storedProviders ?? {}) },
+    routing: storedRouting ?? m.routing
+  }
+}
+
+/**
+ * Resolve just the provider + model + credentials for a routable job — for
+ * callers (per-round Prep) that build their own request rather than the
+ * resume/cover-letter `GenerateRequest`.
+ */
+export async function resolveJobRoute(
+  job: RoutableJob
+): Promise<ResolvedRoute | { error: string }> {
+  const { providers, routing } = await loadProvidersAndRouting()
+  return resolve(routing[job], providers)
+}
+
+/**
  * Reads config from storage and builds the GenerateRequest + resolved
  * provider route(s) for a given job.
  */
@@ -98,11 +144,7 @@ export async function prepareGenerateRequest(
   const storage = await new Promise<any>((resolve) => {
     chrome.storage.local.get(
       [
-        STORAGE_KEYS.PROVIDERS,
-        STORAGE_KEYS.MODEL_ROUTING,
-        STORAGE_KEYS.OLLAMA_CONFIG,
         STORAGE_KEYS.CUSTOM_PROMPTS,
-        STORAGE_KEYS.LAST_SELECTED_MODEL,
         STORAGE_KEYS.PENDING_JOB_DATA,
         STORAGE_KEYS.LLM_TUNING
       ],
@@ -114,26 +156,7 @@ export async function prepareGenerateRequest(
   const llmTuning = storage[STORAGE_KEYS.LLM_TUNING] || DEFAULT_LLM_TUNING
   const jobData = storage[STORAGE_KEYS.PENDING_JOB_DATA]
 
-  const storedProviders = storage[STORAGE_KEYS.PROVIDERS] as
-    | ProvidersConfig
-    | undefined
-  const storedRouting = storage[STORAGE_KEYS.MODEL_ROUTING] as
-    | ModelRouting
-    | undefined
-
-  let providers: ProvidersConfig
-  let routing: ModelRouting
-  if (storedProviders && storedRouting) {
-    providers = storedProviders
-    routing = storedRouting
-  } else {
-    const m = migrate(
-      storage[STORAGE_KEYS.OLLAMA_CONFIG],
-      storage[STORAGE_KEYS.LAST_SELECTED_MODEL]
-    )
-    providers = { ...m.providers, ...(storedProviders ?? {}) }
-    routing = storedRouting ?? m.routing
-  }
+  const { providers, routing } = await loadProvidersAndRouting()
 
   // The Model routing page is the single source of truth for which
   // provider + model runs each job. Callers no longer pass a model.
