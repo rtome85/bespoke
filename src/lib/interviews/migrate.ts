@@ -1,4 +1,5 @@
 import { INTERVIEWS_SCHEMA_VERSION, STORAGE_KEYS } from "~storage/keys"
+import { mutateSavedApplications } from "~storage/savedApplications"
 import type {
   ApplicationStatus,
   InterviewRound,
@@ -84,6 +85,16 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
  * interview rounds. Safe to call from multiple contexts (options page mount and
  * the background service worker) — the version check short-circuits after the
  * first successful run.
+ *
+ * The array commit goes through `mutateSavedApplications`, which re-reads the
+ * freshest list immediately before writing and serializes with every other
+ * write in this context — so a concurrent user edit landing in the migration's
+ * read→write window is merged, not clobbered. `migrateApplication` is
+ * idempotent, so a cross-context race (two startup contexts migrating at once)
+ * just re-applies the same deterministic transform to the newest array; the
+ * only non-determinism is a synthesized round's random id / timestamp. A
+ * heavier cross-context lock is deliberately avoided for a one-time idempotent
+ * transform (stale-lock failure mode not worth it).
  */
 export async function migrateInterviewsSchema(): Promise<void> {
   const versionRes = await chrome.storage.local.get(
@@ -101,29 +112,25 @@ export async function migrateInterviewsSchema(): Promise<void> {
     return
   }
 
-  const appsRes = await chrome.storage.local.get(
-    STORAGE_KEYS.SAVED_APPLICATIONS
+  await mutateSavedApplications((current) =>
+    // Isolate each record: one malformed entry that still slips past the guards
+    // in `migrateApplication` must not abort the batch.
+    current.map((app) => {
+      try {
+        return migrateApplication(app)
+      } catch (err) {
+        console.warn(
+          "[interviews migration] leaving malformed record as-is",
+          err
+        )
+        return app
+      }
+    })
   )
-  const apps: SavedApplication[] = Array.isArray(
-    appsRes[STORAGE_KEYS.SAVED_APPLICATIONS]
-  )
-    ? appsRes[STORAGE_KEYS.SAVED_APPLICATIONS]
-    : []
 
-  // Isolate each record: one malformed entry that still slips past the guards
-  // in `migrateApplication` must not abort the batch — valid records still get
-  // written back.
-  const migrated = apps.map((app) => {
-    try {
-      return migrateApplication(app)
-    } catch (err) {
-      console.warn("[interviews migration] leaving malformed record as-is", err)
-      return app
-    }
-  })
-
+  // Separate write — atomicity with the array isn't required: if the process
+  // dies here the next run just re-migrates (idempotent no-op) and sets this.
   await chrome.storage.local.set({
-    [STORAGE_KEYS.SAVED_APPLICATIONS]: migrated,
     [STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION]: INTERVIEWS_SCHEMA_VERSION
   })
 }
