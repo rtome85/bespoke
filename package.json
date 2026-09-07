@@ -42,7 +42,8 @@
       "storage",
       "downloads",
       "identity",
-      "notifications"
+      "notifications",
+      "alarms"
     ],
     "overrides": {
       "chrome": {
@@ -53,6 +54,7 @@
           "downloads",
           "identity",
           "notifications",
+          "alarms",
           "sidePanel"
         ],
         "side_panel": {
