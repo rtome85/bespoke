@@ -89,8 +89,13 @@ export async function migrateInterviewsSchema(): Promise<void> {
   const versionRes = await chrome.storage.local.get(
     STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION
   )
+  // `>=`, not `===`: if a newer build already migrated to a later schema (and
+  // this older build is now running via a downgrade or a sync skew), do
+  // nothing rather than run a stale migration over newer-shaped data.
+  // `undefined` / non-numeric junk yields `false` here and gets migrated,
+  // which is the safe direction (the per-record pass is hardened + idempotent).
   if (
-    versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] ===
+    versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] >=
     INTERVIEWS_SCHEMA_VERSION
   ) {
     return
