@@ -20,6 +20,7 @@ import { sendToBackground } from "@plasmohq/messaging"
 import { AppBar, type AppSection } from "~components/AppBar"
 import { ApplicationsList } from "~components/ApplicationsList"
 import { ApplicationsOverview } from "~components/ApplicationsOverview"
+import { ApplicationsRail } from "~components/ApplicationsRail"
 import { CertificateEditor } from "~components/CertificateEditor"
 import { EducationEditor } from "~components/Education"
 import { ExperienceEditor } from "~components/ExperienceEditor"
@@ -53,7 +54,8 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
-import { migrateInterviewsSchema } from "~lib/interviews/migrate"
+import { useHashRoute } from "~lib/router"
+import { useSavedApplications } from "~lib/useSavedApplications"
 import { mutateSavedApplications } from "~storage/savedApplications"
 import {
   DEFAULT_USER_PROFILE,
@@ -339,33 +341,41 @@ const SAMPLE_BULLETS: Record<
   }
 }
 
-const URL_PARAMS =
-  typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search)
-    : new URLSearchParams()
+const SETTINGS_DEFAULT_TAB = "providers"
+
+// Rail value key → destination hash. Shared by the Applications rail.
+const RAIL_HASH: Record<string, string> = {
+  all: "#/applications",
+  overview: "#/applications/overview",
+  schedule: "#/interviews/schedule",
+  prep: "#/interviews/prep",
+  debriefs: "#/interviews/debriefs"
+}
 
 function Options() {
-  const [section, setSection] = useState<AppSection>(
-    URL_PARAMS.get("section") === "applications" ? "applications" : "settings"
-  )
-  const [activeTab, setActiveTab] = useState("providers")
-  const appsStartOnOverview = URL_PARAMS.get("view") === "overview"
+  const { route, navigate } = useHashRoute()
+  const apps = useSavedApplications()
 
-  useEffect(() => {
-    // A ?section= deep link (from the popup / retired analytics tab) wins
-    // over the last-used section.
-    if (URL_PARAMS.get("section")) return
-    chrome.storage.local.get("optionsSection", (res) => {
-      if (res.optionsSection === "applications" || res.optionsSection === "settings") {
-        setSection(res.optionsSection)
-      }
-    })
-  }, [])
+  // AppBar still switches between two top-level sections; Interviews lives under
+  // the Applications umbrella.
+  const section: AppSection =
+    route.area === "settings" ? "settings" : "applications"
 
-  const changeSection = (next: AppSection) => {
-    setSection(next)
-    chrome.storage.local.set({ optionsSection: next })
-  }
+  const allNavItems = NAV_GROUPS.flatMap((g) => g.items)
+  const activeTab = allNavItems.some((i) => i.value === route.view)
+    ? route.view
+    : SETTINGS_DEFAULT_TAB
+
+  // Which rail row is highlighted in the Applications area.
+  const railActive =
+    route.area === "interviews"
+      ? route.view
+      : route.view === "overview"
+        ? "overview"
+        : "all"
+
+  const changeSection = (next: AppSection) =>
+    navigate(next === "settings" ? "#/settings" : "#/applications")
 
   const [userProfile, setUserProfile] = useDebouncedStorage<UserProfile>(
     "userProfile",
@@ -887,7 +897,6 @@ function Options() {
   }
 
   // ── Active nav info ──────────────────────────────────────────────────────────
-  const allNavItems = NAV_GROUPS.flatMap((g) => g.items)
   const activeNav = allNavItems.find((i) => i.value === activeTab)
 
   // ── Tab content ──────────────────────────────────────────────────────────────
@@ -1221,7 +1230,7 @@ function Options() {
                   The research and interview-prep prompts live on the{" "}
                   <button
                     type="button"
-                    onClick={() => setActiveTab("prompts")}
+                    onClick={() => navigate("#/settings/prompts")}
                     className="text-aa-primary hover:underline bg-transparent border-0 p-0 cursor-pointer font-semibold">
                     Prompts
                   </button>{" "}
@@ -1324,7 +1333,7 @@ function Options() {
               No AI provider is connected yet. Add one on the{" "}
               <button
                 type="button"
-                onClick={() => setActiveTab("providers")}
+                onClick={() => navigate("#/settings/providers")}
                 className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-aa-neutral-700">
                 Providers
               </button>{" "}
@@ -2060,7 +2069,7 @@ function Options() {
             <SettingsRail
               groups={NAV_GROUPS}
               active={activeTab}
-              onSelect={setActiveTab}
+              onSelect={(value) => navigate(`#/settings/${value}`)}
             />
 
             <div className="flex-1 flex flex-col min-w-0">
@@ -2097,8 +2106,23 @@ function Options() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto px-10 py-8">
-            <ApplicationsSection initialOverview={appsStartOnOverview} />
+          <div className="flex flex-1">
+            <ApplicationsRail
+              active={railActive}
+              apps={apps}
+              onSelect={(value) => navigate(RAIL_HASH[value] ?? "#/applications")}
+            />
+
+            <div className="flex-1 overflow-y-auto px-8 py-8 min-w-0">
+              {route.area === "applications" ? (
+                <ApplicationsSection
+                  apps={apps}
+                  view={route.view === "overview" ? "overview" : "all"}
+                />
+              ) : (
+                <InterviewsPlaceholder view={route.view} param={route.param} />
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -2141,46 +2165,44 @@ function openDialogWindow(view: "saveForm" | "applicationsList") {
   })
 }
 
+/** Stand-in for the Interviews screens until Phases 2–4 land. */
+function InterviewsPlaceholder({
+  view,
+  param
+}: {
+  view: string
+  param?: string
+}) {
+  const label =
+    view === "prep" ? "Prep" : view === "debriefs" ? "Debriefs" : "Schedule"
+  return (
+    <div className="max-w-4xl">
+      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
+        {label}
+        {param ? " · round" : ""}
+      </h1>
+      <p className="text-[13px] text-aa-text-secondary mt-1">
+        Coming soon — {label.toLowerCase()} lands in a later phase.
+      </p>
+    </div>
+  )
+}
+
 /**
  * Applications area of the app shell — the tracked-application list and the
  * Overview (analytics), replacing the side-panel list and the standalone
  * analytics tab.
  */
 function ApplicationsSection({
-  initialOverview
+  apps,
+  view
 }: {
-  initialOverview?: boolean
+  apps: SavedApplication[]
+  view: "all" | "overview"
 }) {
-  const [apps, setApps] = useState<SavedApplication[]>([])
-  const [view, setView] = useState<"all" | "overview">(
-    initialOverview ? "overview" : "all"
-  )
-
-  useEffect(() => {
-    const listener = (
-      changes: { [k: string]: chrome.storage.StorageChange },
-      area: string
-    ) => {
-      if (area === "local" && changes.savedApplications) {
-        setApps(changes.savedApplications.newValue ?? [])
-      }
-    }
-    chrome.storage.onChanged.addListener(listener)
-    // Run the interviews migration before the first read so labels don't flash
-    // the legacy status set. Idempotent + version-guarded.
-    migrateInterviewsSchema()
-      .catch(() => {})
-      .finally(() => {
-        chrome.storage.local.get("savedApplications", (res) => {
-          if (Array.isArray(res.savedApplications)) setApps(res.savedApplications)
-        })
-      })
-    return () => chrome.storage.onChanged.removeListener(listener)
-  }, [])
-
   // Mutations go through the shared serialized writer, which re-reads the
-  // stored array before applying the change; the onChanged listener above
-  // then syncs `apps`, so there's no local snapshot to keep in step here.
+  // stored array before applying the change; `useSavedApplications` picks the
+  // result up via `storage.onChanged`, so there's no local snapshot to keep.
   const updateApplication = (id: string, patch: Partial<SavedApplication>) => {
     const now = new Date().toISOString()
     void mutateSavedApplications((current) =>
@@ -2201,30 +2223,6 @@ function ApplicationsSection({
 
   return (
     <div>
-      <div className="inline-flex rounded-aa-md border border-aa-border p-[3px] mb-5">
-        {(
-          [
-            { id: "all", label: "All" },
-            { id: "overview", label: "Overview" }
-          ] as const
-        ).map((t) => {
-          const on = view === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setView(t.id)}
-              className={`px-4 py-1.5 rounded-aa-sm text-[12px] font-semibold transition-colors ${
-                on
-                  ? "bg-aa-primary text-aa-text-on-primary"
-                  : "text-aa-text-secondary hover:text-aa-text-primary"
-              }`}>
-              {t.label}
-            </button>
-          )
-        })}
-      </div>
-
       {view === "all" ? (
         <ApplicationsList
           applications={apps}
