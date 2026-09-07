@@ -44,6 +44,10 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
   }
   if (!hit || !hit.round.date || !hit.round.time) return
+  // No reminders for a round whose application has been rejected (the status
+  // may have changed after the alarm was scheduled — via a debrief outcome,
+  // a manual status change, etc.).
+  if (hit.app.status === "Reject") return
 
   const lead = parsed.key === "24h" ? "Tomorrow" : "In 1 hour"
   const fmt = formatLabel(hit.round.format)
