@@ -386,13 +386,20 @@ function Options() {
       }
     )
   }, [])
-  const toggleReminders = async (next: boolean) => {
+  // Serialize preference writes + alarm reconciliation so a rapid on/off can't
+  // leave a stale "enable" run recreating alarms after a later "disable".
+  const remindersChain = useRef<Promise<unknown>>(Promise.resolve())
+  const toggleReminders = (next: boolean) => {
     setRemindersOn(next)
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.INTERVIEW_REMINDERS_ENABLED]: next
-    })
-    if (next) await resyncAllReminderAlarms(apps)
-    else await clearAllReminderAlarms()
+    const run = async () => {
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.INTERVIEW_REMINDERS_ENABLED]: next
+      })
+      if (next) await resyncAllReminderAlarms(apps)
+      else await clearAllReminderAlarms()
+    }
+    const started = remindersChain.current.then(run, run)
+    remindersChain.current = started.catch(() => {})
   }
 
   // AppBar still switches between two top-level sections; Interviews lives under
