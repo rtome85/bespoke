@@ -33,6 +33,7 @@ export function Checklist({ items, onChange, addLabel = "Add item" }: Props) {
             type="button"
             role="checkbox"
             aria-checked={!!it.checked}
+            aria-label={it.text}
             onClick={() => patch(i, { checked: !it.checked })}
             className={`mt-[2px] w-4 h-4 shrink-0 grid place-items-center rounded-aa-sm border transition-colors ${
               it.checked
