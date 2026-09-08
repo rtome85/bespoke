@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Eye,
   FileText,
-  Lightbulb,
   Mail,
   Pencil,
   Sparkles,
@@ -22,7 +21,6 @@ import { useEffect, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 
 import type { CompanyInfo } from "~api/perplexityClient"
-import { PreparationPlanModal } from "~components/PreparationPlanModal"
 import { seedCompanyResearch } from "~lib/interviews/companyResearch"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
 import {
@@ -270,11 +268,9 @@ function IndexDialog() {
     date: new Date().toISOString().split("T")[0],
     jobUrl: "",
     tags: [] as string[],
-    notes: "",
-    isFavorite: false
+    notes: ""
   })
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null)
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   // Track where the save form was opened from so Cancel goes back correctly
   const [saveFormOrigin, setSaveFormOrigin] = useState<
@@ -282,13 +278,6 @@ function IndexDialog() {
   >("success")
   const [saveDocs, setSaveDocs] = useState(true)
   const [saveFormError, setSaveFormError] = useState("")
-
-  // Preparation plan state
-  const [preparationPlanModalOpen, setPreparationPlanModalOpen] =
-    useState(false)
-  const [preparationPlanContent, setPreparationPlanContent] = useState("")
-  const [generatingPlan, setGeneratingPlan] = useState(false)
-  const [planError, setPlanError] = useState("")
 
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
@@ -859,8 +848,7 @@ function IndexDialog() {
         date: app.date,
         jobUrl: app.jobUrl ?? "",
         tags: app.tags ?? [],
-        notes: app.notes ?? "",
-        isFavorite: app.isFavorite ?? false
+        notes: app.notes ?? ""
       })
     } else {
       setSaveFormData({
@@ -870,8 +858,7 @@ function IndexDialog() {
         date: new Date().toISOString().split("T")[0],
         jobUrl: pendingJobUrl,
         tags: [],
-        notes: "",
-        isFavorite: false
+        notes: ""
       })
     }
     setView("saveForm")
@@ -930,9 +917,7 @@ function IndexDialog() {
                   statusUpdatedAt:
                     saveFormData.status !== a.status
                       ? now
-                      : a.statusUpdatedAt ?? a.createdAt,
-                  // Preserve existing preparation plan
-                  preparationPlan: a.preparationPlan
+                      : a.statusUpdatedAt ?? a.createdAt
                 }
               : a
           )
@@ -967,82 +952,6 @@ function IndexDialog() {
       current.filter((a) => a.id !== id)
     ).then(setSavedApplications)
     setDeleteConfirmId(null)
-  }
-
-  // Check if current status is an interview stage that needs preparation plan
-  const isInterviewStage = (status: ApplicationStatus): boolean =>
-    status === "Interviewing"
-
-  // Generate preparation plan using Perplexity
-  const generatePreparationPlan = async (app?: SavedApplication) => {
-    if (!perplexityConfig?.enabled || !perplexityConfig?.apiKey) {
-      setPlanError(
-        "Perplexity API not configured. Please configure it in the extension options."
-      )
-      return
-    }
-
-    setGeneratingPlan(true)
-    setPlanError("")
-    setPreparationPlanContent("")
-
-    try {
-      const { PerplexityClient } = await import("~api/perplexityClient")
-      const client = new PerplexityClient(perplexityConfig)
-
-      // Use provided application or fall back to editingApplication/saveFormData
-      const targetApp = app || editingApplication
-      const company = targetApp?.company || saveFormData.company
-      const jobTitle = targetApp?.jobTitle || saveFormData.jobTitle
-      const status = targetApp?.status || saveFormData.status
-
-      // Get job description from current context or use placeholder
-      const jobDescription =
-        result?.match?.summary || "Job description not available"
-
-      const planContent = await client.generateInterviewPrepPlan(
-        company,
-        jobTitle,
-        jobDescription,
-        status
-      )
-
-      setPreparationPlanContent(planContent)
-      setPreparationPlanModalOpen(true)
-    } catch (error) {
-      console.error("Failed to generate preparation plan:", error)
-      setPlanError("Error generating preparation plan. Please try again.")
-    } finally {
-      setGeneratingPlan(false)
-    }
-  }
-
-  // Save the generated preparation plan to the application
-  const savePreparationPlan = () => {
-    if (!editingApplication || !preparationPlanContent) return
-
-    const editingId = editingApplication.id
-    void mutateSavedApplications((current) =>
-      current.map((a) =>
-        a.id === editingId
-          ? {
-              ...a,
-              preparationPlan: {
-                content: preparationPlanContent,
-                generatedAt: new Date().toISOString(),
-                interviewType: saveFormData.status as
-                  | "HR Interview"
-                  | "1st Technical Interview"
-                  | "2nd Technical Interview"
-              }
-            }
-          : a
-      )
-    ).then((updated) => {
-      setSavedApplications(updated)
-      setEditingApplication(updated.find((a) => a.id === editingId) || null)
-    })
-    setPreparationPlanModalOpen(false)
   }
 
   const matchColor = (pct: number) => {
@@ -1564,15 +1473,6 @@ function IndexDialog() {
       "w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm placeholder:text-aa-neutral-400 focus:outline-none focus:border-aa-primary transition-colors"
     return (
       <div className="min-h-screen bg-aa-surface-subtle flex flex-col font-aa text-aa-text-primary">
-        <PreparationPlanModal
-          isOpen={preparationPlanModalOpen}
-          onClose={() => setPreparationPlanModalOpen(false)}
-          content={preparationPlanContent}
-          companyName={saveFormData.company}
-          interviewType={saveFormData.status}
-          onSave={editingApplication ? savePreparationPlan : undefined}
-        />
-
         {/* Top Bar */}
         <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
           <div className="flex flex-col gap-0.5">
@@ -1672,24 +1572,6 @@ function IndexDialog() {
 
             {/* Divider */}
             <div className="border-t border-aa-border" />
-
-            {/* Favourite toggle */}
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={saveFormData.isFavorite}
-                onChange={(e) =>
-                  setSaveFormData((f) => ({
-                    ...f,
-                    isFavorite: e.target.checked
-                  }))
-                }
-                className="w-4 h-4 accent-aa-primary"
-              />
-              <span className="text-[13px] text-aa-text-primary">
-                <span className="text-aa-primary">★</span> Mark as favourite
-              </span>
-            </label>
 
             {/* Tags */}
             <div>
@@ -1823,60 +1705,6 @@ function IndexDialog() {
                 </div>
               )}
 
-            {/* Preparation Plan */}
-            {isInterviewStage(saveFormData.status) &&
-              editingApplication &&
-              perplexityConfig?.preparationPlanEnabled && (
-                <div className="border-t border-aa-border pt-5">
-                  {editingApplication.preparationPlan ? (
-                    <div className="flex items-center gap-3 p-3 rounded-aa-md bg-aa-surface border border-aa-border">
-                      <Lightbulb
-                        size={16}
-                        className="text-aa-primary shrink-0"
-                      />
-                      <span className="text-[13px] text-aa-text-primary flex-1">
-                        Preparation plan already generated
-                      </span>
-                      <button
-                        onClick={() => {
-                          setPreparationPlanContent(
-                            editingApplication.preparationPlan!.content
-                          )
-                          setPreparationPlanModalOpen(true)
-                        }}
-                        className="text-[11px] font-semibold text-aa-primary hover:underline transition-colors">
-                        View plan
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => generatePreparationPlan()}
-                      disabled={generatingPlan}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5
-                               bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
-                               hover:bg-aa-primary-hover transition-colors
-                               disabled:opacity-50 disabled:cursor-not-allowed">
-                      {generatingPlan ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-aa-text-on-primary/30 border-t-aa-text-on-primary rounded-full animate-spin" />
-                          <span>Generating plan…</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={15} />
-                          <span>Generate preparation plan</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                  {planError && (
-                    <p className="mt-2 text-sm text-aa-error-strong">
-                      {planError}
-                    </p>
-                  )}
-                </div>
-              )}
-
             {/* Action buttons */}
             <div className="flex gap-3 pt-2">
               <button
@@ -1902,7 +1730,6 @@ function IndexDialog() {
   if (view === "applicationsList") {
     const allTags = [...new Set(savedApplications.flatMap((a) => a.tags ?? []))]
     const filteredApplications = savedApplications.filter((app) => {
-      if (showFavoritesOnly && !app.isFavorite) return false
       if (activeTagFilter && !(app.tags ?? []).includes(activeTagFilter))
         return false
       return true
@@ -1910,17 +1737,6 @@ function IndexDialog() {
 
     return (
       <div className="min-h-screen bg-canvas flex flex-col">
-        <PreparationPlanModal
-          isOpen={preparationPlanModalOpen}
-          onClose={() => setPreparationPlanModalOpen(false)}
-          content={preparationPlanContent}
-          companyName={viewingApplication?.company || saveFormData.company}
-          interviewType={
-            viewingApplication?.preparationPlan?.interviewType ||
-            saveFormData.status
-          }
-        />
-
         {/* Detail modal overlay */}
         {viewingApplication && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -1997,14 +1813,6 @@ function IndexDialog() {
                 )}
               </dl>
 
-              {viewingApplication.isFavorite && (
-                <div className="mt-3">
-                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Favourite
-                  </span>
-                  <p className="text-sm text-sidebar-accent mt-0.5">★ Yes</p>
-                </div>
-              )}
               {(viewingApplication.tags ?? []).length > 0 && (
                 <div className="mt-3">
                   <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
@@ -2132,42 +1940,6 @@ function IndexDialog() {
                     )}
                 </div>
               )}
-
-              {viewingApplication.preparationPlan && (
-                <div className="mt-5 pt-4 border-t border-canvas-divide">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb size={14} className="text-sidebar-accent" />
-                    <p className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                      Preparation Plan
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-canvas border border-canvas-divide">
-                    <div>
-                      <p className="text-[11px] font-semibold text-ink uppercase tracking-[0.05em]">
-                        {viewingApplication.preparationPlan.interviewType}
-                      </p>
-                      <p className="text-xs text-ink-secondary mt-0.5">
-                        Generated{" "}
-                        {new Date(
-                          viewingApplication.preparationPlan.generatedAt
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setPreparationPlanContent(
-                          viewingApplication.preparationPlan!.content
-                        )
-                        setPreparationPlanModalOpen(true)
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold
-                                 text-sidebar-accent hover:text-ink transition-colors">
-                      <Eye size={14} />
-                      <span>VIEW</span>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -2194,36 +1966,20 @@ function IndexDialog() {
           {/* Filter Row */}
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => {
-                setActiveTagFilter(null)
-                setShowFavoritesOnly(false)
-              }}
+              onClick={() => setActiveTagFilter(null)}
               className={`px-4 py-2 text-[11px] font-semibold tracking-[0.1em] transition-colors ${
-                !activeTagFilter && !showFavoritesOnly
+                !activeTagFilter
                   ? "bg-ink text-white"
                   : "text-sidebar-item hover:text-ink"
               }`}>
               ALL
             </button>
-            <button
-              onClick={() => {
-                setShowFavoritesOnly((v) => !v)
-                setActiveTagFilter(null)
-              }}
-              className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] transition-colors ${
-                showFavoritesOnly
-                  ? "bg-ink text-white"
-                  : "text-sidebar-item hover:text-ink"
-              }`}>
-              ★ FAVOURITES
-            </button>
             {allTags.map((tag) => (
               <button
                 key={tag}
-                onClick={() => {
+                onClick={() =>
                   setActiveTagFilter(activeTagFilter === tag ? null : tag)
-                  setShowFavoritesOnly(false)
-                }}
+                }
                 className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] transition-colors ${
                   activeTagFilter === tag
                     ? "bg-ink text-white"
@@ -2292,16 +2048,9 @@ function IndexDialog() {
                   className="flex items-center px-4 py-[14px] border-b border-canvas-divide last:border-b-0 hover:bg-canvas/60 transition-colors ">
                   {/* Company */}
                   <div className="w-40 shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      {app.isFavorite && (
-                        <span className="text-sidebar-accent text-xs leading-none">
-                          ★
-                        </span>
-                      )}
-                      <span className="text-[13px] font-semibold text-ink">
-                        {app.company}
-                      </span>
-                    </div>
+                    <span className="block text-[13px] font-semibold text-ink">
+                      {app.company}
+                    </span>
                     {(app.tags ?? []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {app.tags!.map((t) => (
