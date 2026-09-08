@@ -42,7 +42,7 @@ export function Checklist({
             aria-checked={!!it.checked}
             aria-label={it.text}
             onClick={() => patch(i, { checked: !it.checked })}
-            className={`mt-[2px] w-4 h-4 shrink-0 grid place-items-center rounded-aa-sm border transition-colors ${
+            className={`mt-[2px] w-4 h-4 shrink-0 grid place-items-center rounded-aa-sm border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary ${
               it.checked
                 ? "bg-aa-primary border-aa-primary text-aa-text-on-primary"
                 : "border-aa-border hover:border-aa-neutral-400"
@@ -62,8 +62,10 @@ export function Checklist({
               type="button"
               aria-label={it.pinned ? "Unpin" : "Pin"}
               onClick={() => patch(i, { pinned: !it.pinned })}
-              className={`shrink-0 transition-opacity ${
-                it.pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              className={`shrink-0 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary rounded-aa-sm ${
+                it.pinned
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
               }`}>
               <Star
                 className={`w-3.5 h-3.5 ${
@@ -78,7 +80,7 @@ export function Checklist({
               type="button"
               aria-label="Remove"
               onClick={() => remove(i)}
-              className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-aa-neutral-400 hover:text-aa-error-strong">
+              className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-aa-neutral-400 hover:text-aa-error-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary rounded-aa-sm">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
