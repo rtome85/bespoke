@@ -83,28 +83,6 @@ export const APPLICATION_STATUSES: ApplicationStatus[] = [
   "Reject"
 ]
 
-/** Legacy statuses that collapsed into "Interviewing" (see interviews/migrate). */
-export const LEGACY_INTERVIEW_STATUSES = [
-  "HR Interview",
-  "1st Technical Interview",
-  "2nd Technical Interview",
-  "Final Interview"
-] as const
-
-/**
- * @deprecated Superseded by per-round `InterviewRound.prep`. Field is stripped
- * from stored records by the interviews migration and removed from the UI in a
- * later phase.
- */
-export interface PreparationPlan {
-  content: string
-  generatedAt: string
-  interviewType:
-    | "HR Interview"
-    | "1st Technical Interview"
-    | "2nd Technical Interview"
-}
-
 // ── Interview rounds ───────────────────────────────────────────────────────────
 
 export type RoundType = "HR" | "Technical" | "Final" | "Custom"
@@ -183,14 +161,8 @@ export interface SavedApplication {
   // Scheduled interview rounds for this application (see interviews/*).
   rounds?: InterviewRound[]
 
-  /** @deprecated Stripped by the interviews migration; UI removed in a later phase. */
-  preparationPlan?: PreparationPlan
-
-  // Feature 1.3 — Tags, Notes & Favourites
   tags?: string[]
   notes?: string
-  /** @deprecated Favourites removed; field stripped by the interviews migration. */
-  isFavorite?: boolean
 }
 
 export const DEFAULT_USER_PROFILE: UserProfile = {

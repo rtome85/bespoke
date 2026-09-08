@@ -22,6 +22,16 @@ const LEGACY_STATUS_TO_ROUND_TYPE: Record<string, RoundType> = {
   "Final Interview": "Final"
 }
 
+/**
+ * Fields dropped from `SavedApplication` that can still be present in stored
+ * records written by an older build. Declared locally so the migration keeps
+ * reading them without the public type carrying dead shape.
+ */
+interface LegacyApplicationFields {
+  preparationPlan?: { content?: string; generatedAt?: string }
+  isFavorite?: boolean
+}
+
 function isoToDay(iso: unknown): string | undefined {
   if (typeof iso !== "string") return undefined
   const day = iso.slice(0, 10)
@@ -41,14 +51,16 @@ function isoToDay(iso: unknown): string | undefined {
 export function migrateApplication(app: SavedApplication): SavedApplication {
   if (!app || typeof app !== "object") return app
 
+  const legacy = app as SavedApplication & LegacyApplicationFields
+
   const isLegacyInterview =
     typeof app.status === "string" && app.status in LEGACY_STATUS_MAP
   const hasDeadFields =
-    app.preparationPlan !== undefined || app.isFavorite !== undefined
+    legacy.preparationPlan !== undefined || legacy.isFavorite !== undefined
 
   if (!isLegacyInterview && !hasDeadFields) return app
 
-  const next: SavedApplication = { ...app }
+  const next: SavedApplication & LegacyApplicationFields = { ...legacy }
 
   if (isLegacyInterview) {
     const legacyStatus = app.status as string
@@ -65,10 +77,10 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
         synthesized: true,
         createdAt: new Date().toISOString()
       }
-      if (app.preparationPlan?.content) {
+      if (legacy.preparationPlan?.content) {
         round.prep = {
-          notes: app.preparationPlan.content,
-          topicsPointsAt: app.preparationPlan.generatedAt
+          notes: legacy.preparationPlan.content,
+          topicsPointsAt: legacy.preparationPlan.generatedAt
         }
       }
       next.rounds = [round]

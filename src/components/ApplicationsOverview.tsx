@@ -8,16 +8,11 @@ import {
 
 interface Props {
   applications: SavedApplication[]
-  onOpen: (app: SavedApplication) => void
 }
 
 const RESPONDED: ApplicationStatus[] = ["Interviewing", "Offer", "Reject"]
 
 const INTERVIEW: ApplicationStatus[] = ["Interviewing"]
-
-const TERMINAL: ApplicationStatus[] = ["Offer", "Reject"]
-
-const STALE_DAYS = 14
 
 function parseDay(raw?: string): Date | null {
   if (!raw) return null
@@ -36,18 +31,11 @@ function shortDate(d: Date): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
-function daysSince(iso?: string): number | null {
-  if (!iso) return null
-  const t = new Date(iso).getTime()
-  if (isNaN(t)) return null
-  return Math.floor((Date.now() - t) / 86_400_000)
-}
-
 const card = "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
 const cardHead = "text-[13px] font-semibold text-aa-text-primary"
 const cardSub = "text-[12px] text-aa-text-secondary mt-0.5"
 
-export function ApplicationsOverview({ applications, onOpen }: Props) {
+export function ApplicationsOverview({ applications }: Props) {
   const derived = useMemo(() => {
     const counts = new Map<ApplicationStatus, number>()
     APPLICATION_STATUSES.forEach((s) => counts.set(s, 0))
@@ -99,29 +87,6 @@ export function ApplicationsOverview({ applications, onOpen }: Props) {
     }
     const rejects = counts.get("Reject") ?? 0
 
-    // Needs attention
-    const stale = applications
-      .filter(
-        (a) =>
-          !TERMINAL.includes(a.status) &&
-          (daysSince(a.statusUpdatedAt ?? a.createdAt) ?? 0) >= STALE_DAYS
-      )
-      .sort(
-        (a, b) =>
-          (daysSince(b.statusUpdatedAt ?? b.createdAt) ?? 0) -
-          (daysSince(a.statusUpdatedAt ?? a.createdAt) ?? 0)
-      )
-    const neverApplied = applications.filter((a) => a.status === "Saved")
-    const recentRejections = applications
-      .filter(
-        (a) => a.status === "Reject" && (daysSince(a.statusUpdatedAt) ?? 99) <= 30
-      )
-      .sort(
-        (a, b) =>
-          (daysSince(a.statusUpdatedAt) ?? 99) -
-          (daysSince(b.statusUpdatedAt) ?? 99)
-      )
-
     return {
       counts,
       total,
@@ -133,10 +98,7 @@ export function ApplicationsOverview({ applications, onOpen }: Props) {
       weeks,
       funnelStages,
       cumulative,
-      rejects,
-      stale,
-      neverApplied,
-      recentRejections
+      rejects
     }
   }, [applications])
 
@@ -148,7 +110,7 @@ export function ApplicationsOverview({ applications, onOpen }: Props) {
         </p>
         <p className="text-[13px] text-aa-text-secondary mt-1">
           Track a few applications and this fills in — pipeline, response rate,
-          and what needs a nudge.
+          and weekly activity.
         </p>
       </div>
     )
@@ -279,97 +241,6 @@ export function ApplicationsOverview({ applications, onOpen }: Props) {
           ))}
         </div>
       </div>
-
-      {/* Needs attention */}
-      <div className={card}>
-        <h3 className={cardHead}>Needs attention</h3>
-        <p className={cardSub}>
-          Where the pipeline has gone quiet.
-        </p>
-        <hr className="border-0 border-t border-aa-border my-4" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <AttentionList
-            title={`Stale · ${STALE_DAYS}+ days`}
-            empty="Everything's moved recently."
-            apps={derived.stale}
-            meta={(a) =>
-              `${daysSince(a.statusUpdatedAt ?? a.createdAt)}d in ${a.status}`
-            }
-            onOpen={onOpen}
-          />
-          <AttentionList
-            title="Saved, not applied"
-            empty="No untouched saves."
-            apps={derived.neverApplied}
-            meta={(a) => {
-              const d = daysSince(a.createdAt)
-              return d === null ? "saved" : `saved ${d}d ago`
-            }}
-            onOpen={onOpen}
-          />
-          <AttentionList
-            title="Recent rejections"
-            empty="None in the last 30 days."
-            apps={derived.recentRejections}
-            meta={(a) => {
-              const d = daysSince(a.statusUpdatedAt)
-              return d === null ? "" : `${d}d ago`
-            }}
-            onOpen={onOpen}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AttentionList({
-  title,
-  empty,
-  apps,
-  meta,
-  onOpen
-}: {
-  title: string
-  empty: string
-  apps: SavedApplication[]
-  meta: (a: SavedApplication) => string
-  onOpen: (a: SavedApplication) => void
-}) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-2">
-        {title}
-        {apps.length > 0 && (
-          <span className="ml-1.5 text-aa-text-primary">{apps.length}</span>
-        )}
-      </p>
-      {apps.length === 0 ? (
-        <p className="text-[12px] text-aa-text-secondary">{empty}</p>
-      ) : (
-        <ul className="space-y-1.5">
-          {apps.slice(0, 6).map((a) => (
-            <li key={a.id}>
-              <button
-                type="button"
-                onClick={() => onOpen(a)}
-                className="w-full text-left group">
-                <span className="block text-[12px] font-medium text-aa-text-primary truncate group-hover:text-aa-primary transition-colors">
-                  {a.company}
-                </span>
-                <span className="block text-[11px] text-aa-text-secondary truncate">
-                  {a.jobTitle} · {meta(a)}
-                </span>
-              </button>
-            </li>
-          ))}
-          {apps.length > 6 && (
-            <li className="text-[11px] text-aa-text-secondary">
-              +{apps.length - 6} more
-            </li>
-          )}
-        </ul>
-      )}
     </div>
   )
 }

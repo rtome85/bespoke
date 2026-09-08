@@ -47,7 +47,6 @@ import {
   DEFAULT_MODEL_ROUTING,
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_PERPLEXITY_PROMPT,
-  DEFAULT_PREPARATION_PLAN_PROMPT,
   DEFAULT_PROMPTS,
   MODEL_COST_PER_MTOK,
   PROMPT_TEMPLATES,
@@ -454,8 +453,6 @@ function Options() {
       apiKey: "",
       enabled: false,
       customPrompt: DEFAULT_PERPLEXITY_PROMPT,
-      preparationPlanEnabled: false,
-      preparationPlanPrompt: DEFAULT_PREPARATION_PLAN_PROMPT,
       interviewPrepPrompt: DEFAULT_INTERVIEW_PREP_PROMPT
     })
 
@@ -2348,10 +2345,7 @@ function ApplicationsSection({
           onOpenSidePanel={() => openDialogWindow("applicationsList")}
         />
       ) : (
-        <ApplicationsOverview
-          applications={apps}
-          onOpen={() => openDialogWindow("applicationsList")}
-        />
+        <ApplicationsOverview applications={apps} />
       )}
     </div>
   )

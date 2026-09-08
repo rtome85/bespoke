@@ -8,7 +8,6 @@ import {
   Loader2,
   Search,
   Sparkles,
-  Star,
   X
 } from "lucide-react"
 
@@ -226,16 +225,8 @@ export function ApplicationsList({
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 border-b border-aa-border last:border-0 text-left hover:bg-aa-neutral-50 transition-colors">
                   <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-1.5">
-                      {a.isFavorite && (
-                        <Star
-                          className="w-3 h-3 text-aa-primary shrink-0"
-                          fill="currentColor"
-                        />
-                      )}
-                      <span className="text-[13px] font-semibold text-aa-text-primary truncate">
-                        {a.company}
-                      </span>
+                    <span className="block text-[13px] font-semibold text-aa-text-primary truncate">
+                      {a.company}
                     </span>
                     <span className="block text-[12px] text-aa-text-secondary truncate">
                       {a.jobTitle}
@@ -290,27 +281,9 @@ export function ApplicationsList({
               <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-4">
                 <div className="flex items-center justify-between gap-3.5">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="text-[20px] font-bold text-aa-text-primary truncate">
-                        {open.company}
-                      </h2>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onUpdate(open.id, { isFavorite: !open.isFavorite })
-                        }
-                        aria-label="Toggle favourite"
-                        className="shrink-0 grid place-items-center rounded-aa-sm hover:bg-aa-neutral-100 transition-colors">
-                        <Star
-                          className={`w-4 h-4 ${
-                            open.isFavorite
-                              ? "text-aa-primary"
-                              : "text-aa-neutral-400"
-                          }`}
-                          fill={open.isFavorite ? "currentColor" : "none"}
-                        />
-                      </button>
-                    </div>
+                    <h2 className="text-[20px] font-bold text-aa-text-primary truncate">
+                      {open.company}
+                    </h2>
                     <p className="text-[13px] text-aa-text-secondary leading-relaxed">
                       {open.jobTitle}
                     </p>
