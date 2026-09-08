@@ -89,9 +89,17 @@ async function push(token: string): Promise<void> {
   }
 }
 
-async function pull(token: string): Promise<void> {
+/**
+ * Restore the synced keys from the Drive backup.
+ *
+ * Returns the subset that was actually present in the backup, so the caller can
+ * distinguish "the payload carried this key" from "the payload omitted it and
+ * the local value survived" — the interviews migration needs exactly that
+ * distinction to tell a pre-versioning backup from a current one.
+ */
+async function pull(token: string): Promise<Partial<Record<SyncKey, unknown>>> {
   const fileId = await findFile(token)
-  if (!fileId) return // Nothing to restore yet
+  if (!fileId) return {} // Nothing to restore yet
   const res = await fetch(`${DRIVE_API}/files/${fileId}?alt=media`, {
     headers: { Authorization: `Bearer ${token}` }
   })
@@ -104,7 +112,7 @@ async function pull(token: string): Promise<void> {
   }
 
   // Only restore known sync keys to avoid importing garbage
-  const toRestore: Record<string, unknown> = {}
+  const toRestore: Partial<Record<SyncKey, unknown>> = {}
   for (const key of SYNC_KEYS) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       toRestore[key] = (data as Record<SyncKey, unknown>)[key]
@@ -113,6 +121,7 @@ async function pull(token: string): Promise<void> {
   if (Object.keys(toRestore).length > 0) {
     await chrome.storage.local.set(toRestore)
   }
+  return toRestore
 }
 
 async function revoke(token: string): Promise<void> {

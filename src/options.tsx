@@ -64,6 +64,7 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
+import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import {
   clearAllReminderAlarms,
   resyncAllReminderAlarms
@@ -809,8 +810,11 @@ function Options() {
 
   const handleExportData = async () => {
     try {
-      const { savedApplications } =
-        await chrome.storage.local.get("savedApplications")
+      const { savedApplications, interviewsSchemaVersion } =
+        await chrome.storage.local.get([
+          "savedApplications",
+          "interviewsSchemaVersion"
+        ])
       const data = {
         version: "1.0.0",
         exportDate: new Date().toISOString(),
@@ -822,7 +826,10 @@ function Options() {
         userProfile,
         llmTuning,
         lastSelectedModel: matchModel,
-        savedApplications: savedApplications ?? []
+        savedApplications: savedApplications ?? [],
+        // Describes the shape of `savedApplications` above — not the same thing
+        // as `version`, which is this file format's own version.
+        interviewsSchemaVersion
       }
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -879,6 +886,10 @@ function Options() {
             await chrome.storage.local.set({
               savedApplications: data.savedApplications
             })
+            // The local stamp describes the array this just overwrote, so the
+            // decision has to come from the file. Older exports carry no
+            // `interviewsSchemaVersion` at all — that's the pre-migration shape.
+            await migrateRestoredApplications(data.interviewsSchemaVersion)
           }
 
           setSaveStatus("Data imported successfully!")
@@ -916,7 +927,18 @@ function Options() {
       message: "Restoring from Google Drive..."
     })
     try {
-      await pull(syncConfig.token)
+      const restored = await pull(syncConfig.token)
+      // Only when the backup actually replaced the list — `pull` returns {} if
+      // there's no Drive file yet, and migrating then would stamp (and possibly
+      // downgrade) the version over local data nothing touched.
+      // `hasOwnProperty`, matching how `pull` decides what to restore, so an
+      // empty-but-present array still counts. Same edge as import: the backup
+      // can predate the collapsed-status schema while this install is already
+      // stamped current, so an absent version reads as legacy rather than
+      // picking up the stale local stamp.
+      if (Object.prototype.hasOwnProperty.call(restored, "savedApplications")) {
+        await migrateRestoredApplications(restored.interviewsSchemaVersion)
+      }
       await chrome.storage.local.set({
         syncConfig: { ...syncConfig, lastSynced: new Date().toISOString() }
       })

@@ -95,7 +95,7 @@ export function DebriefsListPage({ apps, onOpen }: Props) {
         Debriefs
       </h1>
 
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {stats.map((s) => (
           <div key={s.label} className={`${card} p-4`}>
             <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">

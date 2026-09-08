@@ -93,10 +93,7 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
 }
 
 /**
- * One-time, version-guarded migration to the collapsed status model + embedded
- * interview rounds. Safe to call from multiple contexts (options page mount and
- * the background service worker) — the version check short-circuits after the
- * first successful run.
+ * The per-record pass over the stored array, plus the version stamp.
  *
  * The array commit goes through `mutateSavedApplications`, which re-reads the
  * freshest list immediately before writing and serializes with every other
@@ -108,22 +105,7 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
  * heavier cross-context lock is deliberately avoided for a one-time idempotent
  * transform (stale-lock failure mode not worth it).
  */
-export async function migrateInterviewsSchema(): Promise<void> {
-  const versionRes = await chrome.storage.local.get(
-    STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION
-  )
-  // `>=`, not `===`: if a newer build already migrated to a later schema (and
-  // this older build is now running via a downgrade or a sync skew), do
-  // nothing rather than run a stale migration over newer-shaped data.
-  // `undefined` / non-numeric junk yields `false` here and gets migrated,
-  // which is the safe direction (the per-record pass is hardened + idempotent).
-  if (
-    versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] >=
-    INTERVIEWS_SCHEMA_VERSION
-  ) {
-    return
-  }
-
+async function runMigrationPass(): Promise<void> {
   await mutateSavedApplications((current) =>
     // Isolate each record: one malformed entry that still slips past the guards
     // in `migrateApplication` must not abort the batch.
@@ -145,4 +127,63 @@ export async function migrateInterviewsSchema(): Promise<void> {
   await chrome.storage.local.set({
     [STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION]: INTERVIEWS_SCHEMA_VERSION
   })
+}
+
+/**
+ * One-time, version-guarded migration to the collapsed status model + embedded
+ * interview rounds. Safe to call from multiple contexts (options page mount and
+ * the background service worker) — the version check short-circuits after the
+ * first successful run.
+ */
+export async function migrateInterviewsSchema(): Promise<void> {
+  const versionRes = await chrome.storage.local.get(
+    STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION
+  )
+  // `>=`, not `===`: if a newer build already migrated to a later schema (and
+  // this older build is now running via a downgrade or a sync skew), do
+  // nothing rather than run a stale migration over newer-shaped data.
+  // `undefined` / non-numeric junk yields `false` here and gets migrated,
+  // which is the safe direction (the per-record pass is hardened + idempotent).
+  if (
+    versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] >=
+    INTERVIEWS_SCHEMA_VERSION
+  ) {
+    return
+  }
+
+  await runMigrationPass()
+}
+
+/**
+ * Migration for a bulk restore that replaced `savedApplications` wholesale from
+ * outside this install (Drive `pull`, JSON import).
+ *
+ * The local `interviewsSchemaVersion` describes the array that was just
+ * *overwritten*, so it says nothing about what landed — a pre-migration backup
+ * restored onto an install already stamped current would be skipped forever by
+ * the normal guard, leaving a legacy status the collapsed 5-value UI can't
+ * render. Decide from the version the payload carried instead:
+ *
+ * - absent / non-numeric → a backup written before the version was included in
+ *   the payload, i.e. exactly the pre-migration shape: migrate it.
+ * - at or ahead of `INTERVIEWS_SCHEMA_VERSION` → already migrated, or written
+ *   by a newer build. Adopt that version and run nothing, so this build never
+ *   applies a stale transform to newer-shaped data. This is the same downgrade
+ *   protection `migrateInterviewsSchema`'s `>=` gives, sourced from the payload
+ *   rather than from the clobbered local stamp.
+ */
+export async function migrateRestoredApplications(
+  sourceVersion: unknown
+): Promise<void> {
+  if (
+    typeof sourceVersion === "number" &&
+    sourceVersion >= INTERVIEWS_SCHEMA_VERSION
+  ) {
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION]: sourceVersion
+    })
+    return
+  }
+
+  await runMigrationPass()
 }

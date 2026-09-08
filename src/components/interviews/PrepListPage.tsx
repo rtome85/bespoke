@@ -75,7 +75,7 @@ export function PrepListPage({ apps, onOpen }: Props) {
         Prep
       </h1>
 
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {stats.map((s) => (
           <div
             key={s.label}

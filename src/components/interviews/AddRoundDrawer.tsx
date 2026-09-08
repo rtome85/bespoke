@@ -1,5 +1,5 @@
 import { X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { SegmentedControl } from "~components/SegmentedControl"
 import { hasOpenRound } from "~lib/interviews/selectors"
@@ -87,10 +87,61 @@ export function AddRoundDrawer({
   const [error, setError] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // `aria-modal` is a promise to assistive tech that the rest of the page is
+  // inert — so the drawer has to actually hold focus: pull it in on open, keep
+  // Tab inside, and hand it back to whatever opened the drawer on close.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
+    const opener = document.activeElement as HTMLElement | null
+
+    const focusables = () =>
+      Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      ).filter(
+        (el) => el.offsetParent !== null || el === document.activeElement
+      )
+
+    // Skip the header close button — the first field is the useful landing spot.
+    const initial = focusables()
+    ;(initial[1] ?? initial[0] ?? panelRef.current)?.focus()
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose()
+        return
+      }
+      if (e.key !== "Tab") return
+
+      const items = focusables()
+      if (items.length === 0) {
+        e.preventDefault()
+        panelRef.current?.focus()
+        return
+      }
+      const first = items[0]
+      const last = items[items.length - 1]
+      const active = document.activeElement as HTMLElement | null
+
+      // Also catches focus sitting outside the panel entirely (browser chrome,
+      // the page behind), which would otherwise leak on the next Tab.
+      const outside = !panelRef.current?.contains(active)
+      if (!e.shiftKey && (active === last || outside)) {
+        e.preventDefault()
+        first.focus()
+      } else if (e.shiftKey && (active === first || outside)) {
+        e.preventDefault()
+        last.focus()
+      }
+    }
+
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      opener?.focus?.()
+    }
   }, [onClose])
 
   const selectedApp =
@@ -158,12 +209,14 @@ export function AddRoundDrawer({
   return (
     <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose}>
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-label={
           mode === "edit" ? "Edit interview round" : "Add interview round"
         }
-        className="absolute inset-y-0 right-0 w-[460px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl flex flex-col"
+        className="absolute inset-y-0 right-0 w-[460px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl flex flex-col focus:outline-none"
         onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 shrink-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
           <span className="text-[14px] font-semibold text-aa-text-primary">
