@@ -21,6 +21,9 @@ interface Props {
   apps: SavedApplication[]
   /** create mode — preselect this application */
   presetAppId?: string
+  /** create mode — preselect the round type; `""` opens with no type chosen
+   * (post-debrief "advance" flow: a Custom round has no canonical next). */
+  presetType?: RoundType | ""
   /** edit mode — the round being edited */
   editRef?: AddRoundEditRef
   onClose: () => void
@@ -49,6 +52,7 @@ export function AddRoundDrawer({
   mode,
   apps,
   presetAppId,
+  presetType,
   editRef,
   onClose,
   onDone
@@ -66,7 +70,9 @@ export function AddRoundDrawer({
   const [appId, setAppId] = useState(
     editApp?.id ?? presetAppId ?? createApps[0]?.id ?? ""
   )
-  const [type, setType] = useState<RoundType>(editRound?.type ?? "HR")
+  const [type, setType] = useState<RoundType | "">(
+    editRound?.type ?? presetType ?? "HR"
+  )
   const [customLabel, setCustomLabel] = useState(editRound?.customLabel ?? "")
   const [date, setDate] = useState(editRound?.date ?? "")
   const [time, setTime] = useState(editRound?.time ?? "")
@@ -105,6 +111,10 @@ export function AddRoundDrawer({
   const submit = async () => {
     if (!selectedApp) {
       setError("Pick an application first.")
+      return
+    }
+    if (!type) {
+      setError("Pick a round type.")
       return
     }
     setBusy(true)
@@ -212,6 +222,11 @@ export function AddRoundDrawer({
                   value={type}
                   onChange={(e) => setType(e.target.value as RoundType)}
                   className={field}>
+                  {type === "" && (
+                    <option value="" disabled>
+                      Choose a round type…
+                    </option>
+                  )}
                   {TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}

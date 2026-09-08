@@ -199,6 +199,17 @@ export function needsDebrief(
   )
 }
 
+/** Rounds with a logged debrief, most recently logged first. */
+export function debriefed(list: RoundRef[]): RoundRef[] {
+  return list
+    .filter((r) => !!r.round.debrief?.loggedAt)
+    .sort((a, b) =>
+      (b.round.debrief!.loggedAt ?? "").localeCompare(
+        a.round.debrief!.loggedAt ?? ""
+      )
+    )
+}
+
 export function nextRound(
   list: RoundRef[],
   now: Date = new Date()

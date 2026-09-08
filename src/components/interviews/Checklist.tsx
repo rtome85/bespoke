@@ -7,10 +7,17 @@ interface Props {
   items: PrepItem[]
   onChange: (next: PrepItem[]) => void
   addLabel?: string
+  /** Hide the pin control — for lists where pinning has no meaning (follow-ups). */
+  hidePin?: boolean
 }
 
 /** Editable checklist over `PrepItem[]` — toggle, pin, add, remove user items. */
-export function Checklist({ items, onChange, addLabel = "Add item" }: Props) {
+export function Checklist({
+  items,
+  onChange,
+  addLabel = "Add item",
+  hidePin = false
+}: Props) {
   const [draft, setDraft] = useState("")
 
   const patch = (i: number, p: Partial<PrepItem>) =>
@@ -50,20 +57,22 @@ export function Checklist({ items, onChange, addLabel = "Add item" }: Props) {
             }`}>
             {it.text}
           </span>
-          <button
-            type="button"
-            aria-label={it.pinned ? "Unpin" : "Pin"}
-            onClick={() => patch(i, { pinned: !it.pinned })}
-            className={`shrink-0 transition-opacity ${
-              it.pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            }`}>
-            <Star
-              className={`w-3.5 h-3.5 ${
-                it.pinned ? "text-aa-primary" : "text-aa-neutral-400"
-              }`}
-              fill={it.pinned ? "currentColor" : "none"}
-            />
-          </button>
+          {!hidePin && (
+            <button
+              type="button"
+              aria-label={it.pinned ? "Unpin" : "Pin"}
+              onClick={() => patch(i, { pinned: !it.pinned })}
+              className={`shrink-0 transition-opacity ${
+                it.pinned ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              }`}>
+              <Star
+                className={`w-3.5 h-3.5 ${
+                  it.pinned ? "text-aa-primary" : "text-aa-neutral-400"
+                }`}
+                fill={it.pinned ? "currentColor" : "none"}
+              />
+            </button>
+          )}
           {it.userAdded && (
             <button
               type="button"

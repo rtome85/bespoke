@@ -11,6 +11,7 @@ import {
   Route,
   SlidersHorizontal,
   User,
+  X,
   Zap
 } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -28,6 +29,8 @@ import {
   AddRoundDrawer,
   type AddRoundEditRef
 } from "~components/interviews/AddRoundDrawer"
+import { DebriefsListPage } from "~components/interviews/DebriefsListPage"
+import { DebriefWorkspace } from "~components/interviews/DebriefWorkspace"
 import { PrepListPage } from "~components/interviews/PrepListPage"
 import { PrepWorkspace } from "~components/interviews/PrepWorkspace"
 import { SchedulePage } from "~components/interviews/SchedulePage"
@@ -75,6 +78,7 @@ import {
 } from "~storage/savedApplications"
 import {
   DEFAULT_USER_PROFILE,
+  type RoundType,
   type SavedApplication,
   type UserProfile
 } from "~types/userProfile"
@@ -374,10 +378,18 @@ function Options() {
 
   // Add / edit round drawer (overlays the whole shell).
   const [roundDrawer, setRoundDrawer] = useState<
-    | { mode: "create"; editRef?: undefined }
+    | {
+        mode: "create"
+        editRef?: undefined
+        presetAppId?: string
+        presetType?: RoundType | ""
+      }
     | { mode: "edit"; editRef: AddRoundEditRef }
     | null
   >(null)
+
+  // Post-debrief "advance" prompt: appId of the application to schedule next.
+  const [advanceFor, setAdvanceFor] = useState<string | null>(null)
 
   // Interview reminder alarms (default on).
   const [remindersOn, setRemindersOn] = useState(true)
@@ -2189,8 +2201,22 @@ function Options() {
                     onOpen={(id) => navigate(`#/interviews/prep/${id}`)}
                   />
                 )
+              ) : route.param ? (
+                <DebriefWorkspace
+                  key={route.param}
+                  apps={apps}
+                  roundId={route.param}
+                  onBack={() => navigate("#/interviews/debriefs")}
+                  onSaved={({ advanced, appId }) => {
+                    navigate("#/interviews/debriefs")
+                    if (advanced) setAdvanceFor(appId)
+                  }}
+                />
               ) : (
-                <InterviewsPlaceholder view={route.view} param={route.param} />
+                <DebriefsListPage
+                  apps={apps}
+                  onOpen={(id) => navigate(`#/interviews/debriefs/${id}`)}
+                />
               )}
             </div>
           </div>
@@ -2226,9 +2252,43 @@ function Options() {
         <AddRoundDrawer
           mode={roundDrawer.mode}
           apps={apps}
+          presetAppId={
+            roundDrawer.mode === "create" ? roundDrawer.presetAppId : undefined
+          }
+          presetType={
+            roundDrawer.mode === "create" ? roundDrawer.presetType : undefined
+          }
           editRef={roundDrawer.editRef}
           onClose={() => setRoundDrawer(null)}
         />
+      )}
+
+      {advanceFor && (
+        <div
+          role="status"
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-4 py-3 bg-aa-text-primary text-aa-surface rounded-aa-lg shadow-xl text-[13px]">
+          <span>Round logged. Schedule the next one?</span>
+          <button
+            type="button"
+            onClick={() => {
+              setRoundDrawer({
+                mode: "create",
+                presetAppId: advanceFor,
+                presetType: ""
+              })
+              setAdvanceFor(null)
+            }}
+            className="font-semibold text-aa-primary-hover hover:underline">
+            Add round
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdvanceFor(null)}
+            aria-label="Dismiss"
+            className="text-aa-neutral-400 hover:text-aa-surface">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
     </>
   )
@@ -2243,29 +2303,6 @@ function openDialogWindow(view: "saveForm" | "applicationsList") {
     height: 560,
     focused: true
   })
-}
-
-/** Stand-in for the Interviews screens until Phases 2–4 land. */
-function InterviewsPlaceholder({
-  view,
-  param
-}: {
-  view: string
-  param?: string
-}) {
-  const label =
-    view === "prep" ? "Prep" : view === "debriefs" ? "Debriefs" : "Schedule"
-  return (
-    <div className="max-w-4xl">
-      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
-        {label}
-        {param ? " · round" : ""}
-      </h1>
-      <p className="text-[13px] text-aa-text-secondary mt-1">
-        Coming soon — {label.toLowerCase()} lands in a later phase.
-      </p>
-    </div>
-  )
 }
 
 /**
