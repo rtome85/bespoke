@@ -2177,6 +2177,7 @@ function Options() {
               ) : route.view === "prep" ? (
                 route.param ? (
                   <PrepWorkspace
+                    key={route.param}
                     apps={apps}
                     roundId={route.param}
                     onBack={() => navigate("#/interviews/prep")}
