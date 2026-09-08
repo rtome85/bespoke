@@ -98,6 +98,14 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
  * the background service worker) — the version check short-circuits after the
  * first successful run.
  *
+ * Pass `{ force: true }` after a bulk restore that writes `savedApplications`
+ * from outside this install (Drive `pull`, JSON import). Such a payload can be
+ * pre-migration while this install's `interviewsSchemaVersion` is already
+ * current, and the version guard would then skip it forever — leaving a legacy
+ * status the collapsed 5-value UI can't render. Forcing re-runs the per-record
+ * pass over the restored array (idempotent, so already-migrated records are
+ * returned untouched) and re-stamps the version.
+ *
  * The array commit goes through `mutateSavedApplications`, which re-reads the
  * freshest list immediately before writing and serializes with every other
  * write in this context — so a concurrent user edit landing in the migration's
@@ -108,20 +116,25 @@ export function migrateApplication(app: SavedApplication): SavedApplication {
  * heavier cross-context lock is deliberately avoided for a one-time idempotent
  * transform (stale-lock failure mode not worth it).
  */
-export async function migrateInterviewsSchema(): Promise<void> {
-  const versionRes = await chrome.storage.local.get(
-    STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION
-  )
-  // `>=`, not `===`: if a newer build already migrated to a later schema (and
-  // this older build is now running via a downgrade or a sync skew), do
-  // nothing rather than run a stale migration over newer-shaped data.
-  // `undefined` / non-numeric junk yields `false` here and gets migrated,
-  // which is the safe direction (the per-record pass is hardened + idempotent).
-  if (
-    versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] >=
-    INTERVIEWS_SCHEMA_VERSION
-  ) {
-    return
+export async function migrateInterviewsSchema({
+  force = false
+}: { force?: boolean } = {}): Promise<void> {
+  if (!force) {
+    const versionRes = await chrome.storage.local.get(
+      STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION
+    )
+    // `>=`, not `===`: if a newer build already migrated to a later schema (and
+    // this older build is now running via a downgrade or a sync skew), do
+    // nothing rather than run a stale migration over newer-shaped data.
+    // `undefined` / non-numeric junk yields `false` here and gets migrated,
+    // which is the safe direction (the per-record pass is hardened +
+    // idempotent).
+    if (
+      versionRes[STORAGE_KEYS.INTERVIEWS_SCHEMA_VERSION] >=
+      INTERVIEWS_SCHEMA_VERSION
+    ) {
+      return
+    }
   }
 
   await mutateSavedApplications((current) =>

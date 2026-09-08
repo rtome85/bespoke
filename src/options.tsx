@@ -64,6 +64,7 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
+import { migrateInterviewsSchema } from "~lib/interviews/migrate"
 import {
   clearAllReminderAlarms,
   resyncAllReminderAlarms
@@ -879,6 +880,10 @@ function Options() {
             await chrome.storage.local.set({
               savedApplications: data.savedApplications
             })
+            // The file can predate the collapsed-status schema while this
+            // install is already stamped current — force the pass so legacy
+            // records don't slip past the version guard.
+            await migrateInterviewsSchema({ force: true })
           }
 
           setSaveStatus("Data imported successfully!")
@@ -917,6 +922,9 @@ function Options() {
     })
     try {
       await pull(syncConfig.token)
+      // Same edge as import: the Drive backup can have been written by an older
+      // build, and this install's `interviewsSchemaVersion` is already current.
+      await migrateInterviewsSchema({ force: true })
       await chrome.storage.local.set({
         syncConfig: { ...syncConfig, lastSynced: new Date().toISOString() }
       })
