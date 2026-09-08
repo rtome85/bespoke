@@ -23,6 +23,7 @@ import { sendToBackground } from "@plasmohq/messaging"
 
 import type { CompanyInfo } from "~api/perplexityClient"
 import { PreparationPlanModal } from "~components/PreparationPlanModal"
+import { seedCompanyResearch } from "~lib/interviews/companyResearch"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
 import {
   mutateSavedApplications,
@@ -597,7 +598,7 @@ function IndexDialog() {
             (getField(raw, "ratings") as Record<string, unknown> | undefined) ??
             {}
 
-          setCompanyInfo({
+          const info: CompanyInfo = {
             industry: cleanStr(
               getField(
                 raw,
@@ -664,7 +665,10 @@ function IndexDialog() {
               )
             },
             sources: []
-          })
+          }
+          setCompanyInfo(info)
+          // Seed the Prep engine's cache so it usually won't re-hit Perplexity.
+          void seedCompanyResearch(companyName, info)
         } else {
           setCompanyInfo(null)
         }
