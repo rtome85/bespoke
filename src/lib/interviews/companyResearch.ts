@@ -60,9 +60,9 @@ export function companyInfoToMarkdown(info: CompanyInfo): string {
 
   const r = info.ratings ?? {}
   const ratingParts = [
-    r.glassdoor && `Glassdoor ${r.glassdoor}`,
-    r.indeed && `Indeed ${r.indeed}`,
-    r.teamlyzer && `Teamlyzer ${r.teamlyzer}`
+    r.glassdoor != null && `Glassdoor ${r.glassdoor}`,
+    r.indeed != null && `Indeed ${r.indeed}`,
+    r.teamlyzer != null && `Teamlyzer ${r.teamlyzer}`
   ].filter(Boolean)
   if (ratingParts.length) lines.push(`**Ratings** — ${ratingParts.join(" · ")}`)
 
