@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { BackLink } from "~components/BackLink"
 import { Checklist } from "~components/interviews/Checklist"
@@ -7,7 +7,11 @@ import { RatingInput } from "~components/interviews/RatingInput"
 import { RoundStrip } from "~components/interviews/RoundStrip"
 import { relativeDayLabel, roundLabel } from "~lib/interviews/selectors"
 import { setRoundDebrief } from "~storage/savedApplications"
-import type { DebriefOutcome, SavedApplication } from "~types/userProfile"
+import type {
+  Debrief,
+  DebriefOutcome,
+  SavedApplication
+} from "~types/userProfile"
 
 interface Props {
   apps: SavedApplication[]
@@ -18,6 +22,19 @@ interface Props {
 
 type Rating = 1 | 2 | 3 | 4 | 5
 type FollowUp = { text: string; done?: boolean }
+
+/** Form values for a debrief — empty defaults when none exists. Used for the
+ * initial state and to hydrate once the round resolves (a deep-link load
+ * mounts this before `apps` has populated). */
+export function debriefFormValues(d: Debrief | undefined) {
+  return {
+    rating: d?.rating as Rating | undefined,
+    assessment: d?.assessment ?? "",
+    questionsAsked: d?.questionsAsked ?? "",
+    followUps: (d?.followUps ?? []) as FollowUp[],
+    outcome: (d?.outcome ?? "") as DebriefOutcome | ""
+  }
+}
 
 const OUTCOMES: { value: DebriefOutcome; label: string }[] = [
   { value: "advance", label: "Advance to the next round" },
@@ -45,13 +62,29 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
   }, [apps.length, found, onBack])
 
   const d = found?.round.debrief
-  const [rating, setRating] = useState<Rating | undefined>(d?.rating)
-  const [assessment, setAssessment] = useState(d?.assessment ?? "")
-  const [questionsAsked, setQuestionsAsked] = useState(d?.questionsAsked ?? "")
-  const [followUps, setFollowUps] = useState<FollowUp[]>(d?.followUps ?? [])
-  const [outcome, setOutcome] = useState<DebriefOutcome | "">(d?.outcome ?? "")
+  const initial = debriefFormValues(d)
+  const [rating, setRating] = useState<Rating | undefined>(initial.rating)
+  const [assessment, setAssessment] = useState(initial.assessment)
+  const [questionsAsked, setQuestionsAsked] = useState(initial.questionsAsked)
+  const [followUps, setFollowUps] = useState<FollowUp[]>(initial.followUps)
+  const [outcome, setOutcome] = useState<DebriefOutcome | "">(initial.outcome)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
+
+  // Deep-link load: this mounts with `apps` still empty, so the initializers
+  // above ran against no round. Sync form state once the round resolves.
+  const hydrated = useRef(false)
+  useEffect(() => {
+    if (hydrated.current || !found) return
+    hydrated.current = true
+    if (!found.round.debrief) return
+    const v = debriefFormValues(found.round.debrief)
+    setRating(v.rating)
+    setAssessment(v.assessment)
+    setQuestionsAsked(v.questionsAsked)
+    setFollowUps(v.followUps)
+    setOutcome(v.outcome)
+  }, [found])
 
   if (!found) return null
   const { app, round } = found
