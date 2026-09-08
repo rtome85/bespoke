@@ -64,7 +64,7 @@ import {
   type RoutableJob,
   type RouteTarget
 } from "~types/config"
-import { migrateInterviewsSchema } from "~lib/interviews/migrate"
+import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import {
   clearAllReminderAlarms,
   resyncAllReminderAlarms
@@ -810,8 +810,11 @@ function Options() {
 
   const handleExportData = async () => {
     try {
-      const { savedApplications } =
-        await chrome.storage.local.get("savedApplications")
+      const { savedApplications, interviewsSchemaVersion } =
+        await chrome.storage.local.get([
+          "savedApplications",
+          "interviewsSchemaVersion"
+        ])
       const data = {
         version: "1.0.0",
         exportDate: new Date().toISOString(),
@@ -823,7 +826,10 @@ function Options() {
         userProfile,
         llmTuning,
         lastSelectedModel: matchModel,
-        savedApplications: savedApplications ?? []
+        savedApplications: savedApplications ?? [],
+        // Describes the shape of `savedApplications` above — not the same thing
+        // as `version`, which is this file format's own version.
+        interviewsSchemaVersion
       }
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -880,10 +886,10 @@ function Options() {
             await chrome.storage.local.set({
               savedApplications: data.savedApplications
             })
-            // The file can predate the collapsed-status schema while this
-            // install is already stamped current — force the pass so legacy
-            // records don't slip past the version guard.
-            await migrateInterviewsSchema({ force: true })
+            // The local stamp describes the array this just overwrote, so the
+            // decision has to come from the file. Older exports carry no
+            // `interviewsSchemaVersion` at all — that's the pre-migration shape.
+            await migrateRestoredApplications(data.interviewsSchemaVersion)
           }
 
           setSaveStatus("Data imported successfully!")
@@ -921,10 +927,12 @@ function Options() {
       message: "Restoring from Google Drive..."
     })
     try {
-      await pull(syncConfig.token)
-      // Same edge as import: the Drive backup can have been written by an older
-      // build, and this install's `interviewsSchemaVersion` is already current.
-      await migrateInterviewsSchema({ force: true })
+      const restored = await pull(syncConfig.token)
+      // Same edge as import: the backup can predate the collapsed-status schema
+      // while this install is already stamped current. `pull` reports only the
+      // keys the backup actually held, so an absent version reads as legacy
+      // rather than picking up the stale local stamp.
+      await migrateRestoredApplications(restored.interviewsSchemaVersion)
       await chrome.storage.local.set({
         syncConfig: { ...syncConfig, lastSynced: new Date().toISOString() }
       })

@@ -30,6 +30,10 @@ export const SYNC_KEYS = [
   "customPrompts",
   "llmTuning",
   "savedApplications",
+  // Travels with `savedApplications`: it describes that array's shape, so a
+  // restore can tell a pre-migration backup from one written by a newer schema
+  // instead of guessing (see interviews/migrate).
+  "interviewsSchemaVersion",
   "providers",
   "modelRouting",
 ] as const
