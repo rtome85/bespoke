@@ -1158,7 +1158,7 @@ function Options() {
             )
           })}
 
-          {/* Perplexity — research / interview only */}
+          {/* Perplexity — company research only */}
           <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
             <button
               type="button"
@@ -1181,8 +1181,8 @@ function Options() {
                   </span>
                 </span>
                 <span className="block text-[12px] text-aa-text-secondary mt-0.5">
-                  Company research and interview prep only — never scoring or
-                  drafting
+                  Company research only — never scoring, drafting, or interview
+                  prep
                 </span>
               </span>
               <span
@@ -1277,7 +1277,7 @@ function Options() {
                 </div>
 
                 <p className={hintCls}>
-                  The research and interview-prep prompts live on the{" "}
+                  The company research prompt lives on the{" "}
                   <button
                     type="button"
                     onClick={() => navigate("#/settings/prompts")}
@@ -1406,16 +1406,12 @@ function Options() {
               )}
               {jobRow(
                 "Document drafting",
-                "Writes the tailored CV and the cover letter.",
+                "Writes the tailored CV and cover letter, and the per-round interview prep (Interviews → Prep).",
                 "drafting"
               )}
               {lockedRow(
                 "Company research",
-                "Pulls the company facts shown in the report."
-              )}
-              {lockedRow(
-                "Interview prep",
-                "Generates the HR and technical interview plan."
+                "Pulls the company facts shown in the report and the Prep workspace."
               )}
             </div>
           </div>
