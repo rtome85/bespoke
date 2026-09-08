@@ -10,29 +10,31 @@ export interface CompanyResearchEntry {
   generatedAt: string
 }
 
-type Cache = Record<string, CompanyResearchEntry>
-
 export const researchCacheKey = (company: string) =>
   company.toLowerCase().trim()
 
-const KEY = STORAGE_KEYS.COMPANY_RESEARCH_CACHE
+/**
+ * One storage key per company. Independent keys mean a write for company A
+ * (e.g. the side-panel match flow seeding) and a write for company B (the Prep
+ * engine fetching) touch disjoint storage — no read-modify-write of a shared
+ * cache object, so concurrent writes across contexts can't drop each other.
+ */
+const entryKey = (company: string) =>
+  `${STORAGE_KEYS.COMPANY_RESEARCH_CACHE}:${researchCacheKey(company)}`
 
 export async function readCompanyResearch(
   company: string
 ): Promise<CompanyResearchEntry | undefined> {
-  const res = await chrome.storage.local.get(KEY)
-  const cache = (res[KEY] as Cache | undefined) ?? {}
-  return cache[researchCacheKey(company)]
+  const k = entryKey(company)
+  const res = await chrome.storage.local.get(k)
+  return res[k] as CompanyResearchEntry | undefined
 }
 
 export async function writeCompanyResearch(
   company: string,
   entry: CompanyResearchEntry
 ): Promise<void> {
-  const res = await chrome.storage.local.get(KEY)
-  const cache = (res[KEY] as Cache | undefined) ?? {}
-  cache[researchCacheKey(company)] = entry
-  await chrome.storage.local.set({ [KEY]: cache })
+  await chrome.storage.local.set({ [entryKey(company)]: entry })
 }
 
 const has = (v?: string) =>
