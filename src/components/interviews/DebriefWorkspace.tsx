@@ -238,7 +238,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
                   : outcome === "advance"
                     ? "Keeps the application Interviewing and offers to schedule the next round."
                     : outcome === "waiting"
-                      ? "Leaves the application status unchanged."
+                      ? "Keeps the application Interviewing while you wait to hear back."
                       : "Sets the application status when you save."}
             </p>
           </div>
