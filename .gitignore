@@ -32,3 +32,6 @@ dist/
 # typescript
 .tsbuildinfo
 tsconfig.tsbuildinfo
+
+# local planning docs
+INTERVIEWS_IMPLEMENTATION_PLAN.md
