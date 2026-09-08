@@ -928,11 +928,17 @@ function Options() {
     })
     try {
       const restored = await pull(syncConfig.token)
-      // Same edge as import: the backup can predate the collapsed-status schema
-      // while this install is already stamped current. `pull` reports only the
-      // keys the backup actually held, so an absent version reads as legacy
-      // rather than picking up the stale local stamp.
-      await migrateRestoredApplications(restored.interviewsSchemaVersion)
+      // Only when the backup actually replaced the list — `pull` returns {} if
+      // there's no Drive file yet, and migrating then would stamp (and possibly
+      // downgrade) the version over local data nothing touched.
+      // `hasOwnProperty`, matching how `pull` decides what to restore, so an
+      // empty-but-present array still counts. Same edge as import: the backup
+      // can predate the collapsed-status schema while this install is already
+      // stamped current, so an absent version reads as legacy rather than
+      // picking up the stale local stamp.
+      if (Object.prototype.hasOwnProperty.call(restored, "savedApplications")) {
+        await migrateRestoredApplications(restored.interviewsSchemaVersion)
+      }
       await chrome.storage.local.set({
         syncConfig: { ...syncConfig, lastSynced: new Date().toISOString() }
       })
