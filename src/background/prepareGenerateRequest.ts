@@ -122,15 +122,27 @@ async function loadProvidersAndRouting(): Promise<{
 }
 
 /**
- * Resolve just the provider + model + credentials for a routable job — for
- * callers (per-round Prep) that build their own request rather than the
- * resume/cover-letter `GenerateRequest`.
+ * Resolve the provider + model + credentials for a routable job — for callers
+ * (per-round Prep) that build their own request rather than the
+ * resume/cover-letter `GenerateRequest`. Mirrors `prepareGenerateRequest`:
+ * returns the primary route plus the configured fallback (when enabled and it
+ * resolves) so the caller can retry on it.
  */
 export async function resolveJobRoute(
   job: RoutableJob
-): Promise<ResolvedRoute | { error: string }> {
+): Promise<
+  { primary: ResolvedRoute; fallback?: ResolvedRoute } | { error: string }
+> {
   const { providers, routing } = await loadProvidersAndRouting()
-  return resolve(routing[job], providers)
+  const primary = resolve(routing[job], providers)
+  if ("error" in primary) return { error: primary.error }
+
+  let fallback: ResolvedRoute | undefined
+  if (routing.fallback?.enabled) {
+    const fb = resolve(routing.fallback.target, providers)
+    if (!("error" in fb)) fallback = fb
+  }
+  return { primary, fallback }
 }
 
 /**

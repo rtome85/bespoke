@@ -1,8 +1,11 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
-import { getLLMClient } from "~api/llm"
+import { getLLMClient, type ChatMessage } from "~api/llm"
 import { formatUserProfile } from "~api/llmService"
-import { resolveJobRoute } from "~background/prepareGenerateRequest"
+import {
+  resolveJobRoute,
+  type ResolvedRoute
+} from "~background/prepareGenerateRequest"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_LLM_TUNING,
@@ -52,8 +55,9 @@ function parsePrep(content: string): {
 }
 
 // Per-round "likely topics" + "talking points". One LLM call on the `drafting`
-// route; the prompt is `perplexityConfig.interviewPrepPrompt` (falls back to
-// the built-in default).
+// route (retried on the configured fallback route if the primary fails or
+// times out); the prompt is `perplexityConfig.interviewPrepPrompt` (falls back
+// to the built-in default).
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const body = req.body as Body
 
@@ -88,29 +92,41 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           : "(not provided)"
       )
 
-    const client = getLLMClient(route.provider, route.clientConfig)
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 45_000)
+    const messages: ChatMessage[] = [
+      {
+        role: "system",
+        content:
+          "You are an interview preparation assistant. Return only valid JSON, no markdown."
+      },
+      { role: "user", content: userPrompt }
+    ]
+
+    // Fresh client + AbortController per attempt so a fallback retry after a
+    // provider failure or the 45s abort starts clean.
+    const run = async (r: ResolvedRoute): Promise<string> => {
+      const client = getLLMClient(r.provider, r.clientConfig)
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 45_000)
+      try {
+        return await client.chat({
+          model: r.model,
+          messages,
+          temperature: Math.min(tuning.temperature, 0.5),
+          topP: tuning.topP,
+          maxTokens: 1400,
+          signal: controller.signal
+        })
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
 
     let content: string
     try {
-      content = await client.chat({
-        model: route.model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an interview preparation assistant. Return only valid JSON, no markdown."
-          },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: Math.min(tuning.temperature, 0.5),
-        topP: tuning.topP,
-        maxTokens: 1400,
-        signal: controller.signal
-      })
-    } finally {
-      clearTimeout(timeout)
+      content = await run(route.primary)
+    } catch (err) {
+      if (!route.fallback) throw err
+      content = await run(route.fallback)
     }
 
     const { likelyTopics, talkingPoints } = parsePrep(content)
