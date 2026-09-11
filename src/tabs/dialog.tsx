@@ -251,7 +251,10 @@ function GapRow({
             min={0}
             max={40}
             value={years}
-            onChange={(e) => setYears(Number(e.target.value))}
+            onChange={(e) => {
+              const parsed = Number(e.target.value)
+              setYears(Number.isFinite(parsed) ? Math.min(40, Math.max(0, parsed)) : 0)
+            }}
             className="w-[52px] rounded-aa-md border border-aa-border px-aa-2 py-[6px] text-[13px] text-aa-text-primary bg-aa-surface focus:outline-none focus:border-aa-primary"
           />
           <span className="text-[12px] text-aa-text-secondary shrink-0">
