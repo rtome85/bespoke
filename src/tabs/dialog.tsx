@@ -16,6 +16,8 @@ import { useEffect, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 
 import type { CompanyInfo } from "~api/perplexityClient"
+import { BackLink } from "~components/BackLink"
+import { ScoreGauge } from "~components/ScoreGauge"
 import { seedCompanyResearch } from "~lib/interviews/companyResearch"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
 import {
@@ -187,6 +189,89 @@ function openApplicationsList() {
   })
 }
 
+// One row in the "Skill gaps" list of the pre-generate Strengthen step — a
+// weakness the match analysis surfaced, with an inline form to add the
+// skill (and years) that closes it. Collapses to a confirmed state once added.
+function GapRow({
+  text,
+  added,
+  onAdd
+}: {
+  text: string
+  added: { name: string; years: number } | null
+  onAdd: (name: string, years: number) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState("")
+  const [years, setYears] = useState(1)
+
+  if (added) {
+    return (
+      <div className="flex items-center gap-aa-3 px-aa-4 py-aa-3">
+        <CheckCircle2 className="w-[18px] h-[18px] text-aa-success shrink-0" />
+        <div className="flex-1 flex flex-col gap-[2px] min-w-0">
+          <span className="text-[14px] font-semibold text-aa-text-primary truncate">
+            {added.name}
+          </span>
+          <span className="text-[12px] text-aa-text-secondary truncate">
+            {text}
+          </span>
+        </div>
+        <span className="text-[12px] font-semibold text-aa-success-strong shrink-0">
+          Added
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-aa-3 px-aa-4 py-aa-3">
+      <div className="flex items-center gap-aa-3">
+        <AlertTriangle className="w-[18px] h-[18px] text-aa-error shrink-0" />
+        <span className="flex-1 text-[13px] text-aa-text-secondary leading-[1.4]">
+          {text}
+        </span>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="shrink-0 rounded-aa-pill border border-aa-border px-[12px] py-[6px] text-[12px] font-semibold text-aa-primary hover:bg-aa-primary-soft transition-colors">
+          {open ? "Cancel" : "+ Add"}
+        </button>
+      </div>
+      {open && (
+        <div className="flex items-center gap-aa-2 pl-[30px]">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Skill you have"
+            className="flex-1 min-w-0 rounded-aa-md border border-aa-border px-aa-3 py-[6px] text-[13px] text-aa-text-primary bg-aa-surface focus:outline-none focus:border-aa-primary"
+          />
+          <input
+            type="number"
+            min={0}
+            max={40}
+            value={years}
+            onChange={(e) => setYears(Number(e.target.value))}
+            className="w-[52px] rounded-aa-md border border-aa-border px-aa-2 py-[6px] text-[13px] text-aa-text-primary bg-aa-surface focus:outline-none focus:border-aa-primary"
+          />
+          <span className="text-[12px] text-aa-text-secondary shrink-0">
+            yrs
+          </span>
+          <button
+            disabled={!name.trim()}
+            onClick={() => {
+              onAdd(name.trim(), years)
+              setOpen(false)
+            }}
+            className="shrink-0 rounded-aa-md bg-aa-primary px-[12px] py-[6px] text-[12px] font-semibold text-aa-text-on-primary disabled:opacity-40 hover:bg-aa-primary-hover transition-colors">
+            Confirm
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function IndexDialog() {
   const initialView = new URLSearchParams(window.location.search).get(
     "view"
@@ -227,6 +312,12 @@ function IndexDialog() {
   const [triageDecision, setTriageDecision] = useState<
     "apply" | "save" | "discard" | null
   >(null)
+  // Pre-generate "Strengthen this application" step — keyed by index into
+  // result.match.weaknesses. Survives a "back to report" / re-apply round
+  // trip so the user doesn't lose what they already filled in.
+  const [addedGapSkills, setAddedGapSkills] = useState<
+    Record<number, { name: string; years: number }>
+  >({})
   const [jobDescription, setJobDescription] = useState("")
   const [perplexityConfig, setPerplexityConfig] =
     useState<PerplexityConfig | null>(null)
@@ -658,6 +749,7 @@ function IndexDialog() {
     setStatus("")
     setDocsError("")
     setTriageDecision(null)
+    setAddedGapSkills({})
 
     try {
       const response = await sendToBackground({
@@ -718,6 +810,28 @@ function IndexDialog() {
     runAnalysis(companyName, jobTitle, jobDescription)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAnalyze])
+
+  // Adds a skill the user says closes a gap the match analysis flagged —
+  // reflected immediately in this session's userProfile (so it feeds the
+  // generation call below) and persisted to storage so it sticks for future
+  // applications too.
+  const handleAddGapSkill = (index: number, name: string, years: number) => {
+    setAddedGapSkills((prev) => ({ ...prev, [index]: { name, years } }))
+    setUserProfile((prev) => {
+      if (prev.skills.some((s) => s.name.toLowerCase() === name.toLowerCase())) {
+        return prev
+      }
+      const updated = {
+        ...prev,
+        skills: [
+          ...prev.skills,
+          { id: crypto.randomUUID(), name, yearsOfExperience: years }
+        ]
+      }
+      chrome.storage.local.set({ userProfile: updated })
+      return updated
+    })
+  }
 
   // Step 2: generate CV + cover letter once the user has reviewed the match
   const handleGenerateDocuments = async () => {
@@ -1016,17 +1130,46 @@ function IndexDialog() {
       <div className="min-h-screen bg-aa-surface flex flex-col font-aa text-aa-text-primary">
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-aa-6 pt-[36px] pb-aa-8 flex flex-col gap-aa-6">
-          {/* Header */}
-          <div className="flex flex-col gap-[6px]">
-            <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.4px] text-aa-text-primary">
-              {userProfile.personalInfo?.fullName || "Match report"}
-            </h1>
-            <p className="text-[13px] leading-[1.4] text-aa-text-secondary">
-              {jobTitle || "This role"}
-              {companyName ? ` — ${companyName}` : ""}
-            </p>
+          {/* Header — name/title, plus a compact score gauge once Apply
+              collapses the full score card below into this row. */}
+          <div className="flex items-center justify-between gap-aa-4">
+            <div className="flex flex-col gap-[6px]">
+              <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.4px] text-aa-text-primary">
+                {userProfile.personalInfo?.fullName || "Match report"}
+              </h1>
+              <p className="text-[13px] leading-[1.4] text-aa-text-secondary">
+                {jobTitle || "This role"}
+                {companyName ? ` — ${companyName}` : ""}
+              </p>
+            </div>
+            <div
+              className={`overflow-hidden shrink-0 transition-all duration-500 ease-in-out ${
+                triageDecision === "apply"
+                  ? "w-[60px] opacity-100 scale-100"
+                  : "w-0 opacity-0 scale-75"
+              }`}>
+              <ScoreGauge
+                percentage={pct}
+                ringColor={scoreFill}
+                textColor={scoreInk}
+              />
+            </div>
           </div>
 
+          {/* Report vs. Strengthen-step are two mutually-exclusive collapsing
+              panes sharing one gap-less wrapper — only one ever has real
+              height, so there's no leftover flex `gap` reserved around
+              whichever one is currently collapsed to zero. */}
+          <div className="flex flex-col">
+          {/* Score card + breakdown + company research fade/collapse away
+              once the user applies — the Strengthen step below takes over
+              as the thing to act on, and "go back to report" reverses this. */}
+          <div
+            className={`flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out ${
+              triageDecision === "apply"
+                ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+                : "max-h-[3000px] opacity-100 translate-y-0"
+            }`}>
           {/* Score panel — number, gauge and the analyst's read, on one surface */}
           <div className="bg-aa-surface-subtle rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
             <div className="flex items-end justify-between">
@@ -1274,8 +1417,9 @@ function IndexDialog() {
             </div>
           )}
 
-          {/* Triage — the one decision that gates everything below it */}
-          {!triageDecision && (
+            {/* Triage — "What next?" — part of the same collapsing group as
+                the report above it (same visibility condition), so they
+                hide as one unit with no extra gap between them. */}
             <div className="bg-aa-surface-subtle rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
               <span className="text-[13px] font-semibold text-aa-text-primary">
                 What next?
@@ -1301,54 +1445,111 @@ function IndexDialog() {
                 </button>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Everything below only appears once "Apply" is chosen in the
-              triage above — "Save for later" and "Not a fit" navigate away
-              immediately instead of revealing more of this screen. */}
-          {triageDecision === "apply" && (
-            <>
-              {/* Generate Documents CTA (step 2) — shown until docs exist */}
-              {!docs && (
-                <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[15px] font-semibold text-aa-text-primary">
-                      Tailored documents
-                    </span>
-                    <p className="text-[13px] text-aa-text-secondary leading-[1.5]">
-                      Happy with the match? Generate a CV and cover letter
-                      tailored to this job.
+          {/* Everything below fades/shrinks in once "Apply" is chosen in the
+              triage above, and collapses back out on "Back to report" — the
+              same transition as the report content above, run in reverse.
+              "Save for later" and "Not a fit" navigate away immediately
+              instead of revealing more of this screen.
+
+              Sits with the report block above inside one gap-0 wrapper (next
+              edit) so only one of the two ever contributes real height —
+              no doubled-up gap between two flex siblings that are never
+              both visible at once. */}
+          <div
+            className={`overflow-hidden transition-all duration-500 ease-in-out ${
+              triageDecision === "apply"
+                ? "max-h-[3000px] opacity-100 translate-y-0"
+                : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+            }`}>
+            <div className="flex flex-col gap-aa-6">
+              <BackLink
+                label="Back to report"
+                onClick={() => setTriageDecision(null)}
+              />
+
+              {/* Strengthen this application (step 2a) — turns the gaps and
+                  improvements above into actionable input, then generates.
+                  Stays visible after generating too, so the user can keep
+                  addressing gaps and regenerate. */}
+              <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 flex flex-col gap-aa-5">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold tracking-[0.6px] text-aa-text-secondary uppercase">
+                    Before you generate
+                  </span>
+                  <span className="text-[15px] font-semibold text-aa-text-primary">
+                    Strengthen this application
+                  </span>
+                  <p className="text-[13px] text-aa-text-secondary leading-[1.5]">
+                    Close a gap or two below and we'll fold it into your
+                    tailored CV and cover letter.
+                  </p>
+                </div>
+
+                {(result.match.weaknesses?.length ?? 0) > 0 && (
+                  <div className="flex flex-col gap-aa-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-semibold text-aa-text-primary">
+                        Skill gaps
+                      </span>
+                      <span className="text-[12px] font-semibold text-aa-text-secondary tabular-nums">
+                        {Object.keys(addedGapSkills).length} of{" "}
+                        {result.match.weaknesses.length} addressed
+                      </span>
+                    </div>
+                    <div className="bg-aa-surface-subtle rounded-aa-lg border border-aa-border flex flex-col">
+                      {result.match.weaknesses.map((text, i) => (
+                        <div
+                          key={i}
+                          className={i > 0 ? "border-t border-aa-border" : ""}>
+                          <GapRow
+                            text={text}
+                            added={addedGapSkills[i] ?? null}
+                            onAdd={(name, years) =>
+                              handleAddGapSkill(i, name, years)
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Generate CTA — sits below the "Before you generate" card
+                  rather than inside it, and stays available after documents
+                  exist so the user can regenerate with fresh answers above. */}
+              <div className="flex flex-col gap-aa-2">
+                {docsLoading ? (
+                  <div className="flex flex-col gap-aa-2">
+                    <div className="w-full bg-aa-neutral-200 h-[10px] rounded-aa-pill overflow-hidden">
+                      <div
+                        className="h-[10px] bg-aa-primary transition-all duration-300 ease-out"
+                        style={{ width: `${docsProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-[12px] text-aa-text-secondary text-center">
+                      Generating your documents… this may take a minute
                     </p>
                   </div>
-                  {docsLoading ? (
-                    <div className="flex flex-col gap-aa-2">
-                      <div className="w-full bg-aa-neutral-200 h-[10px] rounded-aa-pill overflow-hidden">
-                        <div
-                          className="h-[10px] bg-aa-primary transition-all duration-300 ease-out"
-                          style={{ width: `${docsProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-[12px] text-aa-text-secondary text-center">
-                        Generating your documents… this may take a minute
-                      </p>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleGenerateDocuments}
-                      className="flex items-center justify-center gap-aa-2 py-[12px] rounded-aa-md bg-aa-primary text-aa-text-on-primary text-[14px] font-semibold hover:bg-aa-primary-hover transition-colors">
-                      <Sparkles size={16} />
-                      Generate CV + cover letter
-                    </button>
-                  )}
-                  {docsError && (
-                    <p className="text-[13px] text-aa-error-strong">
-                      {docsError}
-                    </p>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <button
+                    onClick={handleGenerateDocuments}
+                    className="flex items-center justify-center gap-aa-2 py-[12px] rounded-aa-md bg-aa-primary text-aa-text-on-primary text-[14px] font-semibold hover:bg-aa-primary-hover transition-colors">
+                    <Sparkles size={16} />
+                    {docs ? "Regenerate CV + cover letter" : "Generate CV + cover letter"}
+                  </button>
+                )}
+                {docsError && (
+                  <p className="text-[13px] text-aa-error-strong">
+                    {docsError}
+                  </p>
+                )}
+              </div>
 
-              {/* Download Card */}
+              {/* Download Card — presented below the Generate button once
+                  the documents exist. */}
               {docs && (
                 <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
                   {[
@@ -1401,28 +1602,9 @@ function IndexDialog() {
                   ))}
                 </div>
               )}
-
-              {/* Post-generation CTA — Save is secondary, View Saved is a text link */}
-              <div className="flex flex-col gap-aa-2 pb-aa-2">
-                <div className="flex items-center gap-aa-4">
-                  <button
-                    onClick={() => openSaveForm(null, "Applied")}
-                    className="flex-1 py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
-                    Save application
-                  </button>
-                  <button
-                    onClick={openApplicationsList}
-                    className="flex-1 text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
-                    View saved
-                  </button>
-                </div>
-                <p className="text-[12px] text-aa-text-secondary">
-                  You can come back to this analysis anytime from saved
-                  applications.
-                </p>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
+          </div>
         </div>
       </div>
     )
