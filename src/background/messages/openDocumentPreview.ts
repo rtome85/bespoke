@@ -32,19 +32,15 @@ const handler: PlasmoMessaging.MessageHandler = async (_req, res) => {
     const anchor = await chrome.windows.getLastFocused({
       windowTypes: ["normal"]
     })
-    const left = Math.max(
-      0,
-      Math.round(
-        (anchor.left ?? 0) +
-          ((anchor.width ?? PREVIEW_WIDTH) - PREVIEW_WIDTH) / 2
-      )
+    // No Math.max(0, ...) clamp here — a window on a monitor positioned
+    // left of or above the primary one legitimately has negative
+    // left/top, and clamping would push the popup onto the wrong monitor.
+    const left = Math.round(
+      (anchor.left ?? 0) + ((anchor.width ?? PREVIEW_WIDTH) - PREVIEW_WIDTH) / 2
     )
-    const top = Math.max(
-      0,
-      Math.round(
-        (anchor.top ?? 0) +
-          ((anchor.height ?? PREVIEW_HEIGHT) - PREVIEW_HEIGHT) / 2
-      )
+    const top = Math.round(
+      (anchor.top ?? 0) +
+        ((anchor.height ?? PREVIEW_HEIGHT) - PREVIEW_HEIGHT) / 2
     )
 
     const created = await chrome.windows.create({
