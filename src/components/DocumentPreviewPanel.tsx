@@ -107,7 +107,12 @@ export function DocumentPreviewPanel({
     const start = el.selectionStart
     const end = el.selectionEnd
     const lineStart = content.lastIndexOf("\n", start - 1) + 1
-    const lineEndIdx = content.indexOf("\n", end)
+    // A non-collapsed selection that ends exactly on a newline (e.g. a
+    // whole-line selection) shouldn't pull the following line in — look up
+    // the boundary from just before that trailing newline instead.
+    const lineEndLookup =
+      end > start && content[end - 1] === "\n" ? end - 1 : end
+    const lineEndIdx = content.indexOf("\n", lineEndLookup)
     const lineEnd = lineEndIdx === -1 ? content.length : lineEndIdx
     const lines = content.slice(lineStart, lineEnd).split("\n")
     const allBulleted = lines.every(
@@ -148,7 +153,11 @@ export function DocumentPreviewPanel({
     const start = el.selectionStart
     const end = el.selectionEnd
     const lineStart = content.lastIndexOf("\n", start - 1) + 1
-    const lineEndIdx = content.indexOf("\n", end)
+    // See the matching comment in toggleBullets — avoid pulling the
+    // following line in when the selection ends right on a newline.
+    const lineEndLookup =
+      end > start && content[end - 1] === "\n" ? end - 1 : end
+    const lineEndIdx = content.indexOf("\n", lineEndLookup)
     const lineEnd = lineEndIdx === -1 ? content.length : lineEndIdx
     const marker = "#".repeat(level) + " "
     const nextBlock = content
