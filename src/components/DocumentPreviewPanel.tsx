@@ -3,17 +3,24 @@ import {
   Check,
   Download,
   FileText,
+  Heading1,
+  Heading2,
+  Heading3,
   Italic,
+  Link,
   List,
   RotateCcw,
   X
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
+import { MarkdownPreview } from "~components/MarkdownPreview"
 import { SegmentedControl } from "~components/SegmentedControl"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
 import type { DocumentPreviewTab } from "~types/documentPreview"
 import { downloadMarkdownFile } from "~utils/documentFormatter"
+
+type ViewMode = "edit" | "preview"
 
 interface Props {
   activeTab: DocumentPreviewTab
@@ -51,6 +58,7 @@ export function DocumentPreviewPanel({
   // reset this for.
   const [openedWith] = useState({ resumeContent, coverLetterContent })
   const [downloadError, setDownloadError] = useState("")
+  const [viewMode, setViewMode] = useState<ViewMode>("edit")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -117,6 +125,44 @@ export function DocumentPreviewPanel({
     })
   }
 
+  const insertLink = () => {
+    const el = textareaRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const url = window.prompt("Link URL", "https://")
+    if (!url) return
+    const label = content.slice(start, end) || "link text"
+    const markdown = `[${label}](${url})`
+    setContent(content.slice(0, start) + markdown + content.slice(end))
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + markdown.length
+      el.setSelectionRange(pos, pos)
+    })
+  }
+
+  const setHeading = (level: 1 | 2 | 3) => {
+    const el = textareaRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const lineStart = content.lastIndexOf("\n", start - 1) + 1
+    const lineEndIdx = content.indexOf("\n", end)
+    const lineEnd = lineEndIdx === -1 ? content.length : lineEndIdx
+    const marker = "#".repeat(level) + " "
+    const nextBlock = content
+      .slice(lineStart, lineEnd)
+      .split("\n")
+      .map((l) => (l.trim() === "" ? l : marker + l.replace(/^#{1,6}\s+/, "")))
+      .join("\n")
+    setContent(content.slice(0, lineStart) + nextBlock + content.slice(lineEnd))
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(lineStart, lineStart + nextBlock.length)
+    })
+  }
+
   const handleDownloadMarkdown = () => {
     downloadMarkdownFile(filename, content)
   }
@@ -157,6 +203,7 @@ export function DocumentPreviewPanel({
           <button
             type="button"
             onClick={() => wrapSelection("**")}
+            disabled={viewMode === "preview"}
             aria-label="Bold"
             className={toolbarBtn}>
             <Bold className="w-3.5 h-3.5" />
@@ -164,36 +211,88 @@ export function DocumentPreviewPanel({
           <button
             type="button"
             onClick={() => wrapSelection("*")}
+            disabled={viewMode === "preview"}
             aria-label="Italic"
             className={toolbarBtn}>
             <Italic className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
+            onClick={() => insertLink()}
+            disabled={viewMode === "preview"}
+            aria-label="Insert link"
+            className={toolbarBtn}>
+            <Link className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
             onClick={toggleBullets}
+            disabled={viewMode === "preview"}
             aria-label="Toggle bullet list"
             className={toolbarBtn}>
             <List className="w-3.5 h-3.5" />
           </button>
+          <span className="w-px h-4 bg-aa-border mx-0.5" />
+          <button
+            type="button"
+            onClick={() => setHeading(1)}
+            disabled={viewMode === "preview"}
+            aria-label="Heading 1"
+            className={toolbarBtn}>
+            <Heading1 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHeading(2)}
+            disabled={viewMode === "preview"}
+            aria-label="Heading 2"
+            className={toolbarBtn}>
+            <Heading2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setHeading(3)}
+            disabled={viewMode === "preview"}
+            aria-label="Heading 3"
+            className={toolbarBtn}>
+            <Heading3 className="w-3.5 h-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setContent(original)}
-          disabled={!isEdited}
-          className="flex items-center gap-1.5 text-[11px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-          <RotateCcw className="w-3 h-3" />
-          Revert to opened version
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <SegmentedControl<ViewMode>
+            ariaLabel="View"
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: "edit", label: "Edit" },
+              { value: "preview", label: "Preview" }
+            ]}
+          />
+          <button
+            type="button"
+            onClick={() => setContent(original)}
+            disabled={!isEdited}
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            <RotateCcw className="w-3 h-3" />
+            Revert
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5">
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          spellCheck={false}
-          className="w-full h-full min-h-[320px] px-4 py-3.5 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] leading-relaxed text-aa-text-primary font-mono focus:outline-none focus:border-aa-primary transition-colors resize-none"
-        />
+        {viewMode === "edit" ? (
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            spellCheck={false}
+            className="w-full h-full min-h-[320px] px-4 py-3.5 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] leading-relaxed text-aa-text-primary font-mono focus:outline-none focus:border-aa-primary transition-colors resize-none"
+          />
+        ) : (
+          <div className="min-h-[320px] h-full overflow-y-auto px-8 py-6 bg-aa-surface border border-aa-border rounded-aa-md">
+            <MarkdownPreview content={content} />
+          </div>
+        )}
       </div>
 
       <div className="shrink-0 border-t border-aa-border bg-aa-surface-subtle px-5 py-3.5 flex flex-col gap-2">
