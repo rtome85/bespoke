@@ -544,7 +544,7 @@ function IndexDialog() {
         .newValue as DocumentPreviewDraft | undefined
       if (!next) return
       setResult((prev) =>
-        prev?.resumeContent
+        prev
           ? {
               ...prev,
               resumeContent: next.resumeContent,
