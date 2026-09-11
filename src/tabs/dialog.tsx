@@ -3,8 +3,7 @@ import {
   Building2,
   CheckCircle2,
   ChevronRight,
-  Download,
-  FileText,
+  Eye,
   Mail,
   Sparkles,
   TrendingUp,
@@ -19,13 +18,14 @@ import type { CompanyInfo } from "~api/perplexityClient"
 import { BackLink } from "~components/BackLink"
 import { ScoreGauge } from "~components/ScoreGauge"
 import { seedCompanyResearch } from "~lib/interviews/companyResearch"
-import { downloadMarkdownAsPdf } from "~lib/pdf"
+import { STORAGE_KEYS } from "~storage/keys"
 import {
   mutateSavedApplications,
   setApplicationStatus
 } from "~storage/savedApplications"
 import { PROVIDER_META } from "~types/config"
 import type { PerplexityConfig, RouteTarget } from "~types/config"
+import type { DocumentPreviewDraft } from "~types/documentPreview"
 import {
   APPLICATION_STATUSES,
   DEFAULT_USER_PROFILE,
@@ -33,7 +33,6 @@ import {
   type SavedApplication,
   type UserProfile
 } from "~types/userProfile"
-import { downloadMarkdownFile } from "~utils/documentFormatter"
 
 import "../style.css"
 
@@ -304,6 +303,7 @@ function IndexDialog() {
   const [docsError, setDocsError] = useState("")
   const [generatingDocsForApp, setGeneratingDocsForApp] = useState(false)
   const [docsGenError, setDocsGenError] = useState("")
+  const [previewError, setPreviewError] = useState("")
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
@@ -529,6 +529,33 @@ function IndexDialog() {
         clearInterval(docsProgressIntervalRef.current)
     }
   }, [docsLoading])
+
+  // Picks up edits made in the standalone preview/edit window (see
+  // handleOpenDocumentPreview below) — that window is the sole writer of
+  // this key once open, so any change here originated there.
+  useEffect(() => {
+    const listener = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      area: string
+    ) => {
+      if (area !== "local" || !(STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT in changes))
+        return
+      const next = changes[STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT]
+        .newValue as DocumentPreviewDraft | undefined
+      if (!next) return
+      setResult((prev) =>
+        prev
+          ? {
+              ...prev,
+              resumeContent: next.resumeContent,
+              coverLetterContent: next.coverLetterContent
+            }
+          : prev
+      )
+    }
+    chrome.storage.onChanged.addListener(listener)
+    return () => chrome.storage.onChanged.removeListener(listener)
+  }, [])
 
   useEffect(() => {
     if (
@@ -913,6 +940,38 @@ function IndexDialog() {
       )
     } finally {
       setGeneratingDocsForApp(false)
+    }
+  }
+
+  // Seeds the storage bridge with the current docs, then asks the
+  // background worker to open (or focus) the standalone preview window.
+  const handleOpenDocumentPreview = async (
+    tab: "resume" | "coverLetter",
+    docs: {
+      resumeContent: string
+      resumeFilename: string
+      coverLetterContent: string
+      coverLetterFilename: string
+    }
+  ) => {
+    setPreviewError("")
+    try {
+      const draft: DocumentPreviewDraft = { ...docs, activeTab: tab }
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT]: draft
+      })
+      const response = await sendToBackground({ name: "openDocumentPreview" })
+      if (!response?.success) {
+        setPreviewError(
+          response?.message || "Could not open the preview window."
+        )
+      }
+    } catch (error) {
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : "Could not open the preview window."
+      )
     }
   }
 
@@ -1551,22 +1610,19 @@ function IndexDialog() {
                 )}
               </div>
 
-              {/* Download Card — presented below the Generate button once
-                  the documents exist. */}
+              {/* Documents card — presented below the Generate button once
+                  the documents exist. Preview opens a standalone window,
+                  centered on screen — a chrome.sidePanel can't paint an
+                  overlay outside its own docked strip. MD/PDF downloads
+                  happen from inside that preview window. */}
               {docs && (
                 <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
-                  {[
-                    {
-                      label: "Resume",
-                      filename: docs.resumeFilename,
-                      content: docs.resumeContent
-                    },
-                    {
-                      label: "Cover letter",
-                      filename: docs.coverLetterFilename,
-                      content: docs.coverLetterContent
-                    }
-                  ].map((file, i) => (
+                  {(
+                    [
+                      { tab: "resume", label: "Resume" },
+                      { tab: "coverLetter", label: "Cover letter" }
+                    ] as const
+                  ).map((file, i) => (
                     <div
                       key={file.label}
                       className={`flex items-center justify-between px-aa-4 py-aa-4 ${
@@ -1575,35 +1631,20 @@ function IndexDialog() {
                       <span className="text-[14px] font-semibold text-aa-text-primary">
                         {file.label}
                       </span>
-                      <div className="flex items-center gap-aa-2">
-                        <button
-                          onClick={() =>
-                            downloadMarkdownFile(file.filename, file.content)
-                          }
-                          className="flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[14px] py-2 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
-                          <FileText size={14} />
-                          MD
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await downloadMarkdownAsPdf(
-                                file.content,
-                                file.filename
-                              )
-                            } catch (error) {
-                              console.error("PDF export failed:", error)
-                              alert("Failed to generate PDF. Please try again.")
-                            }
-                          }}
-                          className="flex items-center gap-[6px] rounded-aa-sm bg-aa-primary px-[14px] py-2 text-[11px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
-                          <Download size={14} />
-                          PDF
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleOpenDocumentPreview(file.tab, docs)}
+                        className="flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[14px] py-2 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+                        <Eye size={14} />
+                        Preview
+                      </button>
                     </div>
                   ))}
                 </div>
+              )}
+              {previewError && (
+                <p className="text-[13px] text-aa-error-strong">
+                  {previewError}
+                </p>
               )}
             </div>
           </div>
