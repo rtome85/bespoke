@@ -24,7 +24,6 @@ interface Props {
   applications: SavedApplication[]
   onUpdate: (id: string, patch: Partial<SavedApplication>) => void
   onDelete: (id: string) => void
-  onTrackNew: () => void
   onOpenSidePanel: () => void
 }
 
@@ -55,7 +54,6 @@ export function ApplicationsList({
   applications,
   onUpdate,
   onDelete,
-  onTrackNew,
   onOpenSidePanel
 }: Props) {
   const [query, setQuery] = useState("")
@@ -145,17 +143,9 @@ export function ApplicationsList({
 
   return (
     <div className="max-w-4xl">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
-          Applications
-        </h1>
-        <button
-          type="button"
-          onClick={onTrackNew}
-          className="px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover transition-colors">
-          Track application
-        </button>
-      </div>
+      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
+        Applications
+      </h1>
 
       {applications.length === 0 ? (
         <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 py-16 text-center">
@@ -163,8 +153,7 @@ export function ApplicationsList({
             No tracked applications yet
           </p>
           <p className="text-[13px] text-aa-text-secondary mt-1">
-            Run a match from a job posting and save it, or add one by hand with
-            Track application.
+            Run a match from a job posting and save it.
           </p>
         </div>
       ) : (
