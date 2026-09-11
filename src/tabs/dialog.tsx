@@ -836,7 +836,7 @@ function IndexDialog() {
     setEditingApplication(app)
     setSaveFormOrigin(origin)
 
-    if (!app && origin === "success") {
+    if (!app) {
       setSaveDocs(true)
     }
 
@@ -1477,7 +1477,7 @@ function IndexDialog() {
         <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
           <div className="flex flex-col gap-0.5">
             <h1 className="text-[17px] font-bold tracking-[-0.3px] text-aa-text-primary leading-none">
-              {editingApplication ? "Edit application" : "Track application"}
+              {editingApplication ? "Edit application" : "Save application"}
             </h1>
             <p className="text-[12px] text-aa-text-secondary leading-none">
               Keep your pipeline up to date
@@ -1988,11 +1988,6 @@ function IndexDialog() {
                 {tag}
               </button>
             ))}
-            <button
-              onClick={() => openSaveForm("applicationsList")}
-              className="ml-auto px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-sidebar-accent hover:text-ink transition-colors">
-              + TRACK APPLICATION
-            </button>
           </div>
 
           {/* Table / Empty States */}
@@ -2007,11 +2002,6 @@ function IndexDialog() {
                   Save your first application after generating documents.
                 </p>
               </div>
-              <button
-                onClick={() => openSaveForm("applicationsList")}
-                className="mt-2 px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-sidebar-accent hover:text-ink transition-colors">
-                + TRACK APPLICATION
-              </button>
             </div>
           ) : filteredApplications.length === 0 ? (
             <p className="text-[13px] text-ink-secondary text-center py-6">

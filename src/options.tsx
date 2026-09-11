@@ -2313,10 +2313,10 @@ function Options() {
   )
 }
 
-/** Opens the side panel's dialog page in a standalone window. */
-function openDialogWindow(view: "saveForm" | "applicationsList") {
+/** Opens the side panel's Applications view in a standalone window. */
+function openDialogWindow() {
   chrome.windows.create({
-    url: chrome.runtime.getURL(`tabs/dialog.html?view=${view}`),
+    url: chrome.runtime.getURL("tabs/dialog.html?view=applicationsList"),
     type: "popup",
     width: 720,
     height: 560,
@@ -2363,8 +2363,7 @@ function ApplicationsSection({
           applications={apps}
           onUpdate={updateApplication}
           onDelete={deleteApplication}
-          onTrackNew={() => openDialogWindow("saveForm")}
-          onOpenSidePanel={() => openDialogWindow("applicationsList")}
+          onOpenSidePanel={openDialogWindow}
         />
       ) : (
         <ApplicationsOverview applications={apps} />
