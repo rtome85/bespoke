@@ -17,6 +17,10 @@ export function useDebouncedStorage<T>(
   const pendingValue = useRef<T | undefined>(undefined)
   const lastSentValue = useRef<T | undefined>(undefined)
   const hasSentValue = useRef(false)
+  // Kept in sync with `local` on every render so setValue can read the
+  // latest value without a functional setState updater — see below.
+  const latestLocal = useRef(local)
+  latestLocal.current = local
 
   // Load initial value from storage
   useEffect(() => {
@@ -50,21 +54,24 @@ export function useDebouncedStorage<T>(
     return () => chrome.storage.onChanged.removeListener(listener)
   }, [key])
 
+  // Side effects (timer scheduling, ref bookkeeping) live here, in a plain
+  // callback — not inside setLocal's updater, which React may invoke more
+  // than once for a single update and which must stay pure.
   const setValue = useCallback(
     (value: T | ((prev: T) => T)) => {
-      setLocal((prev) => {
-        const next =
-          typeof value === "function" ? (value as (prev: T) => T)(prev) : value
-        if (timer.current) clearTimeout(timer.current)
-        pendingValue.current = next
-        timer.current = setTimeout(() => {
-          lastSentValue.current = next
-          hasSentValue.current = true
-          chrome.storage.local.set({ [key]: next })
-          pendingValue.current = undefined
-        }, delay)
-        return next
-      })
+      const next =
+        typeof value === "function"
+          ? (value as (prev: T) => T)(latestLocal.current)
+          : value
+      setLocal(next)
+      if (timer.current) clearTimeout(timer.current)
+      pendingValue.current = next
+      timer.current = setTimeout(() => {
+        lastSentValue.current = next
+        hasSentValue.current = true
+        chrome.storage.local.set({ [key]: next })
+        pendingValue.current = undefined
+      }, delay)
     },
     [key, delay]
   )
