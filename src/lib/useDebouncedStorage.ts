@@ -13,6 +13,7 @@ export function useDebouncedStorage<T>(
   const pendingWriteId = useRef(0)
   const lastWriteId = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout>>()
+  const pendingValue = useRef<T | undefined>(undefined)
 
   // Load initial value from storage
   useEffect(() => {
@@ -45,14 +46,31 @@ export function useDebouncedStorage<T>(
           typeof value === "function" ? (value as (prev: T) => T)(prev) : value
         if (timer.current) clearTimeout(timer.current)
         pendingWriteId.current += 1
+        pendingValue.current = next
         timer.current = setTimeout(() => {
           chrome.storage.local.set({ [key]: next })
+          pendingValue.current = undefined
         }, delay)
         return next
       })
     },
     [key, delay]
   )
+
+  // Flush a still-pending debounced write immediately before the page
+  // unloads — a popup window can close (Escape, its own close button, the
+  // native title-bar close button) well inside the debounce window, which
+  // would otherwise silently drop the last edit.
+  useEffect(() => {
+    const flush = () => {
+      if (pendingValue.current === undefined) return
+      if (timer.current) clearTimeout(timer.current)
+      chrome.storage.local.set({ [key]: pendingValue.current })
+      pendingValue.current = undefined
+    }
+    window.addEventListener("beforeunload", flush)
+    return () => window.removeEventListener("beforeunload", flush)
+  }, [key])
 
   return [local, setValue]
 }
