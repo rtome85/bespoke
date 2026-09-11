@@ -23,6 +23,10 @@ import { downloadMarkdownFile } from "~utils/documentFormatter"
 type ViewMode = "edit" | "preview"
 
 interface Props {
+  // Bumps whenever the draft was replaced by something other than this
+  // window's own edits (e.g. the side panel re-seeding it after a
+  // Regenerate, while this window stayed open) — see openedWith below.
+  draftRevision: number
   activeTab: DocumentPreviewTab
   onActiveTabChange: (tab: DocumentPreviewTab) => void
   resumeContent: string
@@ -45,6 +49,7 @@ const toolbarBtn =
 // (tabs/documentPreview.tsx) bridges that to chrome.storage so the side
 // panel picks them up live.
 export function DocumentPreviewPanel({
+  draftRevision,
   activeTab,
   onActiveTabChange,
   resumeContent,
@@ -53,10 +58,20 @@ export function DocumentPreviewPanel({
   coverLetterFilename,
   onChangeContent
 }: Props) {
-  // Captured once, on mount, as "what this window opened with" — a fresh
-  // window per preview session means there's no reopen-in-place case to
-  // reset this for.
-  const [openedWith] = useState({ resumeContent, coverLetterContent })
+  // "What this document looked like before your current edits" — the
+  // baseline Revert targets. The window can be re-seeded with a fresh draft
+  // while it stays open (re-clicking Preview after a Regenerate reuses the
+  // same window), so this re-baselines on every such external replacement,
+  // not just once at mount.
+  const [openedWith, setOpenedWith] = useState({
+    resumeContent,
+    coverLetterContent
+  })
+  const lastRevision = useRef(draftRevision)
+  if (draftRevision !== lastRevision.current) {
+    lastRevision.current = draftRevision
+    setOpenedWith({ resumeContent, coverLetterContent })
+  }
   const [downloadError, setDownloadError] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>("edit")
   const textareaRef = useRef<HTMLTextAreaElement>(null)

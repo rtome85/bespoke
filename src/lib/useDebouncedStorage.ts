@@ -11,8 +11,12 @@ export function useDebouncedStorage<T>(
   key: string,
   defaultValue: T,
   delay = 400
-): [T, (value: T | ((prev: T) => T)) => void] {
+): [T, (value: T | ((prev: T) => T)) => void, number] {
   const [local, setLocal] = useState<T>(defaultValue)
+  // Bumped only when an external write is adopted (not on our own edits) —
+  // lets a caller notice "the world replaced this value out from under me"
+  // and re-baseline any local revert/undo state against it.
+  const [externalRevision, setExternalRevision] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout>>()
   const pendingValue = useRef<T | undefined>(undefined)
   const lastSentValue = useRef<T | undefined>(undefined)
@@ -49,6 +53,7 @@ export function useDebouncedStorage<T>(
       if (timer.current) clearTimeout(timer.current)
       pendingValue.current = undefined
       setLocal(incoming)
+      setExternalRevision((n) => n + 1)
     }
     chrome.storage.onChanged.addListener(listener)
     return () => chrome.storage.onChanged.removeListener(listener)
@@ -93,5 +98,5 @@ export function useDebouncedStorage<T>(
     return () => window.removeEventListener("beforeunload", flush)
   }, [key])
 
-  return [local, setValue]
+  return [local, setValue, externalRevision]
 }

@@ -12,10 +12,11 @@ import "../style.css"
 // from then on this page is the sole writer of edits, and the side panel
 // picks them up live via chrome.storage.onChanged.
 function DocumentPreviewTab() {
-  const [draft, setDraft] = useDebouncedStorage<DocumentPreviewDraft | null>(
-    STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT,
-    null
-  )
+  const [draft, setDraft, draftRevision] =
+    useDebouncedStorage<DocumentPreviewDraft | null>(
+      STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT,
+      null
+    )
 
   if (!draft) {
     return (
@@ -27,6 +28,7 @@ function DocumentPreviewTab() {
 
   return (
     <DocumentPreviewPanel
+      draftRevision={draftRevision}
       activeTab={draft.activeTab}
       onActiveTabChange={(tab) =>
         setDraft((prev) => (prev ? { ...prev, activeTab: tab } : prev))
