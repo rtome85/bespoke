@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-// Optimistic local state + a debounced chrome.storage.local write, with
-// onChanged reconciliation that ignores echoes of this hook's own writes (so
-// an external writer — another extension surface, a Drive pull — can still
-// push updates in without fighting the debounce timer).
+// Optimistic local state + a debounced chrome.storage.local write. The
+// onChanged listener tells its own write's echo apart from a genuinely
+// external change (another extension surface writing the same key, a Drive
+// pull) by comparing against the value it actually sent — a "write in
+// flight" flag alone can't make that call, since an external write can land
+// in the same window as our own pending or just-sent write, and would
+// otherwise be silently dropped and then clobbered by our stale content.
 export function useDebouncedStorage<T>(
   key: string,
   defaultValue: T,
   delay = 400
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const [local, setLocal] = useState<T>(defaultValue)
-  const pendingWriteId = useRef(0)
-  const lastWriteId = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout>>()
   const pendingValue = useRef<T | undefined>(undefined)
+  const lastSentValue = useRef<T | undefined>(undefined)
+  const hasSentValue = useRef(false)
 
   // Load initial value from storage
   useEffect(() => {
@@ -22,18 +25,26 @@ export function useDebouncedStorage<T>(
     })
   }, [key])
 
-  // Sync external storage changes (e.g. from pull)
+  // Sync external storage changes
   useEffect(() => {
     const listener = (
       changes: { [k: string]: chrome.storage.StorageChange },
       area: string
     ) => {
       if (area !== "local" || !(key in changes)) return
-      if (lastWriteId.current === pendingWriteId.current) {
-        setLocal(changes[key].newValue as T)
-      } else {
-        lastWriteId.current = pendingWriteId.current
+      const incoming = changes[key].newValue as T
+      const isOwnEcho =
+        hasSentValue.current &&
+        JSON.stringify(incoming) === JSON.stringify(lastSentValue.current)
+      if (isOwnEcho) {
+        hasSentValue.current = false
+        return
       }
+      // A genuinely external write — adopt it, and drop anything of ours
+      // still queued so it doesn't later overwrite this with stale content.
+      if (timer.current) clearTimeout(timer.current)
+      pendingValue.current = undefined
+      setLocal(incoming)
     }
     chrome.storage.onChanged.addListener(listener)
     return () => chrome.storage.onChanged.removeListener(listener)
@@ -45,9 +56,10 @@ export function useDebouncedStorage<T>(
         const next =
           typeof value === "function" ? (value as (prev: T) => T)(prev) : value
         if (timer.current) clearTimeout(timer.current)
-        pendingWriteId.current += 1
         pendingValue.current = next
         timer.current = setTimeout(() => {
+          lastSentValue.current = next
+          hasSentValue.current = true
           chrome.storage.local.set({ [key]: next })
           pendingValue.current = undefined
         }, delay)
@@ -65,6 +77,8 @@ export function useDebouncedStorage<T>(
     const flush = () => {
       if (pendingValue.current === undefined) return
       if (timer.current) clearTimeout(timer.current)
+      lastSentValue.current = pendingValue.current
+      hasSentValue.current = true
       chrome.storage.local.set({ [key]: pendingValue.current })
       pendingValue.current = undefined
     }
