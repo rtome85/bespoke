@@ -955,14 +955,22 @@ function IndexDialog() {
     }
   ) => {
     setPreviewError("")
-    const draft: DocumentPreviewDraft = { ...docs, activeTab: tab }
-    await chrome.storage.local.set({
-      [STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT]: draft
-    })
-    const response = await sendToBackground({ name: "openDocumentPreview" })
-    if (!response?.success) {
+    try {
+      const draft: DocumentPreviewDraft = { ...docs, activeTab: tab }
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT]: draft
+      })
+      const response = await sendToBackground({ name: "openDocumentPreview" })
+      if (!response?.success) {
+        setPreviewError(
+          response?.message || "Could not open the preview window."
+        )
+      }
+    } catch (error) {
       setPreviewError(
-        response?.message || "Could not open the preview window."
+        error instanceof Error
+          ? error.message
+          : "Could not open the preview window."
       )
     }
   }
