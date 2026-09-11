@@ -2313,10 +2313,10 @@ function Options() {
   )
 }
 
-/** Opens the side panel's Applications view in a standalone window. */
+/** Opens the current Applications list in a standalone window. */
 function openDialogWindow() {
   chrome.windows.create({
-    url: chrome.runtime.getURL("tabs/dialog.html?view=applicationsList"),
+    url: chrome.runtime.getURL("options.html#/applications"),
     type: "popup",
     width: 720,
     height: 560,

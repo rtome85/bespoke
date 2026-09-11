@@ -1,17 +1,12 @@
 import {
   AlertTriangle,
-  Briefcase,
   Building2,
   CheckCircle2,
   ChevronRight,
   Download,
-  ExternalLink,
-  Eye,
   FileText,
   Mail,
-  Pencil,
   Sparkles,
-  Trash2,
   TrendingUp,
   Users,
   X
@@ -167,13 +162,7 @@ interface GenerationResult {
   coverLetterFilename?: string
 }
 
-type View =
-  | "form"
-  | "loading"
-  | "success"
-  | "saveForm"
-  | "applicationsList"
-  | "extracting"
+type View = "form" | "loading" | "success" | "saveForm" | "extracting"
 
 // The report flow (form/loading/success) runs inside the side panel on
 // Chrome, which has no window to close — instead disable the panel for this
@@ -191,21 +180,11 @@ async function closeSidePanel() {
   }
 }
 
-function statusTextClass(status: ApplicationStatus): string {
-  switch (status) {
-    case "Saved":
-      return "text-ink-secondary"
-    case "Offer":
-      return "text-green-600"
-    case "Reject":
-      return "text-red-500"
-    case "Applied":
-      return "text-ink"
-    case "Interviewing":
-      return "text-sidebar-accent"
-    default:
-      return "text-ink-secondary"
-  }
+// Opens the current Applications list in the app shell.
+function openApplicationsList() {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("options.html#/applications")
+  })
 }
 
 function IndexDialog() {
@@ -258,8 +237,6 @@ function IndexDialog() {
   >([])
   const [editingApplication, setEditingApplication] =
     useState<SavedApplication | null>(null)
-  const [viewingApplication, setViewingApplication] =
-    useState<SavedApplication | null>(null)
   const [pendingJobUrl, setPendingJobUrl] = useState("")
   const [saveFormData, setSaveFormData] = useState({
     company: "",
@@ -270,12 +247,6 @@ function IndexDialog() {
     tags: [] as string[],
     notes: ""
   })
-  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  // Track where the save form was opened from so Cancel goes back correctly
-  const [saveFormOrigin, setSaveFormOrigin] = useState<
-    "success" | "applicationsList"
-  >("success")
   const [saveDocs, setSaveDocs] = useState(true)
   const [saveFormError, setSaveFormError] = useState("")
 
@@ -829,12 +800,10 @@ function IndexDialog() {
   }
 
   const openSaveForm = (
-    origin: "success" | "applicationsList",
     app: SavedApplication | null = null,
     defaultStatus: ApplicationStatus = "Saved"
   ) => {
     setEditingApplication(app)
-    setSaveFormOrigin(origin)
 
     if (!app) {
       setSaveDocs(true)
@@ -944,14 +913,8 @@ function IndexDialog() {
         setSavedApplications(list)
       }
     })
-    setView("applicationsList")
-  }
-
-  const handleDeleteApplication = (id: string) => {
-    void mutateSavedApplications((current) =>
-      current.filter((a) => a.id !== id)
-    ).then(setSavedApplications)
-    setDeleteConfirmId(null)
+    openApplicationsList()
+    setView("success")
   }
 
   const matchColor = (pct: number) => {
@@ -1326,7 +1289,7 @@ function IndexDialog() {
                     Apply
                   </button>
                   <button
-                    onClick={() => openSaveForm("success")}
+                    onClick={() => openSaveForm()}
                     className="flex-1 flex items-center justify-center py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
                     Save for later
                   </button>
@@ -1443,13 +1406,13 @@ function IndexDialog() {
               <div className="flex flex-col gap-aa-2 pb-aa-2">
                 <div className="flex items-center gap-aa-4">
                   <button
-                    onClick={() => openSaveForm("success", null, "Applied")}
-                    className="flex-1 flex items-center justify-center py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
+                    onClick={() => openSaveForm(null, "Applied")}
+                    className="flex-1 py-[12px] rounded-aa-md bg-aa-surface border border-aa-primary text-aa-primary text-[14px] font-semibold hover:bg-aa-primary-soft transition-colors">
                     Save application
                   </button>
                   <button
-                    onClick={() => setView("applicationsList")}
-                    className="text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
+                    onClick={openApplicationsList}
+                    className="flex-1 text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
                     View saved
                   </button>
                 </div>
@@ -1484,7 +1447,7 @@ function IndexDialog() {
             </p>
           </div>
           <button
-            onClick={() => setView(saveFormOrigin)}
+            onClick={() => setView("success")}
             aria-label="Close"
             className="w-8 h-8 grid place-items-center rounded-aa-md bg-aa-neutral-100 text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
             <X size={16} />
@@ -1656,7 +1619,7 @@ function IndexDialog() {
             </div>
 
             {/* Save docs checkbox (only from success flow) */}
-            {saveFormOrigin === "success" && result?.resumeContent && (
+            {result?.resumeContent && (
               <label className="flex items-center gap-2.5 text-[13px] text-aa-text-primary cursor-pointer">
                 <input
                   type="checkbox"
@@ -1714,421 +1677,13 @@ function IndexDialog() {
                 Save
               </button>
               <button
-                onClick={() => setView(saveFormOrigin)}
+                onClick={() => setView("success")}
                 className="flex-1 px-4 py-2.5 border border-aa-border text-aa-text-secondary rounded-aa-md text-[13px] font-semibold
                            hover:text-aa-text-primary hover:border-aa-neutral-400 transition-colors">
                 Cancel
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Applications list screen
-  if (view === "applicationsList") {
-    const allTags = [...new Set(savedApplications.flatMap((a) => a.tags ?? []))]
-    const filteredApplications = savedApplications.filter((app) => {
-      if (activeTagFilter && !(app.tags ?? []).includes(activeTagFilter))
-        return false
-      return true
-    })
-
-    return (
-      <div className="min-h-screen bg-canvas flex flex-col">
-        {/* Detail modal overlay */}
-        {viewingApplication && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-sm bg-white shadow-xl p-6">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-[13px] font-bold text-ink uppercase tracking-[0.1em]">
-                  Application Details
-                </h3>
-                <button
-                  onClick={() => setViewingApplication(null)}
-                  className="w-8 h-8 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
-                  <X size={16} />
-                </button>
-              </div>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Company
-                  </dt>
-                  <dd className="text-sm text-ink mt-0.5 font-semibold">
-                    {viewingApplication.company}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Job Title
-                  </dt>
-                  <dd className="text-sm text-ink mt-0.5">
-                    {viewingApplication.jobTitle}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Status
-                  </dt>
-                  <dd className="mt-0.5">
-                    <span
-                      className={`text-[11px] font-semibold tracking-[0.05em] ${statusTextClass(viewingApplication.status)}`}>
-                      {viewingApplication.status.toUpperCase()}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Date Applied
-                  </dt>
-                  <dd className="text-sm text-ink mt-0.5">
-                    {viewingApplication.date}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Saved At
-                  </dt>
-                  <dd className="text-sm text-ink-secondary mt-0.5">
-                    {new Date(viewingApplication.createdAt).toLocaleString()}
-                  </dd>
-                </div>
-                {viewingApplication.jobUrl && (
-                  <div>
-                    <dt className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                      Job Posting
-                    </dt>
-                    <dd className="text-sm mt-0.5">
-                      <a
-                        href={viewingApplication.jobUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sidebar-accent hover:underline break-all">
-                        {viewingApplication.jobUrl}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-
-              {(viewingApplication.tags ?? []).length > 0 && (
-                <div className="mt-3">
-                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Tags
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {viewingApplication.tags!.map((t) => (
-                      <span
-                        key={t}
-                        className="text-[10px] text-sidebar-accent font-medium">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {viewingApplication.notes && (
-                <div className="mt-3">
-                  <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                    Notes
-                  </span>
-                  <p className="text-sm text-ink whitespace-pre-wrap mt-0.5">
-                    {viewingApplication.notes}
-                  </p>
-                </div>
-              )}
-
-              {(viewingApplication.resumeContent ||
-                viewingApplication.coverLetterContent) && (
-                <div className="mt-5 pt-4 border-t border-canvas-divide space-y-3">
-                  <p className="text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em] mb-2">
-                    Documents
-                  </p>
-
-                  {viewingApplication.resumeContent &&
-                    viewingApplication.resumeFilename && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.15em] mb-1.5">
-                          Resume
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              downloadMarkdownFile(
-                                viewingApplication.resumeFilename,
-                                viewingApplication.resumeContent
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-canvas border border-canvas-divide text-ink-secondary
-                                       hover:bg-canvas-divide hover:text-ink
-                                       active:scale-[0.97] transition-all text-xs font-medium">
-                            <FileText size={12} />
-                            <span>MD</span>
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await downloadMarkdownAsPdf(
-                                  viewingApplication.resumeContent,
-                                  viewingApplication.resumeFilename
-                                )
-                              } catch (error) {
-                                console.error("PDF export failed:", error)
-                                alert(
-                                  "Failed to generate PDF. Please try again."
-                                )
-                              }
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-sidebar-accent text-white
-                                       hover:opacity-90 active:scale-[0.97]
-                                       transition-all text-xs font-semibold">
-                            <Download size={12} />
-                            <span>PDF</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                  {viewingApplication.coverLetterContent &&
-                    viewingApplication.coverLetterFilename && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-ink-muted uppercase tracking-[0.15em] mb-1.5">
-                          Cover Letter
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              downloadMarkdownFile(
-                                viewingApplication.coverLetterFilename,
-                                viewingApplication.coverLetterContent
-                              )
-                            }
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-canvas border border-canvas-divide text-ink-secondary
-                                       hover:bg-canvas-divide hover:text-ink
-                                       active:scale-[0.97] transition-all text-xs font-medium">
-                            <FileText size={12} />
-                            <span>MD</span>
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await downloadMarkdownAsPdf(
-                                  viewingApplication.coverLetterContent,
-                                  viewingApplication.coverLetterFilename
-                                )
-                              } catch (error) {
-                                console.error("PDF export failed:", error)
-                                alert(
-                                  "Failed to generate PDF. Please try again."
-                                )
-                              }
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                                       bg-sidebar-accent text-white
-                                       hover:opacity-90 active:scale-[0.97]
-                                       transition-all text-xs font-semibold">
-                            <Download size={12} />
-                            <span>PDF</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Top Bar */}
-        <div className="h-[72px] shrink-0 bg-canvas px-12 flex items-center justify-between border-b border-canvas-divide">
-          <div className="flex flex-col gap-[3px]">
-            <h1 className="text-3xl font-bold tracking-[0.1em] text-ink leading-none">
-              APPLICATIONS
-            </h1>
-            <p className="text-[13px] text-ink-secondary leading-none">
-              Saved applications and pipeline status
-            </p>
-          </div>
-          <button
-            onClick={result ? () => setView("success") : () => window.close()}
-            className="w-9 h-9 flex items-center justify-center bg-[#F0EDE8] text-sidebar-item hover:bg-canvas-divide transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 flex flex-col gap-6 px-12 py-10 overflow-auto">
-          {/* Filter Row */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setActiveTagFilter(null)}
-              className={`px-4 py-2 text-[11px] font-semibold tracking-[0.1em] transition-colors ${
-                !activeTagFilter
-                  ? "bg-ink text-white"
-                  : "text-sidebar-item hover:text-ink"
-              }`}>
-              ALL
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() =>
-                  setActiveTagFilter(activeTagFilter === tag ? null : tag)
-                }
-                className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] transition-colors ${
-                  activeTagFilter === tag
-                    ? "bg-ink text-white"
-                    : "text-sidebar-item hover:text-ink"
-                }`}>
-                {tag}
-              </button>
-            ))}
-          </div>
-
-          {/* Table / Empty States */}
-          {savedApplications.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              <Briefcase size={36} className="text-canvas-divide" />
-              <div className="text-center">
-                <p className="text-[13px] font-semibold text-ink">
-                  No applications saved yet
-                </p>
-                <p className="text-[12px] text-ink-muted mt-1">
-                  Save your first application after generating documents.
-                </p>
-              </div>
-            </div>
-          ) : filteredApplications.length === 0 ? (
-            <p className="text-[13px] text-ink-secondary text-center py-6">
-              No applications match the current filter.
-            </p>
-          ) : (
-            <div className="bg-white border-2 border-ink">
-              {/* Table Header */}
-              <div className="flex items-center bg-canvas px-4 py-3 border-b border-canvas-divide">
-                <span className="w-40 shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  COMPANY
-                </span>
-                <span className="flex-1 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  JOB TITLE
-                </span>
-                <span className="w-[88px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  MATCH %
-                </span>
-                <span className="w-[140px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  STATUS
-                </span>
-                <span className="w-[120px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  DATE
-                </span>
-                <span className="w-[120px] shrink-0 text-[10px] font-semibold text-ink-secondary uppercase tracking-[0.15em]">
-                  ACTIONS
-                </span>
-              </div>
-
-              {/* Table Rows */}
-              {filteredApplications.map((app) => (
-                <div
-                  key={app.id}
-                  className="flex items-center px-4 py-[14px] border-b border-canvas-divide last:border-b-0 hover:bg-canvas/60 transition-colors ">
-                  {/* Company */}
-                  <div className="w-40 shrink-0">
-                    <span className="block text-[13px] font-semibold text-ink">
-                      {app.company}
-                    </span>
-                    {(app.tags ?? []).length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-0.5">
-                        {app.tags!.map((t) => (
-                          <span
-                            key={t}
-                            className="text-[10px] text-sidebar-accent font-medium">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Job Title */}
-                  <span className="flex-1 text-[13px] text-ink">
-                    {app.jobTitle}
-                  </span>
-
-                  {/* Match % */}
-                  <span
-                    className={`w-[88px] shrink-0 text-[12px] font-semibold ${
-                      app.matchPercentage == null
-                        ? "text-ink-muted"
-                        : app.matchPercentage >= 85
-                          ? "text-sidebar-accent"
-                          : app.matchPercentage >= 70
-                            ? "text-ink"
-                            : "text-ink-secondary"
-                    }`}>
-                    {app.matchPercentage != null
-                      ? `${app.matchPercentage}%`
-                      : "—"}
-                  </span>
-
-                  {/* Status */}
-                  <span
-                    className={`w-[140px] shrink-0 text-[11px] font-semibold tracking-[0.05em] ${statusTextClass(app.status)}`}>
-                    {app.status.toUpperCase()}
-                  </span>
-
-                  {/* Date */}
-                  <span className="w-[120px] shrink-0 text-[12px] text-ink-secondary">
-                    {app.date}
-                  </span>
-
-                  {/* Actions */}
-                  <div className="w-[120px] shrink-0 flex items-center gap-2">
-                    {app.jobUrl && (
-                      <a
-                        href={app.jobUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open job posting"
-                        className="text-[#9B9490] hover:text-ink transition-colors">
-                        <ExternalLink size={16} />
-                      </a>
-                    )}
-                    <button
-                      title="View details"
-                      onClick={() => setViewingApplication(app)}
-                      className="text-[#9B9490] hover:text-ink transition-colors">
-                      <Eye size={16} />
-                    </button>
-                    <button
-                      title="Edit"
-                      onClick={() => openSaveForm("applicationsList", app)}
-                      className="text-[#9B9490] hover:text-ink transition-colors">
-                      <Pencil size={16} />
-                    </button>
-                    {deleteConfirmId === app.id ? (
-                      <button
-                        onClick={() => handleDeleteApplication(app.id)}
-                        className="text-[10px] font-semibold text-sidebar-accent hover:text-ink transition-colors whitespace-nowrap tracking-[0.05em]">
-                        CONFIRM
-                      </button>
-                    ) : (
-                      <button
-                        title="Delete"
-                        onClick={() => setDeleteConfirmId(app.id)}
-                        className="text-sidebar-accent hover:text-ink transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     )
