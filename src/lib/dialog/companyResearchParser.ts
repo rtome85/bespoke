@@ -65,7 +65,14 @@ export function parseCompanyInfo(content: string): CompanyInfo {
 
   let raw: Record<string, unknown> = {}
   try {
-    raw = JSON.parse(json)
+    const parsed: unknown = JSON.parse(json)
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      !Array.isArray(parsed)
+    ) {
+      raw = parsed as Record<string, unknown>
+    }
   } catch {
     console.error("Failed to parse Perplexity JSON response", content)
   }
