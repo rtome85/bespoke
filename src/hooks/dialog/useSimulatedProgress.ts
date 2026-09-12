@@ -33,6 +33,7 @@ export function useAnalysisSplashState(
     null
   )
   const quoteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const quoteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const inProgress = view === "extracting" || loading
@@ -44,7 +45,7 @@ export function useAnalysisSplashState(
 
       quoteIntervalRef.current = setInterval(() => {
         setQuoteVisible(false)
-        setTimeout(() => {
+        quoteTimeoutRef.current = setTimeout(() => {
           setQuoteIndex((current) => (current + 1) % quoteCount)
           setQuoteVisible(true)
         }, 400)
@@ -65,6 +66,7 @@ export function useAnalysisSplashState(
         clearInterval(progressIntervalRef.current)
       }
       if (quoteIntervalRef.current) clearInterval(quoteIntervalRef.current)
+      if (quoteTimeoutRef.current) clearTimeout(quoteTimeoutRef.current)
     }
   }, [view, loading, quoteCount])
 
