@@ -115,72 +115,66 @@ export function MatchReportScreen({
         </div>
 
         <div className="flex flex-col">
-          <div
-            className={`flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out ${
-              triageDecision === "apply"
-                ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
-                : "max-h-[3000px] opacity-100 translate-y-0"
-            }`}>
-            <ScoreSummaryCard
-              percentage={percentage}
-              summary={result.match.summary}
-              presentation={score}
-            />
-            <MatchBreakdown
-              match={result.match}
-              openSection={openMatchSection}
-              onToggle={onToggleMatchSection}
-            />
-            {(companyInfo || companyInfoLoading) && (
-              <CompanyResearchCard
-                companyName={companyName}
-                info={companyInfo}
-                isLoading={companyInfoLoading}
-                projectsExpanded={projectsExpanded}
-                onToggleProjects={onToggleProjects}
+          {triageDecision !== "apply" && (
+            <div className="flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out max-h-[3000px] opacity-100 translate-y-0">
+              <ScoreSummaryCard
+                percentage={percentage}
+                summary={result.match.summary}
+                presentation={score}
               />
-            )}
-            <TriageActions
-              onApply={onApply}
-              onSaveForLater={onSaveForLater}
-              onDiscard={onDiscard}
-            />
-          </div>
-
-          <div
-            className={`overflow-hidden transition-all duration-500 ease-in-out ${
-              triageDecision === "apply"
-                ? "max-h-[3000px] opacity-100 translate-y-0"
-                : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
-            }`}>
-            <div className="flex flex-col gap-aa-6">
-              <BackLink label="Back to report" onClick={onBackToReport} />
-              <StrengthenApplication
-                weaknesses={result.match.weaknesses ?? []}
-                addedGapSkills={addedGapSkills}
-                onAddGapSkill={onAddGapSkill}
+              <MatchBreakdown
+                match={result.match}
+                openSection={openMatchSection}
+                onToggle={onToggleMatchSection}
               />
-              <DocumentGenerationControls
-                isLoading={documentsLoading}
-                progress={documentsProgress}
-                error={documentsError}
-                hasDocuments={Boolean(documents)}
-                onGenerate={onGenerateDocuments}
-              />
-              {documents && (
-                <GeneratedDocumentsCard
-                  documents={documents}
-                  previewError={previewError}
-                  onPreview={onPreviewDocuments}
+              {(companyInfo || companyInfoLoading) && (
+                <CompanyResearchCard
+                  companyName={companyName}
+                  info={companyInfo}
+                  isLoading={companyInfoLoading}
+                  projectsExpanded={projectsExpanded}
+                  onToggleProjects={onToggleProjects}
                 />
               )}
-              {!documents && previewError && (
-                <p className="text-[13px] text-aa-error-strong">
-                  {previewError}
-                </p>
-              )}
+              <TriageActions
+                onApply={onApply}
+                onSaveForLater={onSaveForLater}
+                onDiscard={onDiscard}
+              />
             </div>
-          </div>
+          )}
+
+          {triageDecision === "apply" && (
+            <div className="overflow-hidden transition-all duration-500 ease-in-out max-h-[3000px] opacity-100 translate-y-0">
+              <div className="flex flex-col gap-aa-6">
+                <BackLink label="Back to report" onClick={onBackToReport} />
+                <StrengthenApplication
+                  weaknesses={result.match.weaknesses ?? []}
+                  addedGapSkills={addedGapSkills}
+                  onAddGapSkill={onAddGapSkill}
+                />
+                <DocumentGenerationControls
+                  isLoading={documentsLoading}
+                  progress={documentsProgress}
+                  error={documentsError}
+                  hasDocuments={Boolean(documents)}
+                  onGenerate={onGenerateDocuments}
+                />
+                {documents && (
+                  <GeneratedDocumentsCard
+                    documents={documents}
+                    previewError={previewError}
+                    onPreview={onPreviewDocuments}
+                  />
+                )}
+                {!documents && previewError && (
+                  <p className="text-[13px] text-aa-error-strong">
+                    {previewError}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
