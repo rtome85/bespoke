@@ -26,16 +26,22 @@ export function ModelRouteSelect({
   id,
   onChange
 }: Props) {
+  const targetRoute = encodeRoute(target)
+  const hasTargetOption = connectedProviders.some(
+    (provider) =>
+      provider === target.provider &&
+      providerModels(provider, providers).includes(target.model)
+  )
   return (
     <select
       id={id}
       aria-label={ariaLabel}
-      value={encodeRoute(target)}
+      value={targetRoute}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       className={`${INPUT_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`}>
-      {!connectedProviders.includes(target.provider) && (
-        <option value={encodeRoute(target)}>
+      {!hasTargetOption && (
+        <option value={targetRoute}>
           {PROVIDER_META[target.provider].name} · {target.model} (not connected)
         </option>
       )}
