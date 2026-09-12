@@ -147,22 +147,30 @@ export function useApplicationForm({
               statusUpdatedAt: now
             }
           ]
-    ).then(async (applications) => {
-      if (statusChanged && editedApplicationId) {
-        await setApplicationStatus(editedApplicationId, formData.status)
-        const stored = await chrome.storage.local.get("savedApplications")
-        setSavedApplications(
-          Array.isArray(stored.savedApplications)
-            ? stored.savedApplications
-            : applications
-        )
-      } else {
-        setSavedApplications(applications)
-      }
-    })
+    )
+      .then(async (applications) => {
+        if (statusChanged && editedApplicationId) {
+          await setApplicationStatus(editedApplicationId, formData.status)
+          const stored = await chrome.storage.local.get("savedApplications")
+          setSavedApplications(
+            Array.isArray(stored.savedApplications)
+              ? stored.savedApplications
+              : applications
+          )
+        } else {
+          setSavedApplications(applications)
+        }
 
-    openApplicationsList()
-    setView("success")
+        openApplicationsList()
+        setView("success")
+      })
+      .catch((saveError) => {
+        setError(
+          saveError instanceof Error
+            ? saveError.message
+            : "Failed to save application."
+        )
+      })
   }
 
   return {
