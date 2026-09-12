@@ -138,7 +138,14 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
 
       <button
         type="button"
-        onClick={() => onChange(DEFAULT_LLM_TUNING)}
+        onClick={() =>
+          onChange({
+            ...tuning,
+            matchStrictness: DEFAULT_LLM_TUNING.matchStrictness,
+            writingTone: DEFAULT_LLM_TUNING.writingTone,
+            resumeFocus: DEFAULT_LLM_TUNING.resumeFocus
+          })
+        }
         className="text-[12px] font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
         Reset to defaults
       </button>

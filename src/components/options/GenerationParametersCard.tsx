@@ -56,7 +56,14 @@ export function GenerationParametersCard({ tuning, onChange }: Props) {
         </div>
         <button
           type="button"
-          onClick={() => onChange(DEFAULT_LLM_TUNING)}
+          onClick={() =>
+            onChange({
+              ...tuning,
+              temperature: DEFAULT_LLM_TUNING.temperature,
+              topP: DEFAULT_LLM_TUNING.topP,
+              maxTokens: DEFAULT_LLM_TUNING.maxTokens
+            })
+          }
           className={OUTLINE_BUTTON_CLASS}>
           Reset to defaults
         </button>
