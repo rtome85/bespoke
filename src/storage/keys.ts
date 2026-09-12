@@ -31,6 +31,11 @@ export const SYNC_KEYS = [
   "ollamaConfig",
   STORAGE_KEYS.PERPLEXITY_CONFIG,
   "customPrompts",
+  // Travels with `customPrompts`: it describes that value's schema, so a
+  // restore can tell whether the synced prompts predate the current
+  // defaults instead of trusting the local marker (see
+  // usePromptVersionMigration).
+  STORAGE_KEYS.PROMPTS_VERSION,
   "llmTuning",
   "savedApplications",
   // Travels with `savedApplications`: it describes that array's shape, so a

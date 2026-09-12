@@ -52,7 +52,7 @@ function migrate(
       ollama: {
         apiKey: ollamaConfig?.apiKey ?? "",
         baseUrl: ollamaConfig?.baseUrl,
-        enabled: true
+        enabled: ollamaConfig?.enabled ?? false
       }
     },
     routing: {
