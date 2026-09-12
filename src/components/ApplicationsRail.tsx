@@ -6,12 +6,13 @@ import {
   LayoutList
 } from "lucide-react"
 
-import { SettingsRail, type SettingsNavGroup } from "~components/SettingsRail"
+import { SettingsRail } from "~components/SettingsRail"
 import {
   needsDebrief,
   roundsThisWeek,
   roundsWithApp
 } from "~lib/interviews/selectors"
+import type { SettingsNavGroup } from "~types/options"
 import type { SavedApplication } from "~types/userProfile"
 
 /**

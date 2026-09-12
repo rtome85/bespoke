@@ -1,6 +1,6 @@
 import { Triangle } from "lucide-react"
 
-export type AppSection = "applications" | "settings"
+import type { AppSection } from "~types/options"
 
 const TABS: { id: AppSection; label: string }[] = [
   { id: "applications", label: "Applications" },

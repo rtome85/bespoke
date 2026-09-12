@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
 
-import type { AddRoundEditRef } from "~components/interviews/AddRoundDrawer"
+import type { AddRoundEditRef } from "~types/options"
 import {
   formatLabel,
   groupByDay,

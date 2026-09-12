@@ -4,17 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { SegmentedControl } from "~components/SegmentedControl"
 import { hasOpenRound } from "~lib/interviews/selectors"
 import { addRound, deleteRound, updateRound } from "~storage/savedApplications"
+import type { AddRoundEditRef } from "~types/options"
 import type {
-  InterviewRound,
   RoundFormat,
   RoundType,
   SavedApplication
 } from "~types/userProfile"
-
-export interface AddRoundEditRef {
-  app: SavedApplication
-  round: InterviewRound
-}
 
 interface Props {
   mode: "create" | "edit"
