@@ -60,8 +60,13 @@ export function MatchFormScreen({
         <div className="w-full max-w-lg">
           <form onSubmit={onSubmit} className="space-y-5">
             <div>
-              <label className={FORM_FIELD_LABEL_CLASS}>Company name *</label>
+              <label
+                htmlFor="match-company-name"
+                className={FORM_FIELD_LABEL_CLASS}>
+                Company name *
+              </label>
               <input
+                id="match-company-name"
                 type="text"
                 value={companyName}
                 onChange={(event) => onCompanyNameChange(event.target.value)}
@@ -72,8 +77,13 @@ export function MatchFormScreen({
             </div>
 
             <div>
-              <label className={FORM_FIELD_LABEL_CLASS}>Job title *</label>
+              <label
+                htmlFor="match-job-title"
+                className={FORM_FIELD_LABEL_CLASS}>
+                Job title *
+              </label>
               <input
+                id="match-job-title"
                 type="text"
                 value={jobTitle}
                 onChange={(event) => onJobTitleChange(event.target.value)}
@@ -85,10 +95,13 @@ export function MatchFormScreen({
 
             {jobDescription && (
               <div>
-                <label className={FORM_FIELD_LABEL_CLASS}>
+                <label
+                  htmlFor="match-job-description"
+                  className={FORM_FIELD_LABEL_CLASS}>
                   Job description (extracted)
                 </label>
                 <textarea
+                  id="match-job-description"
                   value={jobDescription}
                   onChange={(event) =>
                     onJobDescriptionChange(event.target.value)
