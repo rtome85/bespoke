@@ -107,24 +107,24 @@ export function ProviderConfigurationFields({
         )}
       </div>
 
-      {!meta.local && (
-        <div>
-          <label htmlFor={baseUrlId} className={LABEL_CLASS}>
-            Base URL
-          </label>
-          <input
-            id={baseUrlId}
-            type="text"
-            value={config?.baseUrl ?? ""}
-            onChange={(event) => onUpdate({ baseUrl: event.target.value })}
-            placeholder={meta.defaultBaseUrl}
-            className={INPUT_CLASS}
-          />
-          <p className={HINT_CLASS}>
-            Leave blank unless you use a proxy or gateway.
-          </p>
-        </div>
-      )}
+      <div>
+        <label htmlFor={baseUrlId} className={LABEL_CLASS}>
+          Base URL
+        </label>
+        <input
+          id={baseUrlId}
+          type="text"
+          value={config?.baseUrl ?? ""}
+          onChange={(event) => onUpdate({ baseUrl: event.target.value })}
+          placeholder={meta.defaultBaseUrl}
+          className={INPUT_CLASS}
+        />
+        <p className={HINT_CLASS}>
+          {meta.local
+            ? "Edit to use a remote host, container name, or custom port."
+            : "Leave blank unless you use a proxy or gateway."}
+        </p>
+      </div>
 
       <div className="flex items-center gap-3 flex-wrap">
         <button
