@@ -52,6 +52,7 @@ export function ApplicationTagsField({ formData, setFormData }: Props) {
               {tag}
               <button
                 type="button"
+                aria-label={`Remove ${tag} tag`}
                 onClick={() =>
                   setFormData((current) => ({
                     ...current,
