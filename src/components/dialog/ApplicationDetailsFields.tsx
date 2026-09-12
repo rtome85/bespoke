@@ -19,8 +19,13 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <label className={FORM_FIELD_LABEL_CLASS}>Company *</label>
+        <label
+          htmlFor="save-application-company"
+          className={FORM_FIELD_LABEL_CLASS}>
+          Company *
+        </label>
         <input
+          id="save-application-company"
           type="text"
           value={formData.company}
           onChange={(event) =>
@@ -34,8 +39,13 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
       </div>
 
       <div>
-        <label className={FORM_FIELD_LABEL_CLASS}>Job title *</label>
+        <label
+          htmlFor="save-application-job-title"
+          className={FORM_FIELD_LABEL_CLASS}>
+          Job title *
+        </label>
         <input
+          id="save-application-job-title"
           type="text"
           value={formData.jobTitle}
           onChange={(event) =>
@@ -50,8 +60,13 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
 
       <div className="flex gap-4">
         <div className="flex-1">
-          <label className={FORM_FIELD_LABEL_CLASS}>Status</label>
+          <label
+            htmlFor="save-application-status"
+            className={FORM_FIELD_LABEL_CLASS}>
+            Status
+          </label>
           <select
+            id="save-application-status"
             value={formData.status}
             onChange={(event) =>
               setFormData((current) => ({
@@ -68,8 +83,13 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
           </select>
         </div>
         <div className="flex-1">
-          <label className={FORM_FIELD_LABEL_CLASS}>Date applied *</label>
+          <label
+            htmlFor="save-application-date"
+            className={FORM_FIELD_LABEL_CLASS}>
+            Date applied *
+          </label>
           <input
+            id="save-application-date"
             type="date"
             value={formData.date}
             onChange={(event) =>
@@ -84,8 +104,13 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
       </div>
 
       <div>
-        <label className={FORM_FIELD_LABEL_CLASS}>Job posting URL</label>
+        <label
+          htmlFor="save-application-job-url"
+          className={FORM_FIELD_LABEL_CLASS}>
+          Job posting URL
+        </label>
         <input
+          id="save-application-job-url"
           type="url"
           value={formData.jobUrl}
           onChange={(event) =>

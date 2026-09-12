@@ -70,8 +70,13 @@ export function SaveApplicationScreen({
           <ApplicationTagsField formData={formData} setFormData={setFormData} />
 
           <div>
-            <label className={FORM_FIELD_LABEL_CLASS}>Notes</label>
+            <label
+              htmlFor="save-application-notes"
+              className={FORM_FIELD_LABEL_CLASS}>
+              Notes
+            </label>
             <textarea
+              id="save-application-notes"
               rows={3}
               value={formData.notes}
               onChange={(event) =>
