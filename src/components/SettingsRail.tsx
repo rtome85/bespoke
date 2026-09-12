@@ -1,18 +1,4 @@
-import type { LucideIcon } from "lucide-react"
-
-export type SettingsNavItem = {
-  label: string
-  value: string
-  subtitle: string
-  icon: LucideIcon
-  /** Optional count shown right-aligned on the row (hidden when nullish). */
-  badge?: string | number
-}
-
-export type SettingsNavGroup = {
-  label: string
-  items: SettingsNavItem[]
-}
+import type { SettingsNavGroup } from "~types/options"
 
 /**
  * Second-level nav for the Settings section — a dark grouped rail that
