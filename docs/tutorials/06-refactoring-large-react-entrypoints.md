@@ -286,6 +286,12 @@ Check these details during extraction:
 - `preventDefault()` still happens exactly once.
 - Required-field validation messages are unchanged.
 - Controlled inputs receive both their value and change callback.
+- Every visible `label` either wraps its control or has an `htmlFor` that
+  exactly matches that control's stable, unique `id`. Check inputs, selects,
+  and textareas rather than assuming visible proximity creates an association.
+- Icon-only controls have an accessible name that identifies the action and,
+  when relevant, its target. For example, a tag-removal button should announce
+  `Remove <tag> tag`, not only `Remove`.
 - Close and back actions return to the same view.
 - Application tags preserve their order and existing custom values.
 
@@ -334,6 +340,23 @@ rg -n "<MatchReportScreen|triageDecision=" src/tabs/dialog.tsx
 npx tsc --noEmit
 ```
 
+### Render mutually exclusive branches exclusively
+
+Opacity, height, transforms, and `pointer-events: none` only change visual and
+pointer behavior. Focusable descendants can remain in keyboard navigation and
+the accessibility tree. When a state such as `triageDecision` selects one of
+two complete workflows, render only the active branch:
+
+```tsx
+{
+  triageDecision === "apply" ? <ApplyWorkflow /> : <ReportWorkflow />
+}
+```
+
+If an exit animation genuinely requires both branches to remain mounted, the
+transition must also manage focus and accessibility semantics. That is a
+separate interaction requirement; CSS hiding alone is not sufficient.
+
 ## 7. Step 5 — extract lifecycle hooks
 
 ### Objective
@@ -375,9 +398,12 @@ close over stale state.
 
 ### Timer rule
 
-Store interval handles in refs and clear them both when work stops and when the
-component unmounts. Progress must have a ceiling below 100 while work is still
-pending; only the successful result should set it to 100.
+Store timer handles in refs and clear them both when work stops and when the
+component unmounts. Account for timers created inside other timer callbacks: a
+quote interval may schedule a delayed visibility transition, and clearing only
+the interval does not cancel that pending timeout. Progress must have a ceiling
+below 100 while work is still pending; only the successful result should set it
+to 100.
 
 ## 8. Step 6 — extract complete workflows
 
@@ -406,6 +432,13 @@ after a bounded timeout, and ignore results after cleanup. Parsing must accept
 markdown fences, tolerate field-name variations, clean citation markers, and
 validate ratings.
 
+`JSON.parse()` succeeding proves only that the input is JSON; it does not prove
+that the root is an object. Before passing the result to object-oriented helpers
+such as `Object.keys`, accept it only when it is non-null, non-array, and has
+`typeof value === "object"`. Keep the parser's empty-object fallback for valid
+JSON roots such as `null`, `[]`, strings, and numbers. A small pure-logic check
+should cover both an accepted object and each rejected root category.
+
 #### Document generation
 
 `useDocumentGeneration` owns:
@@ -430,6 +463,12 @@ mutateSavedApplications((current) => /* derive the next list */)
 Never replace this with a write from a React snapshot. If an edited status
 changes, continue through `setApplicationStatus()` so interview-round side
 effects remain centralized.
+
+Treat the mutation, any follow-up status update, and any storage reconciliation
+as one save operation. Navigate away or show the success view only after every
+required promise resolves. Attach rejection handling to the complete chain and
+surface the error in the form; a failed save must leave the user on the form
+rather than reporting success.
 
 ### Avoid a disguised monolith
 
@@ -520,6 +559,11 @@ Load `build/chrome-mv3-dev` at `chrome://extensions`, then verify:
 9. Edit an application's status and confirm centralized interview status
    side-effects still occur.
 10. Close and reopen the panel to confirm storage-backed state remains valid.
+11. Inspect the forms with a browser accessibility panel or screen reader:
+    fields must expose their visible labels, and tag-removal controls must
+    identify their tag.
+12. Navigate the report with a keyboard and confirm controls from the inactive
+    branch cannot receive focus.
 
 Record any flow involving live messages, windows, storage events, or side-panel
 behavior as **needs load-unpacked verification** until it has been checked this
@@ -588,6 +632,11 @@ Copy this checklist into the next large-entrypoint refactor:
 [ ] Step 6: extract independent async workflows
 [ ] Step 7: extract the remaining controller/state machine
 [ ] Confirm hooks and lib modules do not import from components
+[ ] Confirm form labels/control IDs and contextual names for icon-only buttons
+[ ] Confirm mutually exclusive screens do not leave inactive controls focusable
+[ ] Confirm every interval and timeout, including nested timers, is cleaned up
+[ ] Confirm async success/navigation follows all required writes and has a failure path
+[ ] Validate parsed JSON root shapes before object-specific traversal
 [ ] Format only new files; run git diff --check
 [ ] Run npx tsc --noEmit
 [ ] Run pnpm build
