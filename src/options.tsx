@@ -30,8 +30,7 @@ function Options() {
     addAdvancedRound,
     dismissAdvance,
     updateApplication,
-    deleteApplication,
-    openApplicationsWindow
+    deleteApplication
   } = applications
   const {
     userProfile,
@@ -210,7 +209,6 @@ function Options() {
             onDebriefSaved={handleDebriefSaved}
             onUpdateApplication={updateApplication}
             onDeleteApplication={deleteApplication}
-            onOpenApplicationsWindow={openApplicationsWindow}
           />
         )}
       </div>

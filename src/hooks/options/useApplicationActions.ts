@@ -26,15 +26,5 @@ export function useApplicationActions() {
     )
   }, [])
 
-  const openApplicationsWindow = useCallback(() => {
-    chrome.windows.create({
-      url: chrome.runtime.getURL("options.html#/applications"),
-      type: "popup",
-      width: 720,
-      height: 560,
-      focused: true
-    })
-  }, [])
-
-  return { updateApplication, deleteApplication, openApplicationsWindow }
+  return { updateApplication, deleteApplication }
 }

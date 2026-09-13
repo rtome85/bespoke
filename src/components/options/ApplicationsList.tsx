@@ -3,9 +3,11 @@ import { sendToBackground } from "@plasmohq/messaging"
 import {
   ChevronRight,
   ExternalLink,
-  RotateCw,
+  Eye,
+  FileText,
   Search,
   Sparkles,
+  Trash2,
   X
 } from "lucide-react"
 
@@ -31,7 +33,6 @@ interface Props {
   applications: SavedApplication[]
   onUpdate: (id: string, patch: Partial<SavedApplication>) => void
   onDelete: (id: string) => void
-  onOpenSidePanel: () => void
 }
 
 const STATUS_PILL: Record<ApplicationStatus, string> = {
@@ -60,8 +61,7 @@ const th =
 export function ApplicationsList({
   applications,
   onUpdate,
-  onDelete,
-  onOpenSidePanel
+  onDelete
 }: Props) {
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "All">(
@@ -386,11 +386,11 @@ export function ApplicationsList({
           }`}
           onClick={closeDrawer}>
           <div
-            className={`absolute inset-y-0 right-0 w-[420px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl overflow-y-auto transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-y-0 right-0 w-[420px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
               drawerVisible ? "translate-x-0" : "translate-x-full"
             }`}
             onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
+            <div className="shrink-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
               <span className="text-[13px] font-semibold text-aa-text-primary">
                 Application
               </span>
@@ -402,32 +402,35 @@ export function ApplicationsList({
               </button>
             </div>
 
-            <div className="p-5 space-y-5">
-              <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-4">
-                <div className="flex items-center justify-between gap-3.5">
-                  <div className="min-w-0">
-                    <h2 className="text-[20px] font-bold text-aa-text-primary truncate">
-                      {open.company}
-                    </h2>
-                    <p className="text-[13px] text-aa-text-secondary leading-relaxed">
-                      {open.jobTitle}
-                    </p>
-                  </div>
-                  {open.matchPercentage != null && (
-                    <span className="shrink-0 grid place-items-center w-[52px] h-[52px] rounded-full bg-aa-primary-soft text-[13px] font-bold text-aa-primary">
-                      {open.matchPercentage}%
-                    </span>
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
+              <div className="bg-aa-surface-brand-soft rounded-aa-lg p-6 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-[26px] font-extrabold tracking-tight text-aa-text-primary">
+                    {open.company}
+                  </h2>
+                  <p className="text-[14px] text-aa-text-secondary mt-1">
+                    {open.jobTitle}
+                  </p>
+                  {open.jobUrl && (
+                    <a
+                      href={open.jobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-2 text-[13px] font-semibold text-aa-primary hover:underline">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Job posting
+                    </a>
                   )}
                 </div>
-                {open.jobUrl && (
-                  <a
-                    href={open.jobUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 mt-2.5 text-[13px] font-semibold text-aa-primary hover:underline">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Job posting
-                  </a>
+                {open.matchPercentage != null && (
+                  <div className="shrink-0 flex flex-col items-center justify-center w-[84px] h-[84px] rounded-full border-[3px] border-aa-success-strong">
+                    <span className="text-[22px] font-extrabold text-aa-success-strong leading-none">
+                      {open.matchPercentage}%
+                    </span>
+                    <span className="text-[12px] text-aa-text-secondary mt-1">
+                      Match
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -509,27 +512,51 @@ export function ApplicationsList({
 
                   {(open.resumeContent || open.coverLetterContent || canGenerate) && (
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">
-                          Documents
-                        </span>
-                        {documents && open.jobDescription && (
-                          <button
-                            type="button"
-                            onClick={() => setShowStrengthen(true)}
-                            title="Regenerate CV + cover letter"
-                            className="text-aa-primary hover:text-aa-primary-hover transition-colors">
-                            <RotateCw className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                        Documents
+                      </span>
 
                       {documents ? (
-                        <GeneratedDocumentsCard
-                          documents={documents}
-                          previewError={previewError}
-                          onPreview={openDocumentPreview}
-                        />
+                        <>
+                          <div className="overflow-hidden">
+                            {(
+                              [
+                                { tab: "resume", label: documents.resumeFilename },
+                                {
+                                  tab: "coverLetter",
+                                  label: documents.coverLetterFilename
+                                }
+                              ] as const
+                            ).map((file, index) => (
+                              <button
+                                key={file.tab}
+                                type="button"
+                                onClick={() =>
+                                  openDocumentPreview(file.tab, documents)
+                                }
+                                className="w-full flex items-center gap-2 px-3 py-3 text-left hover:bg-aa-neutral-50 transition-colors">
+                                <FileText className="w-[15px] h-[15px] text-aa-neutral-500 shrink-0" />
+                                <span className="flex-1 min-w-0 truncate text-[13px] font-medium text-aa-text-primary">
+                                  {file.label}
+                                </span>
+                                <Eye className="w-[15px] h-[15px] text-aa-neutral-400 shrink-0" />
+                              </button>
+                            ))}
+                          </div>
+                          {previewError && (
+                            <p className="text-[13px] text-aa-error-strong mt-2">
+                              {previewError}
+                            </p>
+                          )}
+                          {open.jobDescription && (
+                            <button
+                              type="button"
+                              onClick={() => setShowStrengthen(true)}
+                              className="w-full mt-2 rounded-aa-md bg-aa-primary py-[9px] text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+                              Regenerate
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <div className="space-y-2">
                           <p className="text-[12px] text-aa-text-secondary">
@@ -546,41 +573,6 @@ export function ApplicationsList({
                       )}
                     </div>
                   )}
-
-                  <div className="pt-2 flex items-center justify-between gap-3 border-t border-aa-border">
-                    <button
-                      type="button"
-                      onClick={onOpenSidePanel}
-                      className="mt-4 text-[12px] font-semibold text-aa-primary hover:underline">
-                      Open in side panel
-                    </button>
-                    {confirmDelete ? (
-                      <span className="mt-4 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onDelete(open.id)
-                            closeDrawer()
-                          }}
-                          className="text-[12px] font-semibold text-aa-error-strong hover:underline">
-                          Confirm delete
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete(false)}
-                          className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
-                          Cancel
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDelete(true)}
-                        className="mt-4 text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
-                        Delete
-                      </button>
-                    )}
-                  </div>
                 </div>
 
                 <div
@@ -618,6 +610,36 @@ export function ApplicationsList({
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="shrink-0 bg-aa-surface border-t border-aa-border px-5 py-3 flex items-center justify-end">
+              {confirmDelete ? (
+                <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(open.id)
+                      closeDrawer()
+                    }}
+                    className="text-[12px] font-semibold text-aa-error-strong hover:underline">
+                    Confirm delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
+                    Cancel
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete application
+                </button>
+              )}
             </div>
           </div>
         </div>

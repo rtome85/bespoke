@@ -20,7 +20,6 @@ interface Props {
   onDebriefSaved: (result: { advanced: boolean; appId: string }) => void
   onUpdateApplication: (id: string, patch: Partial<SavedApplication>) => void
   onDeleteApplication: (id: string) => void
-  onOpenApplicationsWindow: () => void
 }
 
 export function ApplicationsArea({
@@ -31,8 +30,7 @@ export function ApplicationsArea({
   onEditRound,
   onDebriefSaved,
   onUpdateApplication,
-  onDeleteApplication,
-  onOpenApplicationsWindow
+  onDeleteApplication
 }: Props) {
   const railActive =
     route.area === "interviews"
@@ -59,7 +57,6 @@ export function ApplicationsArea({
                 applications={apps}
                 onUpdate={onUpdateApplication}
                 onDelete={onDeleteApplication}
-                onOpenSidePanel={onOpenApplicationsWindow}
               />
             )}
           </div>
