@@ -31,7 +31,6 @@ export function SettingsRail({
   return (
     <aside className="w-14 lg:w-60 shrink-0 bg-aa-neutral-900 sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto py-5 px-2 lg:px-4 flex flex-col gap-4 lg:gap-6">
       <div
-        role="tablist"
         aria-label="Section"
         className="flex items-center gap-[3px] p-[3px] rounded-aa-pill bg-aa-neutral-800 mb-4 lg:mb-6">
         {SECTION_TABS.map((t) => {
@@ -40,8 +39,6 @@ export function SettingsRail({
           return (
             <button
               key={t.id}
-              role="tab"
-              aria-selected={on}
               onClick={() => onSection(t.id)}
               title={t.label}
               className={`flex-1 flex items-center justify-center lg:justify-start gap-2 px-2 lg:px-8 py-[7px] rounded-aa-pill border-0 cursor-pointer transition-colors ${
