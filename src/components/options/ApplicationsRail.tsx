@@ -6,7 +6,7 @@ import {
   LayoutList
 } from "lucide-react"
 
-import { SettingsRail } from "~components/SettingsRail"
+import { SettingsRail } from "~components/options/SettingsRail"
 import {
   needsDebrief,
   roundsThisWeek,

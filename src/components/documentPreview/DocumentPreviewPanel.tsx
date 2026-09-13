@@ -14,8 +14,8 @@ import {
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
-import { MarkdownPreview } from "~components/MarkdownPreview"
-import { SegmentedControl } from "~components/SegmentedControl"
+import { SegmentedControl } from "~components/common/SegmentedControl"
+import { MarkdownPreview } from "~components/documentPreview/MarkdownPreview"
 import { downloadMarkdownAsPdf } from "~lib/pdf"
 import type { DocumentPreviewTab } from "~types/documentPreview"
 import { downloadMarkdownFile } from "~utils/documentFormatter"

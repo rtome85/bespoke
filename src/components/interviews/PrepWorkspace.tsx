@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
-import { BackLink } from "~components/BackLink"
+import { BackLink } from "~components/common/BackLink"
 import { Checklist } from "~components/interviews/Checklist"
 import { RoundStrip } from "~components/interviews/RoundStrip"
 import {

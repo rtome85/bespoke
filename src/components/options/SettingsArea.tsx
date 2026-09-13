@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-import { SettingsRail } from "~components/SettingsRail"
+import { SettingsRail } from "~components/options/SettingsRail"
 import { ACCENT_BUTTON_CLASS, NAV_GROUPS } from "~constants/options"
 import type { SettingsNavItem } from "~types/options"
 

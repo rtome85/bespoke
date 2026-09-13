@@ -1,10 +1,10 @@
-import { CertificateEditor } from "~components/CertificateEditor"
-import { EducationEditor } from "~components/Education"
-import { ExperienceEditor } from "~components/ExperienceEditor"
-import { LanguageEditor } from "~components/LanguageEditor"
-import { PersonalInfo } from "~components/PersonalInfo"
-import { ProjectEditor } from "~components/ProjectEditor"
-import { SkillEditor } from "~components/SkillEditor"
+import { CertificateEditor } from "~components/profile/CertificateEditor"
+import { EducationEditor } from "~components/profile/Education"
+import { ExperienceEditor } from "~components/profile/ExperienceEditor"
+import { LanguageEditor } from "~components/profile/LanguageEditor"
+import { PersonalInfo } from "~components/profile/PersonalInfo"
+import { ProjectEditor } from "~components/profile/ProjectEditor"
+import { SkillEditor } from "~components/profile/SkillEditor"
 import {
   CARD_CLASS,
   DIVIDER_CLASS,

@@ -1,4 +1,4 @@
-import { DocumentPreviewPanel } from "~components/DocumentPreviewPanel"
+import { DocumentPreviewPanel } from "~components/documentPreview/DocumentPreviewPanel"
 import { useDebouncedStorage } from "~lib/useDebouncedStorage"
 import { STORAGE_KEYS } from "~storage/keys"
 import type { DocumentPreviewDraft } from "~types/documentPreview"
