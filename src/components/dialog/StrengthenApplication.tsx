@@ -13,7 +13,7 @@ export function StrengthenApplication({
   onAddGapSkill
 }: Props) {
   return (
-    <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 flex flex-col gap-aa-5">
+    <div className="flex flex-col gap-aa-5">
       <div className="flex flex-col gap-1">
         <span className="text-[11px] font-bold tracking-[0.6px] text-aa-text-secondary uppercase">
           Before you generate
