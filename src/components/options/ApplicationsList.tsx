@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import {
+  Check,
   ChevronRight,
   ExternalLink,
   Eye,
@@ -75,6 +76,7 @@ export function ApplicationsList({
   const [showStrengthen, setShowStrengthen] = useState(false)
   const [addedGapSkills, setAddedGapSkills] = useState<AddedGapSkills>({})
   const [previewError, setPreviewError] = useState("")
+  const [showSaved, setShowSaved] = useState(false)
   const { progress: genProgress, setProgress: setGenProgress } =
     useDocumentGenerationProgress(generating)
   const applicationPanelRef = useRef<HTMLDivElement>(null)
@@ -99,7 +101,26 @@ export function ApplicationsList({
     setShowStrengthen(false)
     setAddedGapSkills({})
     setPreviewError("")
+    setShowSaved(false)
   }, [openId])
+
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flashSaved = () => {
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    setShowSaved(true)
+    savedTimeoutRef.current = setTimeout(() => {
+      savedTimeoutRef.current = null
+      setShowSaved(false)
+    }, 3000)
+  }
+
+  useEffect(
+    () => () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    },
+    []
+  )
 
   // Slide the drawer in on the frame after it mounts, so the transition has
   // an off-screen starting point to animate from instead of snapping open.
@@ -449,11 +470,12 @@ export function ApplicationsList({
                     </label>
                     <select
                       value={open.status}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         onUpdate(open.id, {
                           status: e.target.value as ApplicationStatus
                         })
-                      }
+                        flashSaved()
+                      }}
                       className="w-full px-3 py-[9px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
                       {APPLICATION_STATUSES.map((s) => (
                         <option key={s} value={s}>
@@ -490,9 +512,10 @@ export function ApplicationsList({
                     </label>
                     <textarea
                       value={open.notes ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         onUpdate(open.id, { notes: e.target.value })
-                      }
+                        flashSaved()
+                      }}
                       rows={4}
                       placeholder="Recruiter name, next step, prep reminders…"
                       className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
@@ -612,7 +635,14 @@ export function ApplicationsList({
               </div>
             </div>
 
-            <div className="shrink-0 bg-aa-surface border-t border-aa-border px-5 py-3 flex items-center justify-end">
+            <div className="shrink-0 bg-aa-surface border-t border-aa-border px-5 py-3 flex items-center justify-between">
+              <span
+                className={`inline-flex items-center gap-1.5 text-[12px] font-semibold text-aa-success-strong transition-opacity duration-300 ${
+                  showSaved ? "opacity-100" : "opacity-0"
+                }`}>
+                <Check className="w-3.5 h-3.5" />
+                Saved
+              </span>
               {confirmDelete ? (
                 <span className="flex items-center gap-2">
                   <button
