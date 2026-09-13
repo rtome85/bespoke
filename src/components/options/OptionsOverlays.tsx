@@ -1,6 +1,6 @@
 import { AddRoundDrawer } from "~components/interviews/AddRoundDrawer"
 import { AdvanceRoundPrompt } from "~components/options/AdvanceRoundPrompt"
-import { PromptDialog } from "~components/PromptDialog"
+import { PromptDialog } from "~components/options/PromptDialog"
 import type {
   PerplexityDialogState,
   PromptDialogState,

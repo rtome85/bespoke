@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
-import { BackLink } from "~components/BackLink"
+import { BackLink } from "~components/common/BackLink"
 import { Checklist } from "~components/interviews/Checklist"
 import { RatingInput } from "~components/interviews/RatingInput"
 import { RoundStrip } from "~components/interviews/RoundStrip"

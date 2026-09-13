@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-import { AppBar } from "~components/AppBar"
+import { AppBar } from "~components/options/AppBar"
 import { ApplicationsArea } from "~components/options/ApplicationsArea"
 import { BackupSyncSettingsScreen } from "~components/options/BackupSyncSettingsScreen"
 import { ModelRoutingSettingsScreen } from "~components/options/ModelRoutingSettingsScreen"

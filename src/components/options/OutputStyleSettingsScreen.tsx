@@ -1,6 +1,6 @@
 import { SlidersHorizontal } from "lucide-react"
 
-import { Spectrum } from "~components/Spectrum"
+import { Spectrum } from "~components/options/Spectrum"
 import {
   DIVIDER_CLASS,
   FOCUS,

@@ -1,13 +1,13 @@
 import type { CompanyInfo } from "~api/perplexityClient"
-import { BackLink } from "~components/BackLink"
+import { BackLink } from "~components/common/BackLink"
 import { CompanyResearchCard } from "~components/dialog/CompanyResearchCard"
 import { DocumentGenerationControls } from "~components/dialog/DocumentGenerationControls"
 import { GeneratedDocumentsCard } from "~components/dialog/GeneratedDocumentsCard"
 import { MatchBreakdown } from "~components/dialog/MatchBreakdown"
+import { ScoreGauge } from "~components/dialog/ScoreGauge"
 import { ScoreSummaryCard } from "~components/dialog/ScoreSummaryCard"
 import { StrengthenApplication } from "~components/dialog/StrengthenApplication"
 import { TriageActions } from "~components/dialog/TriageActions"
-import { ScoreGauge } from "~components/ScoreGauge"
 import { getScorePresentation } from "~lib/dialog/scorePresentation"
 import type {
   AddedGapSkills,
