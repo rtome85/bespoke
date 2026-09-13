@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import {
   ChevronRight,
@@ -94,9 +94,31 @@ export function ApplicationsList({
     return () => cancelAnimationFrame(raf)
   }, [openId])
 
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
+
+  // Opening a different application must cancel any close still in flight —
+  // otherwise its delayed setOpenId(null) fires later and closes the newly
+  // opened drawer out from under the user.
+  useEffect(() => {
+    if (openId) clearCloseTimeout()
+  }, [openId])
+
+  useEffect(() => clearCloseTimeout, [])
+
   const closeDrawer = () => {
+    clearCloseTimeout()
     setDrawerVisible(false)
-    setTimeout(() => setOpenId(null), 300)
+    closeTimeoutRef.current = setTimeout(() => {
+      closeTimeoutRef.current = null
+      setOpenId(null)
+    }, 300)
   }
 
   const presentStatuses = useMemo(
