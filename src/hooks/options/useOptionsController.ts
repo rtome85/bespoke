@@ -118,8 +118,7 @@ export function useOptionsController() {
     setMatchModel,
     showStatus
   })
-  const { updateApplication, deleteApplication, openApplicationsWindow } =
-    useApplicationActions()
+  const { updateApplication, deleteApplication } = useApplicationActions()
 
   const openCreateRound = () => setRoundDrawer({ mode: "create" })
   const openEditRound = (editRef: AddRoundEditRef) =>
@@ -175,8 +174,7 @@ export function useOptionsController() {
       addAdvancedRound,
       dismissAdvance: () => setAdvanceFor(null),
       updateApplication,
-      deleteApplication,
-      openApplicationsWindow
+      deleteApplication
     },
     settings: {
       userProfile,
