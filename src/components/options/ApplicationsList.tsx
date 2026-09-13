@@ -1,24 +1,31 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import {
   ChevronRight,
-  Download,
   ExternalLink,
-  FileText,
-  Loader2,
+  RotateCw,
   Search,
   Sparkles,
   X
 } from "lucide-react"
 
-import { downloadMarkdownAsPdf } from "~lib/pdf"
+import { BackLink } from "~components/common/BackLink"
+import { DocumentGenerationControls } from "~components/dialog/DocumentGenerationControls"
+import { GeneratedDocumentsCard } from "~components/dialog/GeneratedDocumentsCard"
+import { StrengthenApplication } from "~components/dialog/StrengthenApplication"
+import { useDocumentGenerationProgress } from "~hooks/dialog/useSimulatedProgress"
+import { STORAGE_KEYS } from "~storage/keys"
+import type { AddedGapSkills } from "~types/dialog"
+import type {
+  DocumentPreviewDraft,
+  DocumentPreviewTab
+} from "~types/documentPreview"
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
   type SavedApplication,
   type UserProfile
 } from "~types/userProfile"
-import { downloadMarkdownFile } from "~utils/documentFormatter"
 
 interface Props {
   applications: SavedApplication[]
@@ -61,14 +68,73 @@ export function ApplicationsList({
     "All"
   )
   const [openId, setOpenId] = useState<string | null>(null)
+  const [drawerVisible, setDrawerVisible] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [genError, setGenError] = useState("")
+  const [showStrengthen, setShowStrengthen] = useState(false)
+  const [addedGapSkills, setAddedGapSkills] = useState<AddedGapSkills>({})
+  const [previewError, setPreviewError] = useState("")
+  const { progress: genProgress, setProgress: setGenProgress } =
+    useDocumentGenerationProgress(generating)
+  const applicationPanelRef = useRef<HTMLDivElement>(null)
+  const strengthenPanelRef = useRef<HTMLDivElement>(null)
+
+  // React 18's DOM property config doesn't recognize `inert`, so passing it
+  // as a JSX prop gets silently dropped for host elements regardless of
+  // true/false — set the underlying DOM property directly instead. Re-run on
+  // openId too, since the drawer (and these refs) remount on every open.
+  useEffect(() => {
+    if (applicationPanelRef.current) {
+      applicationPanelRef.current.inert = showStrengthen
+    }
+    if (strengthenPanelRef.current) {
+      strengthenPanelRef.current.inert = !showStrengthen
+    }
+  }, [showStrengthen, openId])
 
   useEffect(() => {
     setGenerating(false)
     setGenError("")
+    setShowStrengthen(false)
+    setAddedGapSkills({})
+    setPreviewError("")
   }, [openId])
+
+  // Slide the drawer in on the frame after it mounts, so the transition has
+  // an off-screen starting point to animate from instead of snapping open.
+  useEffect(() => {
+    if (!openId) return
+    const raf = requestAnimationFrame(() => setDrawerVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [openId])
+
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
+
+  // Opening a different application must cancel any close still in flight —
+  // otherwise its delayed setOpenId(null) fires later and closes the newly
+  // opened drawer out from under the user.
+  useEffect(() => {
+    if (openId) clearCloseTimeout()
+  }, [openId])
+
+  useEffect(() => clearCloseTimeout, [])
+
+  const closeDrawer = () => {
+    clearCloseTimeout()
+    setDrawerVisible(false)
+    closeTimeoutRef.current = setTimeout(() => {
+      closeTimeoutRef.current = null
+      setOpenId(null)
+    }, 300)
+  }
 
   const presentStatuses = useMemo(
     () =>
@@ -123,21 +189,87 @@ export function ApplicationsList({
         }
       })
       if (response?.success) {
-        onUpdate(open.id, {
-          resumeContent: response.data.resumeContent,
-          resumeFilename: response.data.resumeFilename,
-          coverLetterContent: response.data.coverLetterContent,
-          coverLetterFilename: response.data.coverLetterFilename
-        })
+        setGenProgress(100)
+        setTimeout(() => {
+          onUpdate(open.id, {
+            resumeContent: response.data.resumeContent,
+            resumeFilename: response.data.resumeFilename,
+            coverLetterContent: response.data.coverLetterContent,
+            coverLetterFilename: response.data.coverLetterFilename
+          })
+          setGenerating(false)
+        }, 400)
       } else {
         setGenError(response?.message || "Generation failed. Please try again.")
+        setGenerating(false)
       }
     } catch (error) {
       setGenError(
         error instanceof Error ? error.message : "An unexpected error occurred"
       )
-    } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleAddGapSkill = async (index: number, name: string, years: number) => {
+    setAddedGapSkills((current) => ({ ...current, [index]: { name, years } }))
+    const { userProfile } = (await chrome.storage.local.get("userProfile")) as {
+      userProfile?: UserProfile
+    }
+    if (
+      !userProfile ||
+      userProfile.skills.some(
+        (skill) => skill.name.toLowerCase() === name.toLowerCase()
+      )
+    ) {
+      return
+    }
+    await chrome.storage.local.set({
+      userProfile: {
+        ...userProfile,
+        skills: [
+          ...userProfile.skills,
+          { id: crypto.randomUUID(), name, yearsOfExperience: years }
+        ]
+      }
+    })
+  }
+
+  const documents =
+    open?.resumeContent &&
+    open.resumeFilename &&
+    open.coverLetterContent &&
+    open.coverLetterFilename
+      ? {
+          resumeContent: open.resumeContent,
+          resumeFilename: open.resumeFilename,
+          coverLetterContent: open.coverLetterContent,
+          coverLetterFilename: open.coverLetterFilename
+        }
+      : null
+
+  const openDocumentPreview = async (
+    tab: DocumentPreviewTab,
+    docs: NonNullable<typeof documents>
+  ) => {
+    setPreviewError("")
+    try {
+      const draft: DocumentPreviewDraft = { ...docs, activeTab: tab }
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.DOCUMENT_PREVIEW_DRAFT]: draft
+      })
+      const response = await sendToBackground({ name: "openDocumentPreview" })
+      if (!response?.success) {
+        setPreviewError(
+          response?.message || "Could not open the preview window."
+        )
+      }
+    } catch (error) {
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : "Could not open the preview window."
+      )
     }
   }
 
@@ -249,10 +381,14 @@ export function ApplicationsList({
       {/* Detail drawer */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/30"
-          onClick={() => setOpenId(null)}>
+          className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 ease-in-out ${
+            drawerVisible ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={closeDrawer}>
           <div
-            className="absolute inset-y-0 right-0 w-[420px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl overflow-y-auto"
+            className={`absolute inset-y-0 right-0 w-[420px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl overflow-y-auto transition-transform duration-300 ease-in-out ${
+              drawerVisible ? "translate-x-0" : "translate-x-full"
+            }`}
             onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
               <span className="text-[13px] font-semibold text-aa-text-primary">
@@ -260,7 +396,7 @@ export function ApplicationsList({
               </span>
               <button
                 type="button"
-                onClick={() => setOpenId(null)}
+                onClick={closeDrawer}
                 className="w-8 h-8 grid place-items-center rounded-aa-md text-aa-text-secondary hover:bg-aa-neutral-100 transition-colors">
                 <X className="w-4 h-4" />
               </button>
@@ -295,198 +431,192 @@ export function ApplicationsList({
                 )}
               </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
-                  Status
-                </label>
-                <select
-                  value={open.status}
-                  onChange={(e) =>
-                    onUpdate(open.id, {
-                      status: e.target.value as ApplicationStatus
-                    })
-                  }
-                  className="w-full px-3 py-[9px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
-                  {APPLICATION_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-aa-text-secondary mt-1">
-                  Last change {relTime(open.statusUpdatedAt ?? open.createdAt)}
-                </p>
-              </div>
-
-              {(open.tags ?? []).length > 0 && (
-                <div>
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
-                    Tags
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {open.tags!.map((t) => (
-                      <span
-                        key={t}
-                        className="px-2 py-0.5 rounded-aa-pill bg-aa-neutral-100 text-[11px] text-aa-text-secondary">
-                        {t}
-                      </span>
-                    ))}
+              <div className="flex flex-col">
+                <div
+                  ref={applicationPanelRef}
+                  className={`flex flex-col gap-5 overflow-hidden transition-all duration-500 ease-in-out ${
+                    showStrengthen
+                      ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+                      : "max-h-[3000px] opacity-100 translate-y-0"
+                  }`}
+                  aria-hidden={showStrengthen}>
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                      Status
+                    </label>
+                    <select
+                      value={open.status}
+                      onChange={(e) =>
+                        onUpdate(open.id, {
+                          status: e.target.value as ApplicationStatus
+                        })
+                      }
+                      className="w-full px-3 py-[9px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
+                      {APPLICATION_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-aa-text-secondary mt-1">
+                      Last change{" "}
+                      {relTime(open.statusUpdatedAt ?? open.createdAt)}
+                    </p>
                   </div>
-                </div>
-              )}
 
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
-                  Notes
-                </label>
-                <textarea
-                  value={open.notes ?? ""}
-                  onChange={(e) => onUpdate(open.id, { notes: e.target.value })}
-                  rows={4}
-                  placeholder="Recruiter name, next step, prep reminders…"
-                  className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
-                />
-              </div>
-
-              {open.matchSummary && (
-                <div>
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
-                    Match summary
-                  </span>
-                  <p className="text-[13px] text-aa-neutral-700 leading-relaxed">
-                    {open.matchSummary}
-                  </p>
-                </div>
-              )}
-
-              {(open.resumeContent || open.coverLetterContent || canGenerate) && (
-                <div>
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
-                    Documents
-                  </span>
-
-                  {open.resumeContent || open.coverLetterContent ? (
-                    <div className="bg-aa-surface border border-aa-border rounded-aa-md overflow-hidden">
-                      {[
-                        {
-                          label: "Resume",
-                          filename: open.resumeFilename,
-                          content: open.resumeContent
-                        },
-                        {
-                          label: "Cover letter",
-                          filename: open.coverLetterFilename,
-                          content: open.coverLetterContent
-                        }
-                      ]
-                        .filter((f) => f.content && f.filename)
-                        .map((f, i) => (
-                          <div
-                            key={f.label}
-                            className={`flex items-center justify-between px-3 py-2.5 ${
-                              i === 0 ? "border-b border-aa-border" : ""
-                            }`}>
-                            <span className="text-[13px] font-semibold text-aa-text-primary">
-                              {f.label}
-                            </span>
-                            <span className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  downloadMarkdownFile(f.filename!, f.content!)
-                                }
-                                className="flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-3 py-1.5 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
-                                <FileText className="w-3.5 h-3.5" />
-                                MD
-                              </button>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  try {
-                                    await downloadMarkdownAsPdf(
-                                      f.content!,
-                                      f.filename!
-                                    )
-                                  } catch {
-                                    alert(
-                                      "Failed to generate PDF. Please try again."
-                                    )
-                                  }
-                                }}
-                                className="flex items-center gap-1.5 rounded-aa-sm bg-aa-primary px-3 py-1.5 text-[11px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
-                                <Download className="w-3.5 h-3.5" />
-                                PDF
-                              </button>
-                            </span>
-                          </div>
+                  {(open.tags ?? []).length > 0 && (
+                    <div>
+                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                        Tags
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {open.tags!.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2 py-0.5 rounded-aa-pill bg-aa-neutral-100 text-[11px] text-aa-text-secondary">
+                            {t}
+                          </span>
                         ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-[12px] text-aa-text-secondary">
-                        Saved for later — no CV or cover letter yet.
+                  )}
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                      Notes
+                    </label>
+                    <textarea
+                      value={open.notes ?? ""}
+                      onChange={(e) =>
+                        onUpdate(open.id, { notes: e.target.value })
+                      }
+                      rows={4}
+                      placeholder="Recruiter name, next step, prep reminders…"
+                      className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
+                    />
+                  </div>
+
+                  {open.matchSummary && (
+                    <div>
+                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                        Match summary
+                      </span>
+                      <p className="text-[13px] text-aa-neutral-700 leading-relaxed">
+                        {open.matchSummary}
                       </p>
-                      <button
-                        type="button"
-                        onClick={generateDocuments}
-                        disabled={generating}
-                        className="inline-flex items-center gap-2 rounded-aa-md bg-aa-primary px-3.5 py-2 text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
-                        {generating ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Generating…
-                          </>
-                        ) : (
-                          <>
+                    </div>
+                  )}
+
+                  {(open.resumeContent || open.coverLetterContent || canGenerate) && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">
+                          Documents
+                        </span>
+                        {documents && open.jobDescription && (
+                          <button
+                            type="button"
+                            onClick={() => setShowStrengthen(true)}
+                            title="Regenerate CV + cover letter"
+                            className="text-aa-primary hover:text-aa-primary-hover transition-colors">
+                            <RotateCw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {documents ? (
+                        <GeneratedDocumentsCard
+                          documents={documents}
+                          previewError={previewError}
+                          onPreview={openDocumentPreview}
+                        />
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-[12px] text-aa-text-secondary">
+                            Saved for later — no CV or cover letter yet.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowStrengthen(true)}
+                            className="inline-flex items-center gap-2 rounded-aa-md bg-aa-primary px-3.5 py-2 text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
                             <Sparkles className="w-3.5 h-3.5" />
                             Generate CV + cover letter
-                          </>
-                        )}
-                      </button>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {genError && (
-                    <p className="text-[12px] text-aa-error-strong mt-2">
-                      {genError}
-                    </p>
-                  )}
+                  <div className="pt-2 flex items-center justify-between gap-3 border-t border-aa-border">
+                    <button
+                      type="button"
+                      onClick={onOpenSidePanel}
+                      className="mt-4 text-[12px] font-semibold text-aa-primary hover:underline">
+                      Open in side panel
+                    </button>
+                    {confirmDelete ? (
+                      <span className="mt-4 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onDelete(open.id)
+                            closeDrawer()
+                          }}
+                          className="text-[12px] font-semibold text-aa-error-strong hover:underline">
+                          Confirm delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(false)}
+                          className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
+                          Cancel
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className="mt-4 text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="pt-2 flex items-center justify-between gap-3 border-t border-aa-border">
-                <button
-                  type="button"
-                  onClick={onOpenSidePanel}
-                  className="mt-4 text-[12px] font-semibold text-aa-primary hover:underline">
-                  Open in side panel
-                </button>
-                {confirmDelete ? (
-                  <span className="mt-4 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onDelete(open.id)
-                        setOpenId(null)
-                      }}
-                      className="text-[12px] font-semibold text-aa-error-strong hover:underline">
-                      Confirm delete
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(false)}
-                      className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
-                      Cancel
-                    </button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(true)}
-                    className="mt-4 text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
-                    Delete
-                  </button>
-                )}
+                <div
+                  ref={strengthenPanelRef}
+                  className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                    showStrengthen
+                      ? "max-h-[3000px] opacity-100 translate-y-0"
+                      : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+                  }`}
+                  aria-hidden={!showStrengthen}>
+                  <div className="flex flex-col gap-5">
+                    <BackLink
+                      label="Back"
+                      onClick={() => setShowStrengthen(false)}
+                    />
+                    <StrengthenApplication
+                      weaknesses={open.matchWeaknesses ?? []}
+                      addedGapSkills={addedGapSkills}
+                      onAddGapSkill={handleAddGapSkill}
+                    />
+                    <DocumentGenerationControls
+                      isLoading={generating}
+                      progress={genProgress}
+                      error={genError}
+                      hasDocuments={Boolean(documents)}
+                      onGenerate={generateDocuments}
+                    />
+                    {documents && (
+                      <GeneratedDocumentsCard
+                        documents={documents}
+                        previewError={previewError}
+                        onPreview={openDocumentPreview}
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
