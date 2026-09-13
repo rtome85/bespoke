@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import {
   Check,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ExternalLink,
   Eye,
   FileText,
@@ -59,6 +63,8 @@ function relTime(iso?: string): string {
 const th =
   "text-[10px] font-semibold uppercase tracking-wider text-aa-text-secondary"
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
+
 export function ApplicationsList({
   applications,
   onUpdate,
@@ -68,6 +74,8 @@ export function ApplicationsList({
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "All">(
     "All"
   )
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
   const [openId, setOpenId] = useState<string | null>(null)
   const [drawerVisible, setDrawerVisible] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -182,6 +190,26 @@ export function ApplicationsList({
           new Date(a.statusUpdatedAt ?? a.createdAt).getTime()
       )
   }, [applications, query, statusFilter])
+
+  // Filters/search/page size change the result set, so any page picked
+  // before that no longer means the same thing — snap back to the first page.
+  useEffect(() => {
+    setPage(0)
+  }, [query, statusFilter, pageSize])
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const currentPage = Math.min(page, pageCount - 1)
+
+  // Deleting the last item on a page (or the list shrinking under it) can
+  // leave `page` pointing past the end — clamp back once that happens.
+  useEffect(() => {
+    if (page !== currentPage) setPage(currentPage)
+  }, [page, currentPage])
+
+  const pagedRows = useMemo(
+    () => rows.slice(currentPage * pageSize, currentPage * pageSize + pageSize),
+    [rows, currentPage, pageSize]
+  )
 
   const open = openId
     ? applications.find((a) => a.id === openId) ?? null
@@ -357,7 +385,7 @@ export function ApplicationsList({
                 Nothing matches those filters.
               </p>
             ) : (
-              rows.map((a) => (
+              pagedRows.map((a) => (
                 <button
                   key={a.id}
                   type="button"
@@ -396,6 +424,71 @@ export function ApplicationsList({
               ))
             )}
           </div>
+
+          {rows.length > PAGE_SIZE_OPTIONS[0] && (
+            <div className="flex items-center justify-between mt-3 px-4 py-2.5 bg-aa-surface border border-aa-border rounded-aa-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-aa-text-secondary">
+                  Rows per page
+                </span>
+                <div className="relative">
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="appearance-none pl-2.5 pr-6 py-1 bg-aa-surface border border-aa-border rounded-aa-md text-[12px] font-semibold text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3 h-3 text-aa-text-secondary absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-[12px] text-aa-text-secondary">
+                  Page {currentPage + 1} of {pageCount}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage(0)}
+                    disabled={currentPage === 0}
+                    aria-label="First page"
+                    className="w-7 h-7 grid place-items-center rounded-aa-md border border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:bg-aa-neutral-50 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                    <ChevronsLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={currentPage === 0}
+                    aria-label="Previous page"
+                    className="w-7 h-7 grid place-items-center rounded-aa-md border border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:bg-aa-neutral-50 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPage((p) => Math.min(pageCount - 1, p + 1))
+                    }
+                    disabled={currentPage >= pageCount - 1}
+                    aria-label="Next page"
+                    className="w-7 h-7 grid place-items-center rounded-aa-md border border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:bg-aa-neutral-50 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPage(pageCount - 1)}
+                    disabled={currentPage >= pageCount - 1}
+                    aria-label="Last page"
+                    className="w-7 h-7 grid place-items-center rounded-aa-md border border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:bg-aa-neutral-50 disabled:opacity-40 disabled:pointer-events-none transition-colors">
+                    <ChevronsRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
