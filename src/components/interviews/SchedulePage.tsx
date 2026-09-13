@@ -135,9 +135,9 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
   ]
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary">
+        <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary">
           Schedule
         </h1>
         <button

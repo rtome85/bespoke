@@ -323,8 +323,8 @@ export function ApplicationsList({
   }
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-[22px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
         Applications
       </h1>
 
