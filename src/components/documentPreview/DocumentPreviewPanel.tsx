@@ -73,7 +73,7 @@ export function DocumentPreviewPanel({
     setOpenedWith({ resumeContent, coverLetterContent })
   }
   const [downloadError, setDownloadError] = useState("")
-  const [viewMode, setViewMode] = useState<ViewMode>("edit")
+  const [viewMode, setViewMode] = useState<ViewMode>("preview")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
