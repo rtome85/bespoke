@@ -513,7 +513,7 @@ export function ApplicationsList({
                         <span className="text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">
                           Documents
                         </span>
-                        {documents && (
+                        {documents && open.jobDescription && (
                           <button
                             type="button"
                             onClick={() => setShowStrengthen(true)}
