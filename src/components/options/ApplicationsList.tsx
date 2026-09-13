@@ -77,6 +77,21 @@ export function ApplicationsList({
   const [previewError, setPreviewError] = useState("")
   const { progress: genProgress, setProgress: setGenProgress } =
     useDocumentGenerationProgress(generating)
+  const applicationPanelRef = useRef<HTMLDivElement>(null)
+  const strengthenPanelRef = useRef<HTMLDivElement>(null)
+
+  // React 18's DOM property config doesn't recognize `inert`, so passing it
+  // as a JSX prop gets silently dropped for host elements regardless of
+  // true/false — set the underlying DOM property directly instead. Re-run on
+  // openId too, since the drawer (and these refs) remount on every open.
+  useEffect(() => {
+    if (applicationPanelRef.current) {
+      applicationPanelRef.current.inert = showStrengthen
+    }
+    if (strengthenPanelRef.current) {
+      strengthenPanelRef.current.inert = !showStrengthen
+    }
+  }, [showStrengthen, openId])
 
   useEffect(() => {
     setGenerating(false)
@@ -418,12 +433,12 @@ export function ApplicationsList({
 
               <div className="flex flex-col">
                 <div
+                  ref={applicationPanelRef}
                   className={`flex flex-col gap-5 overflow-hidden transition-all duration-500 ease-in-out ${
                     showStrengthen
                       ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
                       : "max-h-[3000px] opacity-100 translate-y-0"
                   }`}
-                  inert={showStrengthen}
                   aria-hidden={showStrengthen}>
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
@@ -569,12 +584,12 @@ export function ApplicationsList({
                 </div>
 
                 <div
+                  ref={strengthenPanelRef}
                   className={`overflow-hidden transition-all duration-500 ease-in-out ${
                     showStrengthen
                       ? "max-h-[3000px] opacity-100 translate-y-0"
                       : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
                   }`}
-                  inert={!showStrengthen}
                   aria-hidden={!showStrengthen}>
                   <div className="flex flex-col gap-5">
                     <BackLink
