@@ -185,18 +185,18 @@ function Options() {
     <>
       <div className="flex flex-col min-h-screen bg-aa-neutral-50 font-aa text-aa-text-primary">
         <AppBar
-          section={section}
-          onSection={changeSection}
-          email={userProfile.personalInfo?.email || undefined}
+          saveStatus={section === "settings" ? saveStatus : undefined}
+          onSave={section === "settings" ? saveSettings : undefined}
         />
 
         {section === "settings" ? (
           <SettingsArea
             activeTab={activeTab}
             activeNav={activeNav}
-            saveStatus={saveStatus}
             onSelect={(value) => navigate(`#/settings/${value}`)}
-            onSave={saveSettings}>
+            section={section}
+            onSection={changeSection}
+            email={userProfile.personalInfo?.email || undefined}>
             {tabContent[activeTab]}
           </SettingsArea>
         ) : (
@@ -209,6 +209,9 @@ function Options() {
             onDebriefSaved={handleDebriefSaved}
             onUpdateApplication={updateApplication}
             onDeleteApplication={deleteApplication}
+            section={section}
+            onSection={changeSection}
+            email={userProfile.personalInfo?.email || undefined}
           />
         )}
       </div>
