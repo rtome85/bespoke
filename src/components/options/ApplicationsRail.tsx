@@ -12,7 +12,7 @@ import {
   roundsThisWeek,
   roundsWithApp
 } from "~lib/interviews/selectors"
-import type { SettingsNavGroup } from "~types/options"
+import type { AppSection, SettingsNavGroup } from "~types/options"
 import type { SavedApplication } from "~types/userProfile"
 
 /**
@@ -24,11 +24,17 @@ import type { SavedApplication } from "~types/userProfile"
 export function ApplicationsRail({
   active,
   apps,
-  onSelect
+  onSelect,
+  section,
+  onSection,
+  email
 }: {
   active: string
   apps: SavedApplication[]
   onSelect: (value: string) => void
+  section: AppSection
+  onSection: (s: AppSection) => void
+  email?: string
 }) {
   const refs = roundsWithApp(apps)
   const weekCount = roundsThisWeek(refs).length
@@ -70,5 +76,14 @@ export function ApplicationsRail({
     }
   ]
 
-  return <SettingsRail groups={groups} active={active} onSelect={onSelect} />
+  return (
+    <SettingsRail
+      groups={groups}
+      active={active}
+      onSelect={onSelect}
+      section={section}
+      onSection={onSection}
+      email={email}
+    />
+  )
 }

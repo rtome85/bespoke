@@ -1,24 +1,18 @@
 import { Triangle } from "lucide-react"
 
-import type { AppSection } from "~types/options"
-
-const TABS: { id: AppSection; label: string }[] = [
-  { id: "applications", label: "Applications" },
-  { id: "settings", label: "Settings" }
-]
+import { ACCENT_BUTTON_CLASS } from "~constants/options"
 
 /**
- * Persistent top-level nav for the app tab. Dark bar carrying the brand,
- * the Applications / Settings switch, and the account chip.
+ * Persistent top-level nav for the app tab. Dark bar carrying the brand
+ * and the save-changes CTA. The Applications / Settings switch lives in
+ * the sidebar rail.
  */
 export function AppBar({
-  section,
-  onSection,
-  email
+  saveStatus,
+  onSave
 }: {
-  section: AppSection
-  onSection: (s: AppSection) => void
-  email?: string
+  saveStatus?: string
+  onSave?: () => void
 }) {
   const version = chrome.runtime.getManifest().version
 
@@ -34,40 +28,25 @@ export function AppBar({
         </span>
       </div>
 
-      <nav className="flex items-stretch gap-4 h-full">
-        {TABS.map((t) => {
-          const on = section === t.id
-          return (
-            <button
-              key={t.id}
-              onClick={() => onSection(t.id)}
-              className="h-full flex flex-col items-center justify-center gap-[7px] border-0 bg-transparent cursor-pointer">
-              <span
-                className={`text-[13px] font-semibold ${
-                  on ? "text-aa-surface" : "text-aa-neutral-400"
-                }`}>
-                {t.label}
-              </span>
-              <span
-                className={`w-full h-[2px] ${
-                  on ? "bg-aa-primary" : "bg-transparent"
-                }`}
-              />
-            </button>
-          )
-        })}
-      </nav>
-
       <div className="flex-1" />
 
-      {email ? (
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="hidden md:inline text-[12px] text-aa-neutral-400 truncate max-w-[200px]">
-            {email}
-          </span>
-          <div className="w-[26px] h-[26px] shrink-0 rounded-aa-pill bg-aa-neutral-700 flex items-center justify-center text-[11px] font-bold text-aa-surface">
-            {email[0]?.toUpperCase() ?? "?"}
-          </div>
+      {onSave ? (
+        <div className="flex items-center gap-3 shrink-0">
+          {saveStatus ? (
+            <span className="text-[12px] font-semibold text-aa-success">
+              {saveStatus}
+            </span>
+          ) : (
+            <span className="text-[12px] text-aa-neutral-500">
+              All changes saved
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onSave}
+            className={ACCENT_BUTTON_CLASS}>
+            Save changes
+          </button>
         </div>
       ) : null}
     </header>

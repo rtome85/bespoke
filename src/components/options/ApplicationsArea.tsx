@@ -8,7 +8,7 @@ import { ApplicationsOverview } from "~components/options/ApplicationsOverview"
 import { ApplicationsRail } from "~components/options/ApplicationsRail"
 import { RAIL_HASH } from "~constants/options"
 import type { Route } from "~lib/router"
-import type { AddRoundEditRef } from "~types/options"
+import type { AddRoundEditRef, AppSection } from "~types/options"
 import type { SavedApplication } from "~types/userProfile"
 
 interface Props {
@@ -20,6 +20,9 @@ interface Props {
   onDebriefSaved: (result: { advanced: boolean; appId: string }) => void
   onUpdateApplication: (id: string, patch: Partial<SavedApplication>) => void
   onDeleteApplication: (id: string) => void
+  section: AppSection
+  onSection: (s: AppSection) => void
+  email?: string
 }
 
 export function ApplicationsArea({
@@ -30,7 +33,10 @@ export function ApplicationsArea({
   onEditRound,
   onDebriefSaved,
   onUpdateApplication,
-  onDeleteApplication
+  onDeleteApplication,
+  section,
+  onSection,
+  email
 }: Props) {
   const railActive =
     route.area === "interviews"
@@ -45,6 +51,9 @@ export function ApplicationsArea({
         active={railActive}
         apps={apps}
         onSelect={(value) => onNavigate(RAIL_HASH[value] ?? "#/applications")}
+        section={section}
+        onSection={onSection}
+        email={email}
       />
 
       <div className="flex-1 overflow-y-auto px-8 py-8 min-w-0">
