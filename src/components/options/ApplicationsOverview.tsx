@@ -139,7 +139,10 @@ export function ApplicationsOverview({ applications }: Props) {
   const maxWeek = Math.max(...derived.weeks.map((w) => w.count), 1)
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
+        Overview
+      </h1>
       {/* Stat strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {stats.map((s) => (
