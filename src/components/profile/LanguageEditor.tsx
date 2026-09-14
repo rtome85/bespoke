@@ -13,33 +13,46 @@ const LEVELS = ["Native", "A1", "A2", "B1", "B2", "C1", "C2"]
 
 export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
   const safeLanguages = languages || []
-  const [lastAddedId, setLastAddedId] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Language | null>(null)
   const nameRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
-    if (lastAddedId && nameRefs.current[lastAddedId]) {
-      nameRefs.current[lastAddedId]?.focus()
-      setLastAddedId(null)
+    if (draft) {
+      nameRefs.current[draft.id]?.focus()
     }
-  }, [lastAddedId, safeLanguages])
+  }, [draft?.id])
+
+  const displayLanguages = draft ? [...safeLanguages, draft] : safeLanguages
 
   const updateLanguage = (id: string, updates: Partial<Language>) => {
+    if (draft && draft.id === id) {
+      const updated = { ...draft, ...updates }
+      if (updated.name.trim()) {
+        onChange([...safeLanguages, updated])
+        setDraft(null)
+      } else {
+        setDraft(updated)
+      }
+      return
+    }
     onChange(safeLanguages.map((l) => (l.id === id ? { ...l, ...updates } : l)))
   }
 
   const handleAdd = () => {
-    const id = crypto.randomUUID()
-    onChange([...safeLanguages, { id, name: "", level: "B1" }])
-    setLastAddedId(id)
+    setDraft({ id: crypto.randomUUID(), name: "", level: "B1" })
   }
 
   const handleRemove = (id: string) => {
+    if (draft && draft.id === id) {
+      setDraft(null)
+      return
+    }
     onChange(safeLanguages.filter((l) => l.id !== id))
   }
 
   return (
     <div className="space-y-4">
-      {safeLanguages.length === 0 ? (
+      {displayLanguages.length === 0 ? (
         <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-8 text-center">
           <p className="text-sm text-aa-text-secondary">
             No languages added yet. Add the languages you speak to strengthen
@@ -47,7 +60,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
           </p>
         </div>
       ) : (
-        safeLanguages.map((lang) => (
+        displayLanguages.map((lang) => (
           <div
             key={lang.id}
             className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-[14px] py-3">
