@@ -2,6 +2,7 @@ import { SlidersHorizontal } from "lucide-react"
 
 import { Spectrum } from "~components/options/Spectrum"
 import {
+    CARD_CLASS,
   DIVIDER_CLASS,
   FOCUS,
   SAMPLE_BULLETS,
@@ -30,7 +31,7 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
         : "Balanced"
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className={CARD_CLASS}>
       <section className="space-y-4">
         <div>
           <h2 className={SECTION_HEADING_CLASS}>Scoring</h2>

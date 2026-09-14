@@ -34,19 +34,19 @@ export function SettingsArea({
         email={email}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-14 shrink-0 bg-aa-surface border-b border-aa-border px-8 flex items-center gap-4">
-          <div className="flex items-baseline gap-2 min-w-0">
-            <h1 className="text-[18px] font-semibold text-aa-text-primary shrink-0">
-              {activeNav?.label ?? ""}
-            </h1>
-            <p className="text-[13px] text-aa-text-secondary truncate">
-              {activeNav?.subtitle ?? ""}
-            </p>
-          </div>
-        </div>
+      <div className="flex-1 overflow-y-auto px-8 py-8 min-w-0">
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex flex-col items-baseline">
+              <h1 className="text-[28px] font-semibold text-aa-text-primary shrink-0">
+                {activeNav?.label ?? ""}
+              </h1>
+              <p className="text-[13px] text-aa-text-secondary truncate">
+                {activeNav?.subtitle ?? ""}
+              </p>
+            </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">{children}</div>
+          <div className="overflow-y-auto">{children}</div>
+        </div>
       </div>
     </div>
   )
