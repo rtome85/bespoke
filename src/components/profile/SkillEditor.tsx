@@ -113,30 +113,29 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
           {skills.map((skill) => (
             <div
               key={skill.id}
-              onClick={() => handleEditSkill(skill)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && handleEditSkill(skill)}
-              title="Edit skill"
-              className={`inline-flex items-center gap-2 rounded-aa-pill border px-3 py-2 cursor-pointer transition-colors
+              className={`inline-flex items-center rounded-aa-pill border transition-colors
                 ${
                   editingId === skill.id
                     ? "bg-aa-primary-soft border-aa-primary"
                     : "bg-aa-neutral-50 border-aa-border hover:border-aa-neutral-300"
                 }`}>
-              <span className="text-[13px] font-medium text-aa-text-primary">
-                {skill.name}
-              </span>
-              <span className="text-[11px] text-aa-text-secondary">
-                {skill.yearsOfExperience}y
-              </span>
               <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleRemoveSkill(skill.id)
-                }}
+                type="button"
+                onClick={() => handleEditSkill(skill)}
+                title="Edit skill"
+                className="flex items-center gap-2 pl-3 pr-1 py-2 cursor-pointer">
+                <span className="text-[13px] font-medium text-aa-text-primary">
+                  {skill.name}
+                </span>
+                <span className="text-[11px] text-aa-text-secondary">
+                  {skill.yearsOfExperience}y
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveSkill(skill.id)}
                 title="Remove skill"
-                className="text-aa-neutral-400 hover:text-aa-error-strong transition-colors">
+                className="pr-3 py-2 text-aa-neutral-400 hover:text-aa-error-strong transition-colors">
                 <X className="w-[13px] h-[13px]" />
               </button>
             </div>
