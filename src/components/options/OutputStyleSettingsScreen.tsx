@@ -1,14 +1,14 @@
-import { SlidersHorizontal } from "lucide-react"
+import type { ReactNode } from "react"
 
 import { Spectrum } from "~components/options/Spectrum"
 import {
-    CARD_CLASS,
-  DIVIDER_CLASS,
+  BULLET_DENSITY,
+  CARD_CLASS,
+  COVER_LETTER_SAMPLE,
   FOCUS,
+  READING_LEVEL,
   SAMPLE_BULLETS,
-  SECTION_HEADING_CLASS,
   STRICTNESS,
-  STRICTNESS_NOTE,
   TONE
 } from "~constants/options"
 import { DEFAULT_LLM_TUNING, type LLMTuningConfig } from "~types/config"
@@ -18,138 +18,167 @@ interface Props {
   onChange: (tuning: LLMTuningConfig) => void
 }
 
+const SECTION_LABEL_CLASS =
+  "text-[11px] font-bold tracking-[0.08em] text-aa-text-secondary pt-1"
+
+const ROW_CLASS = "border-b border-aa-border-subtle py-3 space-y-3 first:pt-0"
+
+const ROW_TITLE_CLASS = "text-[13px] font-medium text-aa-text-primary"
+
+const ROW_SUB_CLASS = "text-[11px] leading-[1.4] text-aa-text-secondary"
+
+const SAMPLE_LABEL_CLASS =
+  "text-[10px] font-bold tracking-[0.05em] text-aa-text-secondary"
+
+const SAMPLE_BODY_CLASS = "text-[13px] leading-relaxed text-aa-neutral-700"
+
+function SettingRow({
+  label,
+  sub,
+  children
+}: {
+  label: string
+  sub: string
+  children: ReactNode
+}) {
+  return (
+    <div className={ROW_CLASS}>
+      <div className="space-y-0.5">
+        <p className={ROW_TITLE_CLASS}>{label}</p>
+        <p className={ROW_SUB_CLASS}>{sub}</p>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function fallbackIndex(index: number) {
+  return index < 0 ? 1 : index
+}
+
 export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
-  const strictnessIndex = STRICTNESS.indexOf(tuning.matchStrictness)
-  const focusIndex = FOCUS.indexOf(tuning.resumeFocus)
-  const toneLabel =
-    tuning.writingTone[0].toUpperCase() + tuning.writingTone.slice(1)
-  const focusLabel =
-    tuning.resumeFocus === "skills"
-      ? "Skills-first"
-      : tuning.resumeFocus === "experience"
-        ? "Experience-first"
-        : "Balanced"
+  const strictnessIndex = fallbackIndex(
+    STRICTNESS.indexOf(tuning.matchStrictness)
+  )
+  const toneIndex = fallbackIndex(TONE.indexOf(tuning.writingTone))
+  const focusIndex = fallbackIndex(FOCUS.indexOf(tuning.resumeFocus))
+  const densityIndex = fallbackIndex(
+    BULLET_DENSITY.indexOf(tuning.bulletDensity)
+  )
+  const readingIndex = fallbackIndex(READING_LEVEL.indexOf(tuning.readingLevel))
 
   return (
     <div className={CARD_CLASS}>
-      <section className="space-y-4">
-        <div>
-          <h2 className={SECTION_HEADING_CLASS}>Scoring</h2>
-          <p className="text-sm text-aa-text-secondary -mt-2">
-            How rigorously your profile is matched against the job's
-            requirements.
-          </p>
+      <div className="flex gap-8">
+        <div className="flex-1">
+          <p className={SECTION_LABEL_CLASS}>SCORING</p>
+          <SettingRow
+            label="Match strictness"
+            sub="How rigorously your profile is scored against the job's requirements">
+            <Spectrum
+              stops={["Rigorous", "Balanced", "Lenient"]}
+              value={strictnessIndex}
+              onChange={(index) =>
+                onChange({
+                  ...tuning,
+                  matchStrictness: STRICTNESS[index] ?? tuning.matchStrictness
+                })
+              }
+            />
+          </SettingRow>
+
+          <p className={SECTION_LABEL_CLASS}>WRITING</p>
+          <SettingRow
+            label="Tone"
+            sub="Voice used across the CV and cover letter">
+            <Spectrum
+              stops={["Formal", "Professional", "Conversational"]}
+              value={toneIndex}
+              onChange={(index) =>
+                onChange({
+                  ...tuning,
+                  writingTone: TONE[index] ?? tuning.writingTone
+                })
+              }
+            />
+          </SettingRow>
+          <SettingRow
+            label="Resume focus"
+            sub="Which parts of your background get emphasis">
+            <Spectrum
+              stops={["Skills-first", "Balanced", "Experience-first"]}
+              value={focusIndex}
+              onChange={(index) =>
+                onChange({
+                  ...tuning,
+                  resumeFocus: FOCUS[index] ?? tuning.resumeFocus
+                })
+              }
+            />
+          </SettingRow>
+          <SettingRow
+            label="Bullet density"
+            sub="How much detail and evidence each bullet carries">
+            <Spectrum
+              stops={["Concise", "Standard", "Detailed"]}
+              value={densityIndex}
+              onChange={(index) =>
+                onChange({
+                  ...tuning,
+                  bulletDensity: BULLET_DENSITY[index] ?? tuning.bulletDensity
+                })
+              }
+            />
+          </SettingRow>
+          <SettingRow
+            label="Reading level"
+            sub="Vocabulary and sentence complexity">
+            <Spectrum
+              stops={["Simple", "Standard", "Advanced"]}
+              value={readingIndex}
+              onChange={(index) =>
+                onChange({
+                  ...tuning,
+                  readingLevel: READING_LEVEL[index] ?? tuning.readingLevel
+                })
+              }
+            />
+          </SettingRow>
         </div>
-        <div className="space-y-3 pt-1">
-          <span className="block text-[12px] font-semibold text-aa-text-secondary">
-            Match strictness
-          </span>
-          <Spectrum
-            stops={["Rigorous", "Balanced", "Lenient"]}
-            value={strictnessIndex < 0 ? 1 : strictnessIndex}
-            onChange={(index) =>
-              onChange({
-                ...tuning,
-                matchStrictness: STRICTNESS[index] ?? tuning.matchStrictness
-              })
-            }
-          />
-          <div className="flex items-start gap-3 rounded-aa-md bg-aa-primary-soft p-4 max-w-[660px]">
-            <SlidersHorizontal className="w-4 h-4 text-aa-primary shrink-0 mt-0.5" />
-            <p className="text-[13px] leading-relaxed text-aa-neutral-700">
-              {STRICTNESS_NOTE[tuning.matchStrictness]}
-            </p>
-          </div>
-        </div>
-      </section>
 
-      <hr className={DIVIDER_CLASS} />
-
-      <section className="space-y-4">
-        <div>
-          <h2 className={SECTION_HEADING_CLASS}>Writing style</h2>
-          <p className="text-sm text-aa-text-secondary -mt-2">
-            Tone and emphasis applied to the CV and the cover letter.
-          </p>
-        </div>
-
-        <div className="flex flex-row gap-10 pt-1">
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <span className="block text-[12px] font-semibold text-aa-text-secondary">
-                Tone
-              </span>
-              <div className="inline-flex rounded-aa-md border border-aa-border p-[3px]">
-                {TONE.map((option) => {
-                  const selected = tuning.writingTone === option
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() =>
-                        onChange({ ...tuning, writingTone: option })
-                      }
-                      className={`px-4 py-2 rounded-aa-sm text-[12px] font-semibold transition-colors ${
-                        selected
-                          ? "bg-aa-primary text-aa-text-on-primary"
-                          : "text-aa-text-secondary hover:text-aa-text-primary"
-                      }`}>
-                      {option[0].toUpperCase() + option.slice(1)}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <span className="block text-[12px] font-semibold text-aa-text-secondary">
-                Resume focus
-              </span>
-              <Spectrum
-                stops={["Skills-first", "Balanced", "Experience-first"]}
-                value={focusIndex < 0 ? 1 : focusIndex}
-                onChange={(index) =>
-                  onChange({
-                    ...tuning,
-                    resumeFocus: FOCUS[index] ?? tuning.resumeFocus
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="w-sm rounded-aa-lg border border-aa-border bg-aa-surface p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-aa-text-secondary">
-                Sample bullet
-              </span>
-              <span className="text-[10px] font-semibold rounded-aa-pill border border-aa-border px-2 py-[3px] text-aa-text-secondary">
-                {toneLabel} · {focusLabel}
-              </span>
-            </div>
-            <p className="text-[13px] leading-relaxed text-aa-neutral-700">
+        <div className="w-[300px] shrink-0">
+          <div className="rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5 space-y-4">
+            <p className={SAMPLE_LABEL_CLASS}>SAMPLE BULLET</p>
+            <p className={SAMPLE_BODY_CLASS}>
               {SAMPLE_BULLETS[tuning.writingTone][tuning.resumeFocus]}
             </p>
+            <hr className="border-0 border-t border-aa-border" />
+            <p className={SAMPLE_LABEL_CLASS}>COVER LETTER OPENER</p>
+            <p className={SAMPLE_BODY_CLASS}>{COVER_LETTER_SAMPLE}</p>
             <p className="text-[11px] text-aa-text-secondary">
-              Updates as you change tone and focus.
+              Updates live as you change any setting on this page.
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
-      <button
-        type="button"
-        onClick={() =>
-          onChange({
-            ...tuning,
-            matchStrictness: DEFAULT_LLM_TUNING.matchStrictness,
-            writingTone: DEFAULT_LLM_TUNING.writingTone,
-            resumeFocus: DEFAULT_LLM_TUNING.resumeFocus
-          })
-        }
-        className="text-[12px] font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
-        Reset to defaults
-      </button>
+      <div className="flex items-center justify-between pt-6">
+        <button
+          type="button"
+          onClick={() =>
+            onChange({
+              ...tuning,
+              matchStrictness: DEFAULT_LLM_TUNING.matchStrictness,
+              writingTone: DEFAULT_LLM_TUNING.writingTone,
+              resumeFocus: DEFAULT_LLM_TUNING.resumeFocus,
+              bulletDensity: DEFAULT_LLM_TUNING.bulletDensity,
+              readingLevel: DEFAULT_LLM_TUNING.readingLevel
+            })
+          }
+          className="text-[12px] font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
+          Reset to defaults
+        </button>
+      </div>
     </div>
   )
 }

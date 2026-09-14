@@ -143,6 +143,8 @@ export class LLMService {
     toneInstruction: string
     focusInstruction: string
     strictnessInstruction: string
+    densityInstruction: string
+    readingLevelInstruction: string
   } {
     const tone = {
       formal: "Use formal, precise corporate language throughout.",
@@ -168,10 +170,28 @@ export class LLMService {
         "Be optimistic and give credit for transferable skills and adjacent experience. Highlight how the candidate's background could apply even when not an exact match."
     }[tuning.matchStrictness]
 
+    const density = {
+      concise:
+        "Keep each resume bullet to a single tight line — cut qualifiers and background context, state only the action and the result.",
+      standard: "",
+      detailed:
+        "Write fuller bullets that include the specific tools, scale, and context behind each achievement, not just the outcome."
+    }[tuning.bulletDensity]
+
+    const readingLevel = {
+      simple:
+        "Use plain, everyday words and short sentences — avoid jargon and complex sentence structures.",
+      standard: "",
+      advanced:
+        "Use precise, domain-specific vocabulary and more sophisticated sentence structures where appropriate."
+    }[tuning.readingLevel]
+
     return {
       toneInstruction: tone,
       focusInstruction: focus,
-      strictnessInstruction: strictness
+      strictnessInstruction: strictness,
+      densityInstruction: density,
+      readingLevelInstruction: readingLevel
     }
   }
 
@@ -206,9 +226,18 @@ export class LLMService {
       llmTuning = DEFAULT_LLM_TUNING
     } = request
 
-    const { toneInstruction, focusInstruction } =
-      this.tuningInstructions(llmTuning)
-    const extraInstructions = [toneInstruction, focusInstruction]
+    const {
+      toneInstruction,
+      focusInstruction,
+      densityInstruction,
+      readingLevelInstruction
+    } = this.tuningInstructions(llmTuning)
+    const extraInstructions = [
+      toneInstruction,
+      focusInstruction,
+      densityInstruction,
+      readingLevelInstruction
+    ]
       .filter(Boolean)
       .join(" ")
     const systemPrompt = extraInstructions
@@ -247,9 +276,13 @@ export class LLMService {
       llmTuning = DEFAULT_LLM_TUNING
     } = request
 
-    const { toneInstruction } = this.tuningInstructions(llmTuning)
-    const systemPrompt = toneInstruction
-      ? `${prompts.coverLetterSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${toneInstruction}`
+    const { toneInstruction, readingLevelInstruction } =
+      this.tuningInstructions(llmTuning)
+    const extraInstructions = [toneInstruction, readingLevelInstruction]
+      .filter(Boolean)
+      .join(" ")
+    const systemPrompt = extraInstructions
+      ? `${prompts.coverLetterSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
       : prompts.coverLetterSystemPrompt
 
     const interpolatedUserPrompt = this.interpolatePrompt(

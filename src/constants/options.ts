@@ -151,15 +151,11 @@ export const PROVIDER_IDS: LLMProviderId[] = [
 export const STRICTNESS = ["strict", "balanced", "generous"] as const
 export const TONE = ["formal", "professional", "conversational"] as const
 export const FOCUS = ["skills", "balanced", "experience"] as const
+export const BULLET_DENSITY = ["concise", "standard", "detailed"] as const
+export const READING_LEVEL = ["simple", "standard", "advanced"] as const
 
-export const STRICTNESS_NOTE: Record<(typeof STRICTNESS)[number], string> = {
-  strict:
-    "Rigorous — gaps and missing must-haves are weighted heavily; a single unmet requirement can drop the score sharply.",
-  balanced:
-    "Balanced — explicit requirements and transferable skills weigh equally. A missing must-have costs about 10 points.",
-  generous:
-    "Lenient — transferable skills and potential count for a lot; only large gaps move the score much."
-}
+export const COVER_LETTER_SAMPLE =
+  "I'm applying for the Senior Frontend Engineer role because your checkout rebuild is exactly the kind of high-stakes, metrics-driven work I do best."
 
 export const SAMPLE_BULLETS: Record<
   (typeof TONE)[number],

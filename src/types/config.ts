@@ -135,6 +135,10 @@ export interface LLMTuningConfig {
   writingTone: "formal" | "professional" | "conversational"
   /** Which profile section the resume should lead with */
   resumeFocus: "skills" | "experience" | "balanced"
+  /** How much detail and evidence each bullet carries */
+  bulletDensity: "concise" | "standard" | "detailed"
+  /** Vocabulary and sentence complexity target */
+  readingLevel: "simple" | "standard" | "advanced"
 }
 
 export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
@@ -143,7 +147,9 @@ export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
   maxTokens: 4096,
   matchStrictness: "balanced",
   writingTone: "professional",
-  resumeFocus: "balanced"
+  resumeFocus: "balanced",
+  bulletDensity: "standard",
+  readingLevel: "standard"
 }
 
 export interface CustomPrompts {
