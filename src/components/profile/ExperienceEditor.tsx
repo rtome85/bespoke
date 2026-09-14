@@ -1,5 +1,13 @@
-import React, { useState } from "react"
+import { Trash2 } from "lucide-react"
+import { useState } from "react"
 
+import {
+  ACCENT_BUTTON_CLASS,
+  ERROR_MESSAGE_CLASS,
+  INPUT_CLASS,
+  LABEL_CLASS,
+  SECONDARY_BUTTON_CLASS
+} from "~constants/options"
 import type { WorkExperience } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -22,14 +30,12 @@ const validateExperience = (exp: WorkExperience): string[] => {
   return errors
 }
 
-const labelCls =
-  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+const labelCls = LABEL_CLASS
 
-const inputCls =
-  "w-full px-4 py-3 bg-white border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+const inputCls = INPUT_CLASS
 
 const inputErrorCls =
-  "w-full px-4 py-3 bg-white border border-[#fca5a5] text-ink text-sm focus:outline-none focus:border-[#991b1b] transition-colors"
+  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProps) {
   const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null)
@@ -152,8 +158,9 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
                 {experience.achievements.length > 1 && (
                   <button
                     onClick={() => removeAchievement(achievementIndex)}
-                    className="px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-[#991b1b] border border-[#fca5a5] hover:bg-[#fef2f2] transition-colors">
-                    Remove
+                    className="shrink-0 px-2.5 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
+                    title="Remove achievement">
+                    <Trash2 className="w-[15px] h-[15px]" />
                   </button>
                 )}
               </div>
@@ -161,13 +168,13 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
           </div>
           <button
             onClick={addAchievement}
-            className="mt-2 px-4 py-2 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest hover:border-ink transition-colors">
-            + Add Achievement
+            className="mt-2 text-[13px] font-semibold text-aa-primary hover:text-aa-primary-hover transition-colors">
+            + Add achievement
           </button>
         </div>
 
         {hasErrors && (
-          <div className="bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3">
+          <div className={ERROR_MESSAGE_CLASS}>
             {errors.map((error, i) => (
               <p key={i} className="text-sm">• {error}</p>
             ))}
@@ -180,20 +187,18 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
   return (
     <div>
       {editingExperience && (
-        <div className="bg-canvas border-2 border-ink p-4 mb-6">
-          <h3 className="text-[11px] font-bold uppercase tracking-widest text-ink mb-4">
-            Add New Work Experience
+        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
+          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
+            Add new work experience
           </h3>
           {renderExperienceItem(editingExperience, 0, setEditingExperience)}
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={saveEditingExperience}
-              className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
-              Save Experience
+            <button onClick={saveEditingExperience} className={ACCENT_BUTTON_CLASS}>
+              Save experience
             </button>
             <button
               onClick={() => setEditingExperience(null)}
-              className="px-4 py-2 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest cursor-pointer hover:border-ink transition-colors">
+              className={SECONDARY_BUTTON_CLASS}>
               Cancel
             </button>
           </div>
@@ -202,6 +207,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
 
       <ArrayInput
         items={experiences}
+        getItemKey={(experience) => experience.id}
         onAdd={addExperience}
         onUpdate={updateExperience}
         onRemove={removeExperience}
@@ -213,17 +219,17 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
             return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
           }
           return (
-            <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
+            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-ink truncate leading-tight">
-                  {exp.jobTitle || <span className="italic text-ink-muted">Untitled role</span>}
+                <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
+                  {exp.jobTitle || <span className="italic text-aa-text-disabled">Untitled role</span>}
                 </p>
-                <p className="text-xs text-ink-secondary truncate mt-0.5">
+                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
                   {exp.company || "—"}
                 </p>
               </div>
               {exp.startDate && (
-                <span className="ml-4 shrink-0 text-xs text-ink-muted">
+                <span className="shrink-0 text-xs text-aa-text-secondary">
                   {fmt(exp.startDate)} – {fmt(exp.endDate)}
                 </span>
               )}

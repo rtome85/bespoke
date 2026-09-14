@@ -1,5 +1,12 @@
-import React, { useState } from "react"
+import { useState } from "react"
 
+import {
+  ACCENT_BUTTON_CLASS,
+  ERROR_MESSAGE_CLASS,
+  INPUT_CLASS,
+  LABEL_CLASS,
+  SECONDARY_BUTTON_CLASS
+} from "~constants/options"
 import type { Education } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -19,14 +26,12 @@ const validateEducation = (edu: Education): string[] => {
   return errors
 }
 
-const labelCls =
-  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
+const labelCls = LABEL_CLASS
 
-const inputCls =
-  "w-full px-4 py-3 bg-white border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+const inputCls = INPUT_CLASS
 
 const inputErrorCls =
-  "w-full px-4 py-3 bg-white border border-[#fca5a5] text-ink text-sm focus:outline-none focus:border-[#991b1b] transition-colors"
+  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function EducationEditor({ education, onChange }: EducationEditorProps) {
   const [editingEducation, setEditingEducation] = useState<Education | null>(
@@ -148,15 +153,15 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
             placeholder="Describe your coursework, achievements, or relevant projects..."
             rows={3}
             maxLength={300}
-            className="w-full px-4 py-3 bg-white border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors resize-none"
+            className={`${inputCls} resize-none`}
           />
-          <p className="mt-1 text-[11px] text-ink-secondary">
+          <p className="mt-1 text-[11px] text-aa-text-secondary">
             {(edu.description || "").length}/300 characters
           </p>
         </div>
 
         {hasErrors && (
-          <div className="bg-[#fef2f2] border border-[#fca5a5] text-[#991b1b] px-4 py-3">
+          <div className={ERROR_MESSAGE_CLASS}>
             {errors.map((error, i) => (
               <p key={i} className="text-sm">
                 • {error}
@@ -171,20 +176,18 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
   return (
     <div>
       {editingEducation && (
-        <div className="bg-canvas border-2 border-ink p-4 mb-6">
-          <h3 className="text-[11px] font-bold uppercase tracking-widest text-ink mb-4">
-            Add New Education
+        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
+          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
+            Add new education
           </h3>
           {renderEducationItem(editingEducation, 0, setEditingEducation)}
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={saveEditingEducation}
-              className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
-              Save Education
+            <button onClick={saveEditingEducation} className={ACCENT_BUTTON_CLASS}>
+              Save education
             </button>
             <button
               onClick={() => setEditingEducation(null)}
-              className="px-4 py-2 bg-canvas border border-canvas-input-border text-ink text-[11px] font-semibold uppercase tracking-widest cursor-pointer hover:border-ink transition-colors">
+              className={SECONDARY_BUTTON_CLASS}>
               Cancel
             </button>
           </div>
@@ -193,6 +196,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
 
       <ArrayInput
         items={safeEducation}
+        getItemKey={(edu) => edu.id}
         onAdd={addEducation}
         onUpdate={updateEducation}
         onRemove={removeEducation}
@@ -204,19 +208,19 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
             return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
           }
           return (
-            <div className="flex flex-1 items-center justify-between min-w-0 pr-1">
+            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-ink truncate leading-tight">
+                <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
                   {edu.degree
-                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-ink-secondary"> · {edu.fieldOfStudy}</span>}</>
-                    : <span className="italic text-ink-muted">Untitled degree</span>}
+                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-aa-text-secondary"> · {edu.fieldOfStudy}</span>}</>
+                    : <span className="italic text-aa-text-disabled">Untitled degree</span>}
                 </p>
-                <p className="text-xs text-ink-secondary truncate mt-0.5">
+                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
                   {edu.institution || "—"}
                 </p>
               </div>
               {edu.startDate && (
-                <span className="ml-4 shrink-0 text-xs text-ink-muted">
+                <span className="shrink-0 text-xs text-aa-text-secondary">
                   {fmt(edu.startDate)} – {fmt(edu.endDate)}
                 </span>
               )}

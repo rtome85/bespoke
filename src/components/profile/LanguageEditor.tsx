@@ -1,5 +1,7 @@
-import React from "react"
+import { ChevronDown, Plus, Trash2 } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
+import { OUTLINE_BUTTON_CLASS } from "~constants/options"
 import type { Language } from "~types/userProfile"
 
 interface LanguageEditorProps {
@@ -9,166 +11,110 @@ interface LanguageEditorProps {
 
 const LEVELS = ["Native", "A1", "A2", "B1", "B2", "C1", "C2"]
 
-const levelBadgeClass = (level: string) => {
-  if (level === "Native") return "bg-canvas border-canvas-input-border text-ink"
-  if (level === "C1" || level === "C2") return "bg-canvas border-canvas-input-border text-ink"
-  if (level === "B1" || level === "B2") return "bg-canvas border-canvas-input-border text-ink"
-  return "bg-canvas border-canvas-input-border text-ink-secondary"
-}
-
-const labelCls =
-  "block text-[11px] font-semibold uppercase tracking-widest text-ink-secondary mb-2"
-
-const inputCls =
-  "w-full px-4 py-3 bg-surface border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
-
 export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
   const safeLanguages = languages || []
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [formName, setFormName] = React.useState("")
-  const [formLevel, setFormLevel] = React.useState("")
-  const [formError, setFormError] = React.useState("")
-  const nameInputRef = React.useRef<HTMLInputElement>(null)
+  const [draft, setDraft] = useState<Language | null>(null)
+  const nameRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
-  const handleSubmit = () => {
-    const trimmed = formName.trim()
-    if (!trimmed) { setFormError("Language name is required"); return }
-    if (!formLevel) { setFormError("Please select a proficiency level"); return }
-
-    const isDuplicate = safeLanguages.some(
-      (l) => l.name.toLowerCase() === trimmed.toLowerCase() && l.id !== editingId
-    )
-    if (isDuplicate) { setFormError(`"${trimmed}" is already in your languages`); return }
-
-    if (editingId) {
-      onChange(safeLanguages.map((l) =>
-        l.id === editingId ? { ...l, name: trimmed, level: formLevel } : l
-      ))
-    } else {
-      onChange([...safeLanguages, { id: crypto.randomUUID(), name: trimmed, level: formLevel }])
+  useEffect(() => {
+    if (draft) {
+      nameRefs.current[draft.id]?.focus()
     }
-    setFormName(""); setFormLevel(""); setFormError(""); setEditingId(null)
+  }, [draft?.id])
+
+  const displayLanguages = draft ? [...safeLanguages, draft] : safeLanguages
+
+  const updateLanguage = (id: string, updates: Partial<Language>) => {
+    if (draft && draft.id === id) {
+      const updated = { ...draft, ...updates }
+      if (updated.name.trim()) {
+        onChange([...safeLanguages, updated])
+        setDraft(null)
+      } else {
+        setDraft(updated)
+      }
+      return
+    }
+    onChange(safeLanguages.map((l) => (l.id === id ? { ...l, ...updates } : l)))
   }
 
-  const handleEdit = (lang: Language) => {
-    setEditingId(lang.id)
-    setFormName(lang.name)
-    setFormLevel(lang.level)
-    setFormError("")
-    setTimeout(() => nameInputRef.current?.focus(), 0)
+  const handleAdd = () => {
+    setDraft({ id: crypto.randomUUID(), name: "", level: "B1" })
   }
 
   const handleRemove = (id: string) => {
-    onChange(safeLanguages.filter((l) => l.id !== id))
-    if (editingId === id) {
-      setEditingId(null); setFormName(""); setFormLevel(""); setFormError("")
+    if (draft && draft.id === id) {
+      setDraft(null)
+      return
     }
-  }
-
-  const handleCancel = () => {
-    setEditingId(null); setFormName(""); setFormLevel(""); setFormError("")
+    onChange(safeLanguages.filter((l) => l.id !== id))
   }
 
   return (
-    <div className="space-y-3">
-      {/* Tag cloud */}
-      {safeLanguages.length === 0 ? (
-        <div className="bg-canvas border-2 border-dashed border-canvas-input-border p-8 text-center">
-          <p className="text-ink-secondary mb-4 text-sm">
-            No languages added yet. Add the languages you speak to strengthen your profile!
+    <div className="space-y-4">
+      {displayLanguages.length === 0 ? (
+        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-8 text-center">
+          <p className="text-sm text-aa-text-secondary">
+            No languages added yet. Add the languages you speak to strengthen
+            your profile!
           </p>
-          <button
-            onClick={() => nameInputRef.current?.focus()}
-            className="bg-sidebar-accent text-white px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
-            Add Your First Language
-          </button>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2 mb-4 min-h-[2.5rem]">
-          {safeLanguages.map((lang) => (
-            <span
-              key={lang.id}
-              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-sm font-medium
-                          border transition-colors cursor-default
-                          ${editingId === lang.id
-                            ? "bg-canvas border-ink text-ink"
-                            : `${levelBadgeClass(lang.level)} hover:border-ink`}`}>
-              <span>{lang.name}</span>
-              {lang.level && (
-                <span className="text-xs text-ink-muted">· {lang.level}</span>
-              )}
-              <button
-                onClick={() => handleEdit(lang)}
-                className="ml-0.5 p-0.5 text-current opacity-50 hover:opacity-100 hover:text-ink transition-all"
-                title="Edit language">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => handleRemove(lang.id)}
-                className="p-0.5 text-current opacity-50 hover:opacity-100 hover:text-[#991b1b] transition-all"
-                title="Remove language">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          ))}
-        </div>
+        displayLanguages.map((lang, index) => (
+          <div
+            key={lang.id}
+            className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-[14px] py-3">
+            <input
+              ref={(el) => {
+                nameRefs.current[lang.id] = el
+              }}
+              type="text"
+              value={lang.name}
+              onChange={(e) =>
+                updateLanguage(lang.id, { name: e.target.value })
+              }
+              placeholder="Language (e.g. English, French)"
+              aria-label={`Language name, row ${index + 1}`}
+              className="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm font-semibold text-aa-text-primary placeholder:font-normal placeholder:text-aa-text-secondary focus:outline-none"
+            />
+
+            <div className="relative shrink-0">
+              <select
+                value={lang.level}
+                onChange={(e) =>
+                  updateLanguage(lang.id, { level: e.target.value })
+                }
+                aria-label={`Proficiency level, row ${index + 1}`}
+                className="appearance-none w-[130px] bg-aa-surface border border-aa-border rounded-aa-md pl-3 pr-8 py-[7px] text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary cursor-pointer">
+                {LEVELS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-aa-neutral-500" />
+            </div>
+
+            <button
+              onClick={() => handleRemove(lang.id)}
+              className="shrink-0 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
+              title="Remove language">
+              <Trash2 className="w-[15px] h-[15px]" />
+            </button>
+          </div>
+        ))
       )}
 
-      {/* Inline add / edit form */}
-      <div className="flex gap-2 items-start">
-        <div className="flex-1">
-          <input
-            ref={nameInputRef}
-            type="text"
-            value={formName}
-            onChange={(e) => { setFormName(e.target.value); setFormError("") }}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="Language (e.g. English, French)"
-            className={inputCls} />
-        </div>
+      <button
+        onClick={handleAdd}
+        className={`w-full flex items-center justify-center gap-2 ${OUTLINE_BUTTON_CLASS}`}>
+        <Plus className="w-[15px] h-[15px]" />
+        Add language
+      </button>
 
-        <div className="w-32">
-          <select
-            value={formLevel}
-            onChange={(e) => { setFormLevel(e.target.value); setFormError("") }}
-            className="w-full px-3 py-3 bg-surface border border-canvas-input-border text-ink text-sm
-                       focus:outline-none focus:border-ink transition-colors cursor-pointer">
-            <option value="" disabled>Level</option>
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-3 bg-sidebar-accent text-white text-[11px] font-bold uppercase tracking-widest
-                     hover:opacity-90 transition-opacity whitespace-nowrap">
-          {editingId ? "Update" : "+ Add Language"}
-        </button>
-
-        {editingId && (
-          <button
-            onClick={handleCancel}
-            className="px-3 py-3 text-[11px] font-semibold uppercase tracking-widest text-ink-secondary hover:text-ink transition-colors">
-            Cancel
-          </button>
-        )}
-      </div>
-
-      {formError && (
-        <p className="mt-1.5 text-xs text-[#991b1b]">{formError}</p>
-      )}
-
-      {/* Level legend */}
-      <p className="text-xs text-ink-muted pt-1">
-        <span className="font-medium text-ink-secondary">Levels:</span>{" "}
-        Native · A1–A2 Beginner · B1–B2 Intermediate · C1–C2 Advanced
+      <p className="text-xs text-aa-text-secondary pt-1">
+        <span className="font-medium text-aa-text-primary">Levels:</span> Native
+        · A1–A2 Beginner · B1–B2 Intermediate · C1–C2 Advanced
       </p>
     </div>
   )

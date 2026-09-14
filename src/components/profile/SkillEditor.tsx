@@ -1,5 +1,7 @@
-import React from "react"
+import { Plus, X } from "lucide-react"
+import { useRef, useState } from "react"
 
+import { ACCENT_BUTTON_CLASS } from "~constants/options"
 import type { Skill } from "~types/userProfile"
 
 interface SkillEditorProps {
@@ -10,20 +12,26 @@ interface SkillEditorProps {
 const validateSkill = (skill: Skill): string[] => {
   const errors = []
   if (!skill.name.trim()) errors.push("Skill name is required")
-  if (skill.yearsOfExperience <= 0) errors.push("Years of experience must be greater than 0")
-  if (skill.yearsOfExperience > 50) errors.push("Years of experience seems unrealistic")
+  if (skill.yearsOfExperience <= 0)
+    errors.push("Years of experience must be greater than 0")
+  if (skill.yearsOfExperience > 50)
+    errors.push("Years of experience seems unrealistic")
   return errors
 }
 
 export function SkillEditor({ skills, onChange }: SkillEditorProps) {
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [formName, setFormName] = React.useState("")
-  const [formYears, setFormYears] = React.useState(1)
-  const [formError, setFormError] = React.useState("")
-  const nameInputRef = React.useRef<HTMLInputElement>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [formName, setFormName] = useState("")
+  const [formYears, setFormYears] = useState(1)
+  const [formError, setFormError] = useState("")
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const updateSkill = (id: string, updates: Partial<Skill>) => {
-    onChange(skills.map((skill) => (skill.id === id ? { ...skill, ...updates } : skill)))
+    onChange(
+      skills.map((skill) =>
+        skill.id === id ? { ...skill, ...updates } : skill
+      )
+    )
   }
 
   const removeSkill = (id: string) => {
@@ -32,22 +40,41 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
 
   const handleSubmit = () => {
     const trimmed = formName.trim()
-    if (!trimmed) { setFormError("Skill name is required"); return }
-    if (formYears <= 0 || formYears > 50) { setFormError("Years must be 1–50"); return }
+    if (!trimmed) {
+      setFormError("Skill name is required")
+      return
+    }
+    if (formYears <= 0 || formYears > 50) {
+      setFormError("Years must be 1–50")
+      return
+    }
     const isDuplicate = skills.some(
-      (s) => s.name.toLowerCase() === trimmed.toLowerCase() && s.id !== editingId
+      (s) =>
+        s.name.toLowerCase() === trimmed.toLowerCase() && s.id !== editingId
     )
-    if (isDuplicate) { setFormError(`"${trimmed}" is already in your skills`); return }
+    if (isDuplicate) {
+      setFormError(`"${trimmed}" is already in your skills`)
+      return
+    }
     if (editingId) {
       updateSkill(editingId, { name: trimmed, yearsOfExperience: formYears })
     } else {
-      onChange([...skills, { id: crypto.randomUUID(), name: trimmed, yearsOfExperience: formYears }])
+      onChange([
+        ...skills,
+        { id: crypto.randomUUID(), name: trimmed, yearsOfExperience: formYears }
+      ])
     }
-    setFormName(""); setFormYears(1); setFormError(""); setEditingId(null)
+    setFormName("")
+    setFormYears(1)
+    setFormError("")
+    setEditingId(null)
   }
 
   const handleCancelEdit = () => {
-    setEditingId(null); setFormName(""); setFormYears(1); setFormError("")
+    setEditingId(null)
+    setFormName("")
+    setFormYears(1)
+    setFormError("")
   }
 
   const handleEditSkill = (skill: Skill) => {
@@ -61,91 +88,106 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
   const handleRemoveSkill = (id: string) => {
     removeSkill(id)
     if (editingId === id) {
-      setEditingId(null); setFormName(""); setFormYears(1); setFormError("")
+      setEditingId(null)
+      setFormName("")
+      setFormYears(1)
+      setFormError("")
     }
   }
 
   return (
     <div className="space-y-3">
       {skills.length === 0 ? (
-        <div className="border-2 border-dashed border-canvas-input-border p-8 text-center">
-          <p className="text-ink-secondary text-sm mb-4">
+        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-8 text-center">
+          <p className="text-sm text-aa-text-secondary mb-4">
             No skills added yet. Add your skills to showcase your expertise!
           </p>
           <button
             onClick={() => nameInputRef.current?.focus()}
-            className="px-5 py-2.5 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity">
-            Add Your First Skill
+            className={ACCENT_BUTTON_CLASS}>
+            Add your first skill
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2 mb-4 min-h-[2.5rem]">
+        <div className="flex flex-wrap gap-3 mb-4">
           {skills.map((skill) => (
-            <span
+            <div
               key={skill.id}
-              className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-sm font-medium border transition-colors cursor-default
-                ${editingId === skill.id
-                  ? "bg-[#fdf5f2] border-sidebar-accent text-ink"
-                  : "bg-canvas border-canvas-input-border text-ink hover:border-ink-secondary"}`}>
-              <span>{skill.name}</span>
-              <span className="text-xs text-ink-muted">· {skill.yearsOfExperience}y</span>
+              className={`inline-flex items-center rounded-aa-pill border transition-colors
+                ${
+                  editingId === skill.id
+                    ? "bg-aa-primary-soft border-aa-primary"
+                    : "bg-aa-neutral-50 border-aa-border hover:border-aa-neutral-300"
+                }`}>
               <button
+                type="button"
                 onClick={() => handleEditSkill(skill)}
-                className="ml-0.5 p-0.5 hover:bg-canvas-divide text-ink-muted hover:text-ink transition-colors"
-                title="Edit skill">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                title="Edit skill"
+                className="flex items-center gap-2 pl-3 pr-1 py-2 cursor-pointer">
+                <span className="text-[13px] font-medium text-aa-text-primary">
+                  {skill.name}
+                </span>
+                <span className="text-[11px] text-aa-text-secondary">
+                  {skill.yearsOfExperience}y
+                </span>
               </button>
               <button
+                type="button"
                 onClick={() => handleRemoveSkill(skill.id)}
-                className="p-0.5 hover:bg-[#fef2f2] text-ink-muted hover:text-[#991b1b] transition-colors"
-                title="Remove skill">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                title="Remove skill"
+                className="pr-3 py-2 text-aa-neutral-400 hover:text-aa-error-strong transition-colors">
+                <X className="w-[13px] h-[13px]" />
               </button>
-            </span>
+            </div>
           ))}
         </div>
       )}
 
-      <div className="flex gap-2 items-start">
+      <div className="flex gap-3 items-start">
         <div className="flex-1">
           <input
             ref={nameInputRef}
             type="text"
             value={formName}
-            onChange={(e) => { setFormName(e.target.value); setFormError("") }}
+            onChange={(e) => {
+              setFormName(e.target.value)
+              setFormError("")
+            }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Skill name (e.g. React, Python)"
-            className="w-full px-3 py-2 bg-surface border border-canvas-input-border text-ink text-sm focus:outline-none focus:border-ink transition-colors"
+            className="w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors"
           />
         </div>
-        <div className="w-20">
+        <div className="w-[90px]">
           <input
-            type="number" min="1" max="50"
+            type="number"
+            min="1"
+            max="50"
             value={formYears}
             onChange={(e) => setFormYears(parseInt(e.target.value) || 1)}
-            className="w-full px-3 py-2 bg-surface border border-canvas-input-border text-ink text-sm text-center focus:outline-none focus:border-ink transition-colors"
+            className="w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm text-center focus:outline-none focus:border-aa-primary transition-colors"
           />
-          <p className="text-[11px] text-ink-muted text-center mt-0.5">yrs</p>
+          <p className="text-[11px] text-aa-text-secondary text-center mt-0.5">
+            years
+          </p>
         </div>
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-sidebar-accent text-white border-0 text-[11px] font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap">
-          {editingId ? "Update" : "+ Add Skill"}
+          className={`flex items-center gap-2 whitespace-nowrap ${ACCENT_BUTTON_CLASS}`}>
+          <Plus className="w-[15px] h-[15px]" />
+          {editingId ? "Update" : "Add"}
         </button>
         {editingId && (
           <button
             onClick={handleCancelEdit}
-            className="px-3 py-2 text-[11px] font-semibold uppercase tracking-widest text-ink-secondary hover:text-ink transition-colors">
+            className="px-3 py-[9px] text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
             Cancel
           </button>
         )}
       </div>
-      {formError && <p className="mt-1.5 text-xs text-[#991b1b]">{formError}</p>}
+      {formError && (
+        <p className="mt-1.5 text-xs text-aa-error-strong">{formError}</p>
+      )}
     </div>
   )
 }
