@@ -706,6 +706,13 @@ export function ApplicationsList({
                       addedGapSkills={addedGapSkills}
                       onAddGapSkill={handleAddGapSkill}
                     />
+                    {documents && !generating && (
+                      <GeneratedDocumentsCard
+                        documents={documents}
+                        previewError={previewError}
+                        onPreview={openDocumentPreview}
+                      />
+                    )}
                     <DocumentGenerationControls
                       isLoading={generating}
                       progress={genProgress}
@@ -713,13 +720,6 @@ export function ApplicationsList({
                       hasDocuments={Boolean(documents)}
                       onGenerate={generateDocuments}
                     />
-                    {documents && (
-                      <GeneratedDocumentsCard
-                        documents={documents}
-                        previewError={previewError}
-                        onPreview={openDocumentPreview}
-                      />
-                    )}
                   </div>
                 </div>
               </div>

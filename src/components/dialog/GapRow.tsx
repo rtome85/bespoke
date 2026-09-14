@@ -17,7 +17,7 @@ export function GapRow({ text, added, onAdd }: Props) {
 
   if (added) {
     return (
-      <div className="flex items-center gap-aa-3 px-aa-4 py-aa-3">
+      <div className="flex items-center gap-aa-3 py-aa-3">
         <CheckCircle2 className="w-aa-px-18 h-aa-px-18 text-aa-success shrink-0" />
         <div className="flex-1 flex flex-col gap-0.5 min-w-0">
           <span className="text-aa-sm font-semibold text-aa-text-primary truncate">
@@ -35,7 +35,7 @@ export function GapRow({ text, added, onAdd }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-aa-3 px-aa-4 py-aa-3">
+    <div className="flex flex-col gap-aa-3 py-aa-3">
       <div className="flex items-center gap-aa-3">
         <AlertTriangle className="w-aa-px-18 h-aa-px-18 text-aa-error shrink-0" />
         <span className="flex-1 text-aa-13 text-aa-text-secondary leading-aa-1.4">
