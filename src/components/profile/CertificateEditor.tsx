@@ -173,6 +173,7 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
 
       <ArrayInput
         items={safeCerts}
+        getItemKey={(cert) => cert.id}
         onAdd={addCertificate}
         onUpdate={updateCertificate}
         onRemove={removeCertificate}

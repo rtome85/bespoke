@@ -196,6 +196,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
 
       <ArrayInput
         items={safeEducation}
+        getItemKey={(edu) => edu.id}
         onAdd={addEducation}
         onUpdate={updateEducation}
         onRemove={removeEducation}

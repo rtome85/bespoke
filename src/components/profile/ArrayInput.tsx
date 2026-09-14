@@ -6,6 +6,7 @@ import { ACCENT_BUTTON_CLASS, OUTLINE_BUTTON_CLASS } from "~constants/options"
 
 interface ArrayInputProps<T> {
   items: T[]
+  getItemKey: (item: T) => string
   onAdd: () => void
   onUpdate: (index: number, item: T) => void
   onRemove: (index: number) => void
@@ -17,6 +18,7 @@ interface ArrayInputProps<T> {
 
 export function ArrayInput<T>({
   items,
+  getItemKey,
   onAdd,
   onUpdate,
   onRemove,
@@ -25,14 +27,14 @@ export function ArrayInput<T>({
   emptyMessage,
   addButtonText
 }: ArrayInputProps<T>) {
-  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set())
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
-  const toggleExpanded = (index: number) => {
+  const toggleExpanded = (key: string) => {
     const newExpanded = new Set(expandedItems)
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index)
+    if (newExpanded.has(key)) {
+      newExpanded.delete(key)
     } else {
-      newExpanded.add(index)
+      newExpanded.add(key)
     }
     setExpandedItems(newExpanded)
   }
@@ -51,10 +53,11 @@ export function ArrayInput<T>({
   return (
     <div className="space-y-4">
       {items.map((item, index) => {
-        const isExpanded = expandedItems.has(index)
+        const key = getItemKey(item)
+        const isExpanded = expandedItems.has(key)
         return (
           <div
-            key={index}
+            key={key}
             className="rounded-aa-md border border-aa-border bg-aa-surface">
             <div className="flex items-center gap-3 px-[14px] py-3">
               {renderSummary ? (
@@ -66,7 +69,7 @@ export function ArrayInput<T>({
               )}
 
               <button
-                onClick={() => toggleExpanded(index)}
+                onClick={() => toggleExpanded(key)}
                 className="shrink-0 text-aa-neutral-500 hover:text-aa-text-primary transition-colors"
                 title={isExpanded ? "Close" : "Edit item"}>
                 <Pencil className="w-[15px] h-[15px]" />

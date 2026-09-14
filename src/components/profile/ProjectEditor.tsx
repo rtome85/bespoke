@@ -159,6 +159,7 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
 
       <ArrayInput
         items={projects}
+        getItemKey={(project) => project.id}
         onAdd={addProject}
         onUpdate={updateProject}
         onRemove={removeProject}

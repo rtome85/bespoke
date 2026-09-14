@@ -207,6 +207,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
 
       <ArrayInput
         items={experiences}
+        getItemKey={(experience) => experience.id}
         onAdd={addExperience}
         onUpdate={updateExperience}
         onRemove={removeExperience}
