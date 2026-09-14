@@ -60,7 +60,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
           </p>
         </div>
       ) : (
-        displayLanguages.map((lang) => (
+        displayLanguages.map((lang, index) => (
           <div
             key={lang.id}
             className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-[14px] py-3">
@@ -74,6 +74,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
                 updateLanguage(lang.id, { name: e.target.value })
               }
               placeholder="Language (e.g. English, French)"
+              aria-label={`Language name, row ${index + 1}`}
               className="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm font-semibold text-aa-text-primary placeholder:font-normal placeholder:text-aa-text-secondary focus:outline-none"
             />
 
@@ -83,6 +84,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
                 onChange={(e) =>
                   updateLanguage(lang.id, { level: e.target.value })
                 }
+                aria-label={`Proficiency level, row ${index + 1}`}
                 className="appearance-none w-[130px] bg-aa-surface border border-aa-border rounded-aa-md pl-3 pr-8 py-[7px] text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary cursor-pointer">
                 {LEVELS.map((l) => (
                   <option key={l} value={l}>
