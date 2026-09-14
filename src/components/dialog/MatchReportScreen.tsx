@@ -164,6 +164,13 @@ export function MatchReportScreen({
                 addedGapSkills={addedGapSkills}
                 onAddGapSkill={onAddGapSkill}
               />
+              {documents && !documentsLoading && (
+                <GeneratedDocumentsCard
+                  documents={documents}
+                  previewError={previewError}
+                  onPreview={onPreviewDocuments}
+                />
+              )}
               <DocumentGenerationControls
                 isLoading={documentsLoading}
                 progress={documentsProgress}
@@ -171,13 +178,6 @@ export function MatchReportScreen({
                 hasDocuments={Boolean(documents)}
                 onGenerate={onGenerateDocuments}
               />
-              {documents && (
-                <GeneratedDocumentsCard
-                  documents={documents}
-                  previewError={previewError}
-                  onPreview={onPreviewDocuments}
-                />
-              )}
               {!documents && previewError && (
                 <p className="text-aa-13 text-aa-error-strong">
                   {previewError}
