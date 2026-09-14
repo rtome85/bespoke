@@ -17,7 +17,7 @@ function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-aa-neutral-50 font-aa flex items-center justify-center">
-      <p className="text-[13px] text-aa-text-secondary">
+      <p className="text-aa-13 text-aa-text-secondary">
         Opening Applications → Overview…
       </p>
     </div>

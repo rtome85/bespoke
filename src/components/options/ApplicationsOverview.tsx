@@ -31,10 +31,6 @@ function shortDate(d: Date): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
-const card = "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
-const cardHead = "text-[13px] font-semibold text-aa-text-primary"
-const cardSub = "text-[12px] text-aa-text-secondary mt-0.5"
-
 export function ApplicationsOverview({ applications }: Props) {
   const derived = useMemo(() => {
     const counts = new Map<ApplicationStatus, number>()
@@ -104,11 +100,11 @@ export function ApplicationsOverview({ applications }: Props) {
 
   if (applications.length === 0) {
     return (
-      <div className={`${card} text-center py-16`}>
-        <p className="text-[14px] font-semibold text-aa-text-primary">
+      <div className="aa-card text-center py-16">
+        <p className="text-aa-sm font-semibold text-aa-text-primary">
           Nothing to chart yet
         </p>
-        <p className="text-[13px] text-aa-text-secondary mt-1">
+        <p className="text-aa-13 text-aa-text-secondary mt-1">
           Track a few applications and this fills in — pipeline, response rate,
           and weekly activity.
         </p>
@@ -140,17 +136,17 @@ export function ApplicationsOverview({ applications }: Props) {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
+      <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary mb-4">
         Overview
       </h1>
       {/* Stat strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {stats.map((s) => (
-          <div key={s.label} className={card}>
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">
+          <div key={s.label} className="aa-card">
+            <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary">
               {s.label}
             </span>
-            <span className="block text-[28px] font-bold text-aa-text-primary leading-none mt-2">
+            <span className="block text-aa-28 font-bold text-aa-text-primary leading-none mt-2">
               {s.value}
             </span>
           </div>
@@ -158,9 +154,9 @@ export function ApplicationsOverview({ applications }: Props) {
       </div>
 
       {/* Pipeline funnel */}
-      <div className={card}>
-        <h3 className={cardHead}>Pipeline</h3>
-        <p className={cardSub}>Applications still live at each stage.</p>
+      <div className="aa-card">
+        <h3 className="aa-card-heading">Pipeline</h3>
+        <p className="aa-card-sub">Applications still live at each stage.</p>
         <hr className="border-0 border-t border-aa-border my-4" />
         <div>
           {derived.funnelStages.map((stage, i) => {
@@ -175,7 +171,7 @@ export function ApplicationsOverview({ applications }: Props) {
                 key={stage}
                 className="flex items-center gap-3 py-2.5 border-b border-aa-border last:border-0">
                 <span
-                  className={`text-[12px] w-[168px] shrink-0 ${
+                  className={`text-aa-caption w-aa-px-168 shrink-0 ${
                     on ? "text-aa-text-primary font-medium" : "text-aa-text-secondary"
                   }`}>
                   {stage}
@@ -188,11 +184,11 @@ export function ApplicationsOverview({ applications }: Props) {
                     />
                   )}
                 </div>
-                <span className="text-[11px] text-aa-text-secondary w-10 text-right tabular-nums">
+                <span className="text-aa-11 text-aa-text-secondary w-10 text-right tabular-nums">
                   {conv === null ? "" : `${conv}%`}
                 </span>
                 <span
-                  className={`text-[13px] font-bold w-6 text-right tabular-nums ${
+                  className={`text-aa-13 font-bold w-6 text-right tabular-nums ${
                     on ? "text-aa-text-primary" : "text-aa-neutral-400"
                   }`}>
                   {count}
@@ -202,7 +198,7 @@ export function ApplicationsOverview({ applications }: Props) {
           })}
           {derived.rejects > 0 && (
             <div className="flex items-center gap-3 py-2.5">
-              <span className="text-[12px] w-[168px] shrink-0 text-aa-error-strong font-medium">
+              <span className="text-aa-caption w-aa-px-168 shrink-0 text-aa-error-strong font-medium">
                 Rejected
               </span>
               <div className="flex-1 h-2 rounded-aa-pill bg-aa-error-soft overflow-hidden">
@@ -212,7 +208,7 @@ export function ApplicationsOverview({ applications }: Props) {
                 />
               </div>
               <span className="w-10" />
-              <span className="text-[13px] font-bold w-6 text-right tabular-nums text-aa-text-primary">
+              <span className="text-aa-13 font-bold w-6 text-right tabular-nums text-aa-text-primary">
                 {derived.rejects}
               </span>
             </div>
@@ -221,23 +217,23 @@ export function ApplicationsOverview({ applications }: Props) {
       </div>
 
       {/* Applications by week */}
-      <div className={card}>
-        <h3 className={cardHead}>Activity</h3>
-        <p className={cardSub}>Applications tracked per week, last 8 weeks.</p>
+      <div className="aa-card">
+        <h3 className="aa-card-heading">Activity</h3>
+        <p className="aa-card-sub">Applications tracked per week, last 8 weeks.</p>
         <hr className="border-0 border-t border-aa-border my-4" />
         <div className="flex items-end gap-2 h-36">
           {derived.weeks.map((w, i) => (
             <div
               key={i}
               className="flex-1 flex flex-col items-center justify-end h-full group">
-              <span className="text-[11px] font-semibold text-aa-text-secondary mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-aa-11 font-semibold text-aa-text-secondary mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {w.count}
               </span>
               <div
                 className="w-full rounded-aa-sm bg-aa-primary group-hover:bg-aa-primary-hover transition-colors"
                 style={{ height: `${Math.max((w.count / maxWeek) * 100, 3)}%` }}
               />
-              <span className="text-[10px] text-aa-text-secondary mt-1.5">
+              <span className="text-aa-10 text-aa-text-secondary mt-1.5">
                 {w.label}
               </span>
             </div>

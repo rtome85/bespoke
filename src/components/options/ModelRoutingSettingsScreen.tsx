@@ -4,13 +4,6 @@ import {
   ModelRouteRow
 } from "~components/options/ModelRouteRow"
 import { ModelRouteSelect } from "~components/options/ModelRouteSelect"
-import {
-  CARD_CLASS,
-  DIVIDER_CLASS,
-  INFO_MESSAGE_CLASS,
-  LABEL_CLASS,
-  SECTION_HEADING_CLASS
-} from "~constants/options"
 import { connectedProviders, decodeRoute } from "~lib/options/modelRouting"
 import type {
   LLMTuningConfig,
@@ -51,7 +44,7 @@ export function ModelRoutingSettingsScreen({
   return (
     <div className="space-y-6">
       {noProviders && (
-        <div className={INFO_MESSAGE_CLASS}>
+        <div className="aa-message-info">
           No AI provider is connected yet. Add one on the{" "}
           <button
             type="button"
@@ -63,12 +56,12 @@ export function ModelRoutingSettingsScreen({
         </div>
       )}
 
-      <div className={CARD_CLASS}>
-        <h2 className={SECTION_HEADING_CLASS}>Assignments</h2>
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Assignments</h2>
         <p className="text-sm text-aa-text-secondary -mt-1">
           Which model runs each job.
         </p>
-        <hr className={DIVIDER_CLASS} />
+        <hr className="aa-divider" />
         <div>
           <ModelRouteRow
             label="Match scoring"
@@ -97,10 +90,10 @@ export function ModelRoutingSettingsScreen({
         </div>
       </div>
 
-      <div className={CARD_CLASS}>
+      <div className="aa-card">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className={SECTION_HEADING_CLASS}>Fallback</h2>
+            <h2 className="aa-section-heading">Fallback</h2>
             <p className="text-sm text-aa-text-secondary -mt-1">
               Retry on a second model when the primary one errors or times out.
             </p>
@@ -120,15 +113,15 @@ export function ModelRoutingSettingsScreen({
               }
               className="w-4 h-4 accent-aa-primary"
             />
-            <span className="text-[12px] font-semibold text-aa-text-secondary">
+            <span className="text-aa-caption font-semibold text-aa-text-secondary">
               {modelRouting.fallback.enabled ? "On" : "Off"}
             </span>
           </label>
         </div>
         {modelRouting.fallback.enabled && (
           <>
-            <hr className={DIVIDER_CLASS} />
-            <label htmlFor="fallback-model" className={LABEL_CLASS}>
+            <hr className="aa-divider" />
+            <label htmlFor="fallback-model" className="aa-label">
               Fallback model
             </label>
             <ModelRouteSelect

@@ -1,12 +1,5 @@
 import { useState } from "react"
 
-import {
-  ACCENT_BUTTON_CLASS,
-  ERROR_MESSAGE_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  SECONDARY_BUTTON_CLASS
-} from "~constants/options"
 import type { Education } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -25,13 +18,6 @@ const validateEducation = (edu: Education): string[] => {
   if (!edu.startDate) errors.push("Start date is required")
   return errors
 }
-
-const labelCls = LABEL_CLASS
-
-const inputCls = INPUT_CLASS
-
-const inputErrorCls =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function EducationEditor({ education, onChange }: EducationEditorProps) {
   const [editingEducation, setEditingEducation] = useState<Education | null>(
@@ -88,18 +74,18 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Degree *</label>
+            <label className="aa-label">Degree *</label>
             <input
               type="text"
               value={edu.degree}
               onChange={(e) => onUpdate({ ...edu, degree: e.target.value })}
               placeholder="e.g., Bachelor of Science"
-              className={hasErrors && !edu.degree ? inputErrorCls : inputCls}
+              className={hasErrors && !edu.degree ? "aa-input-error" : "aa-input"}
             />
           </div>
 
           <div>
-            <label className={labelCls}>Institution *</label>
+            <label className="aa-label">Institution *</label>
             <input
               type="text"
               value={edu.institution}
@@ -108,20 +94,20 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
               }
               placeholder="e.g., University of California"
               className={
-                hasErrors && !edu.institution ? inputErrorCls : inputCls
+                hasErrors && !edu.institution ? "aa-input-error" : "aa-input"
               }
             />
           </div>
         </div>
 
         <div>
-          <label className={labelCls}>Field of Study</label>
+          <label className="aa-label">Field of Study</label>
           <input
             type="text"
             value={edu.fieldOfStudy || ""}
             onChange={(e) => onUpdate({ ...edu, fieldOfStudy: e.target.value })}
             placeholder="e.g., Computer Science"
-            className={inputCls}
+            className="aa-input"
           />
         </div>
 
@@ -146,22 +132,22 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
         </div>
 
         <div>
-          <label className={labelCls}>Description</label>
+          <label className="aa-label">Description</label>
           <textarea
             value={edu.description || ""}
             onChange={(e) => onUpdate({ ...edu, description: e.target.value })}
             placeholder="Describe your coursework, achievements, or relevant projects..."
             rows={3}
             maxLength={300}
-            className={`${inputCls} resize-none`}
+            className="aa-input resize-none"
           />
-          <p className="mt-1 text-[11px] text-aa-text-secondary">
+          <p className="mt-1 text-aa-11 text-aa-text-secondary">
             {(edu.description || "").length}/300 characters
           </p>
         </div>
 
         {hasErrors && (
-          <div className={ERROR_MESSAGE_CLASS}>
+          <div className="aa-message-error">
             {errors.map((error, i) => (
               <p key={i} className="text-sm">
                 • {error}
@@ -182,12 +168,12 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
           </h3>
           {renderEducationItem(editingEducation, 0, setEditingEducation)}
           <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingEducation} className={ACCENT_BUTTON_CLASS}>
+            <button onClick={saveEditingEducation} className="aa-btn-accent">
               Save education
             </button>
             <button
               onClick={() => setEditingEducation(null)}
-              className={SECONDARY_BUTTON_CLASS}>
+              className="aa-btn-secondary">
               Cancel
             </button>
           </div>

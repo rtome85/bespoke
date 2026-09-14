@@ -11,6 +11,10 @@ Quick reminders that bite most often here:
   `pnpm build:firefox`.
 - Never `prettier --write` a whole pre-existing file — the tree isn't uniformly
   formatted; hand-place edits, only auto-format files you created.
+- No arbitrary Tailwind values (`text-[13px]`) and no class-string consts
+  (`const CARD_CLASS = "…"`) — extend the `aa-*` token scale in
+  `tailwind.config.js` or add a class to the `@layer components` block in
+  `src/style.css` instead.
 - Mutate the application list only through `mutateSavedApplications()` in
   `src/storage/savedApplications.ts`.
 - Branch off `dev`, open a PR against `dev`, never commit to `dev` directly.

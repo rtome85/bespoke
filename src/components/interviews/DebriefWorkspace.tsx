@@ -43,11 +43,6 @@ const OUTCOMES: { value: DebriefOutcome; label: string }[] = [
   { value: "waiting", label: "Still waiting" }
 ]
 
-const card = "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
-const fieldLabel = "block text-[13px] font-semibold text-aa-text-primary mb-1.5"
-const textField =
-  "w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors"
-
 export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
   const found = useMemo(() => {
     for (const app of apps) {
@@ -124,7 +119,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
         <div className="flex items-center gap-2 min-w-0">
           <BackLink label="Debriefs" onClick={onBack} />
           <span className="text-aa-neutral-400">/</span>
-          <span className="text-[14px] font-semibold text-aa-text-primary truncate">
+          <span className="text-aa-sm font-semibold text-aa-text-primary truncate">
             {roundLabel(round)} — {app.company}
             {round.date ? ` · ${round.date}` : ""}
           </span>
@@ -133,7 +128,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
           type="button"
           onClick={save}
           disabled={busy}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+          className="shrink-0 inline-flex items-center gap-2 px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
           {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
           {saveLabel}
         </button>
@@ -145,7 +140,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
           round={round}
           right={
             <span
-              className={`inline-block px-2 py-0.5 rounded-aa-pill text-[10px] font-bold uppercase tracking-wide ${
+              className={`inline-block px-2 py-0.5 rounded-aa-pill text-aa-10 font-bold uppercase tracking-wide ${
                 logged
                   ? "bg-aa-success-soft text-aa-success-strong"
                   : "bg-aa-warning-soft text-aa-warning-strong"
@@ -157,11 +152,11 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
           }
         />
 
-        {error && <p className="text-[12px] text-aa-error-strong">{error}</p>}
+        {error && <p className="text-aa-caption text-aa-error-strong">{error}</p>}
 
-        <div className={`${card} space-y-5`}>
+        <div className="aa-card space-y-5">
           <div>
-            <span className={fieldLabel}>How it went</span>
+            <span className="aa-workspace-field-label">How it went</span>
             <RatingInput
               value={rating}
               onChange={setRating}
@@ -172,12 +167,12 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
               value={assessment}
               onChange={(e) => setAssessment(e.target.value)}
               placeholder="One line — how did it actually go?"
-              className={`${textField} mt-2`}
+              className="aa-workspace-field-input mt-2"
             />
           </div>
 
           <div>
-            <label className={fieldLabel} htmlFor="debrief-questions">
+            <label className="aa-workspace-field-label" htmlFor="debrief-questions">
               Questions they asked
             </label>
             <textarea
@@ -186,12 +181,12 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
               onChange={(e) => setQuestionsAsked(e.target.value)}
               rows={4}
               placeholder="What came up — so you can prep the next round."
-              className={`${textField} resize-y`}
+              className="aa-workspace-field-input resize-y"
             />
           </div>
 
           <div>
-            <span className={fieldLabel}>Follow-ups</span>
+            <span className="aa-workspace-field-label">Follow-ups</span>
             <Checklist
               hidePin
               items={followUps.map((f) => ({
@@ -209,7 +204,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
           </div>
 
           <div>
-            <label className={fieldLabel} htmlFor="debrief-outcome">
+            <label className="aa-workspace-field-label" htmlFor="debrief-outcome">
               Outcome
             </label>
             <select
@@ -218,7 +213,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
               onChange={(e) =>
                 setOutcome(e.target.value as DebriefOutcome | "")
               }
-              className={textField}>
+              className="aa-workspace-field-input">
               {outcome === "" && (
                 <option value="" disabled>
                   Choose an outcome…
@@ -230,7 +225,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-aa-text-secondary mt-1.5">
+            <p className="text-aa-11 text-aa-text-secondary mt-1.5">
               {outcome === "offer"
                 ? "Marks the application Offer."
                 : outcome === "reject"

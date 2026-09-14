@@ -19,27 +19,27 @@ export function DocumentGenerationControls({
     <div className="flex flex-col gap-aa-2">
       {isLoading ? (
         <div className="flex flex-col gap-aa-2">
-          <div className="w-full bg-aa-neutral-200 h-[10px] rounded-aa-pill overflow-hidden">
+          <div className="w-full bg-aa-neutral-200 h-2.5 rounded-aa-pill overflow-hidden">
             <div
-              className="h-[10px] bg-aa-primary transition-all duration-300 ease-out"
+              className="h-2.5 bg-aa-primary transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-[12px] text-aa-text-secondary text-center">
+          <p className="text-aa-caption text-aa-text-secondary text-center">
             Generating your documents… this may take a minute
           </p>
         </div>
       ) : (
         <button
           onClick={onGenerate}
-          className="flex items-center justify-center gap-aa-2 py-[12px] rounded-aa-md bg-aa-primary text-aa-text-on-primary text-[14px] font-semibold hover:bg-aa-primary-hover transition-colors">
+          className="flex items-center justify-center gap-aa-2 py-3 rounded-aa-md bg-aa-primary text-aa-text-on-primary text-aa-sm font-semibold hover:bg-aa-primary-hover transition-colors">
           <Sparkles size={16} />
           {hasDocuments
             ? "Regenerate CV + cover letter"
             : "Generate CV + cover letter"}
         </button>
       )}
-      {error && <p className="text-[13px] text-aa-error-strong">{error}</p>}
+      {error && <p className="text-aa-13 text-aa-error-strong">{error}</p>}
     </div>
   )
 }

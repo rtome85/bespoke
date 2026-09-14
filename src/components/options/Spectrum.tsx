@@ -16,7 +16,7 @@ export function Spectrum({
   const frac = value / max
 
   return (
-    <div className="w-[460px] max-w-full flex flex-col gap-3">
+    <div className="w-aa-px-460 max-w-full flex flex-col gap-3">
       <div className="relative h-5">
         <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1 rounded-aa-pill bg-aa-neutral-200" />
         <div
@@ -33,7 +33,7 @@ export function Spectrum({
           />
         ))}
         <span
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[18px] h-[18px] rounded-full bg-aa-surface border-[3px] border-aa-primary"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-aa-px-18 h-aa-px-18 rounded-full bg-aa-surface border-3 border-aa-primary"
           style={{ left: `calc(8px + (100% - 16px) * ${frac})` }}
         />
         <input
@@ -53,7 +53,7 @@ export function Spectrum({
             key={s}
             type="button"
             onClick={() => onChange(i)}
-            className={`text-[11px] bg-transparent border-0 p-0 cursor-pointer ${
+            className={`text-aa-11 bg-transparent border-0 p-0 cursor-pointer ${
               i === value
                 ? "text-aa-primary font-bold"
                 : "text-aa-text-secondary font-normal"

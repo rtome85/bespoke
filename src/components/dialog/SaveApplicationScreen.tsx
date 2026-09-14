@@ -3,10 +3,6 @@ import type { Dispatch, SetStateAction } from "react"
 
 import { ApplicationDetailsFields } from "~components/dialog/ApplicationDetailsFields"
 import { ApplicationTagsField } from "~components/dialog/ApplicationTagsField"
-import {
-  FORM_FIELD_INPUT_CLASS,
-  FORM_FIELD_LABEL_CLASS
-} from "~constants/dialog"
 import type { SaveApplicationFormData } from "~types/dialog"
 import type { SavedApplication } from "~types/userProfile"
 
@@ -41,12 +37,12 @@ export function SaveApplicationScreen({
 }: Props) {
   return (
     <div className="min-h-screen bg-aa-surface-subtle flex flex-col font-aa text-aa-text-primary">
-      <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
+      <div className="h-aa-px-60 shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
         <div className="flex flex-col gap-0.5">
-          <h1 className="text-[17px] font-bold tracking-[-0.3px] text-aa-text-primary leading-none">
+          <h1 className="text-aa-17 font-bold tracking-aa-tighter-3 text-aa-text-primary leading-none">
             {editingApplication ? "Edit application" : "Save application"}
           </h1>
-          <p className="text-[12px] text-aa-text-secondary leading-none">
+          <p className="text-aa-caption text-aa-text-secondary leading-none">
             Keep your pipeline up to date
           </p>
         </div>
@@ -72,7 +68,7 @@ export function SaveApplicationScreen({
           <div>
             <label
               htmlFor="save-application-notes"
-              className={FORM_FIELD_LABEL_CLASS}>
+              className="aa-field-label">
               Notes
             </label>
             <textarea
@@ -86,12 +82,12 @@ export function SaveApplicationScreen({
                 }))
               }
               placeholder="Interview notes, contacts, reminders…"
-              className={`${FORM_FIELD_INPUT_CLASS} resize-none`}
+              className={`aa-field-input resize-none`}
             />
           </div>
 
           {showSaveDocuments && (
-            <label className="flex items-center gap-2.5 text-[13px] text-aa-text-primary cursor-pointer">
+            <label className="flex items-center gap-2.5 text-aa-13 text-aa-text-primary cursor-pointer">
               <input
                 type="checkbox"
                 checked={saveDocuments}
@@ -113,7 +109,7 @@ export function SaveApplicationScreen({
                   onClick={onGenerateDocuments}
                   disabled={generatingDocuments}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5
-                           bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
+                           bg-aa-primary text-aa-text-on-primary rounded-aa-md text-aa-13 font-semibold
                            hover:bg-aa-primary-hover transition-colors
                            disabled:opacity-50 disabled:cursor-not-allowed">
                   {generatingDocuments ? (
@@ -139,13 +135,13 @@ export function SaveApplicationScreen({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onSave}
-              className="flex-1 px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold
+              className="flex-1 px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-aa-13 font-semibold
                          hover:bg-aa-primary-hover transition-colors">
               Save
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-aa-border text-aa-text-secondary rounded-aa-md text-[13px] font-semibold
+              className="flex-1 px-4 py-2.5 border border-aa-border text-aa-text-secondary rounded-aa-md text-aa-13 font-semibold
                          hover:text-aa-text-primary hover:border-aa-neutral-400 transition-colors">
               Cancel
             </button>

@@ -37,10 +37,10 @@ export function SettingsArea({
       <div className="flex-1 overflow-y-auto px-8 py-8 min-w-0">
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex flex-col items-baseline">
-              <h1 className="text-[28px] font-semibold text-aa-text-primary shrink-0">
+              <h1 className="text-aa-28 font-semibold text-aa-text-primary shrink-0">
                 {activeNav?.label ?? ""}
               </h1>
-              <p className="text-[13px] text-aa-text-secondary truncate">
+              <p className="text-aa-13 text-aa-text-secondary truncate">
                 {activeNav?.subtitle ?? ""}
               </p>
             </div>

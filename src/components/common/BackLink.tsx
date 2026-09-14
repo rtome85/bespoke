@@ -15,7 +15,7 @@ export function BackLink({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 border-0 bg-transparent p-0 text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors cursor-pointer">
+      className="inline-flex items-center gap-1 border-0 bg-transparent p-0 text-aa-13 font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors cursor-pointer">
       <ChevronLeft className="w-4 h-4" />
       {label}
     </button>

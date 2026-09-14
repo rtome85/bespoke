@@ -1,4 +1,3 @@
-import { HINT_CLASS, LABEL_CLASS, TEXTAREA_CLASS } from "~constants/options"
 
 interface Props {
   id: string
@@ -21,7 +20,7 @@ export function PromptEditorField({
 }: Props) {
   return (
     <div>
-      <label htmlFor={id} className={LABEL_CLASS}>
+      <label htmlFor={id} className="aa-label">
         {label}
       </label>
       <textarea
@@ -29,14 +28,14 @@ export function PromptEditorField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={rows}
-        className={TEXTAREA_CLASS}
+        className="aa-textarea"
       />
       <div className="flex items-center justify-between mt-1">
-        <p className={HINT_CLASS}>{hint}</p>
+        <p className="aa-hint">{hint}</p>
         <button
           type="button"
           onClick={onExpand}
-          className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
+          className="px-3 py-1 text-aa-10 font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
           Expand
         </button>
       </div>

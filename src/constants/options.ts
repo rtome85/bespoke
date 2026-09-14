@@ -104,43 +104,6 @@ export const NAV_GROUPS: SettingsNavGroup[] = [
   }
 ]
 
-export const CARD_CLASS =
-  "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
-
-export const INPUT_CLASS =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors"
-
-export const TEXTAREA_CLASS =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-secondary text-xs font-mono leading-relaxed focus:outline-none focus:border-aa-primary transition-colors"
-
-export const LABEL_CLASS =
-  "block text-[12px] font-semibold text-aa-text-secondary mb-2"
-
-export const HINT_CLASS = "text-[11px] text-aa-text-secondary mt-1"
-
-export const SECTION_HEADING_CLASS =
-  "text-[16px] font-semibold tracking-[-0.2px] text-aa-text-primary mb-3"
-
-export const OUTLINE_BUTTON_CLASS =
-  "px-4 py-[9px] bg-aa-surface border border-aa-primary text-aa-primary rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-soft"
-
-export const ACCENT_BUTTON_CLASS =
-  "px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-hover"
-
-export const SECONDARY_BUTTON_CLASS =
-  "px-4 py-[9px] bg-aa-surface border border-aa-border text-aa-text-secondary rounded-aa-md text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-neutral-100"
-
-export const SUCCESS_MESSAGE_CLASS =
-  "bg-aa-success-soft text-aa-success-strong px-4 py-3 rounded-aa-md text-sm"
-
-export const ERROR_MESSAGE_CLASS =
-  "bg-aa-error-soft text-aa-error-strong px-4 py-3 rounded-aa-md text-sm"
-
-export const INFO_MESSAGE_CLASS =
-  "bg-aa-neutral-50 border border-aa-border text-aa-neutral-700 px-4 py-3 rounded-aa-md text-sm"
-
-export const DIVIDER_CLASS = "border-0 border-t border-aa-border my-5"
-
 export const PROVIDER_IDS: LLMProviderId[] = [
   "ollama",
   "openai",

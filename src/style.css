@@ -135,8 +135,139 @@
   --aa-radius-lg: 12px;
   --aa-radius-xl: 16px;
   --aa-radius-pill: 9999px;
+
+  /* Layout constants */
+  --aa-appbar-height: 52px;
 }
 
 body {
   font-family: var(--font-family-base);
+}
+
+/* ---------------------------------------------------------------------
+   Bespoke component classes.
+   Reusable Tailwind compositions used from more than one place, or
+   previously held in a JS/TS const — those must live here, not in
+   source files. See AGENTS.md conventions.
+   --------------------------------------------------------------------- */
+@layer components {
+  /* src/constants/options.ts */
+  .aa-card {
+    @apply bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6;
+  }
+  .aa-input {
+    @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors;
+  }
+  .aa-textarea {
+    @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-secondary text-xs font-mono leading-relaxed focus:outline-none focus:border-aa-primary transition-colors;
+  }
+  .aa-label {
+    @apply block text-aa-caption font-semibold text-aa-text-secondary mb-2;
+  }
+  .aa-hint {
+    @apply text-aa-11 text-aa-text-secondary mt-1;
+  }
+  .aa-section-heading {
+    @apply text-aa-body font-semibold tracking-aa-tighter-2 text-aa-text-primary mb-3;
+  }
+  .aa-btn-outline {
+    @apply px-4 py-aa-px-9 bg-aa-surface border border-aa-primary text-aa-primary rounded-aa-md text-aa-13 font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-soft;
+  }
+  .aa-btn-accent {
+    @apply px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-primary-hover;
+  }
+  .aa-btn-secondary {
+    @apply px-4 py-aa-px-9 bg-aa-surface border border-aa-border text-aa-text-secondary rounded-aa-md text-aa-13 font-semibold cursor-pointer disabled:opacity-50 transition-colors hover:bg-aa-neutral-100;
+  }
+  .aa-message-success {
+    @apply bg-aa-success-soft text-aa-success-strong px-4 py-3 rounded-aa-md text-sm;
+  }
+  .aa-message-error {
+    @apply bg-aa-error-soft text-aa-error-strong px-4 py-3 rounded-aa-md text-sm;
+  }
+  .aa-message-info {
+    @apply bg-aa-neutral-50 border border-aa-border text-aa-neutral-700 px-4 py-3 rounded-aa-md text-sm;
+  }
+  .aa-divider {
+    @apply border-0 border-t border-aa-border my-5;
+  }
+
+  /* src/constants/dialog.ts */
+  .aa-field-label {
+    @apply block text-aa-caption font-semibold text-aa-text-secondary mb-1.5;
+  }
+  .aa-field-input {
+    @apply w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm placeholder:text-aa-neutral-400 focus:outline-none focus:border-aa-primary transition-colors;
+  }
+
+  /* src/components/options/OutputStyleSettingsScreen.tsx */
+  .aa-settings-section-label {
+    @apply text-aa-11 font-bold tracking-aa-wider-8 text-aa-text-secondary pt-1;
+  }
+  .aa-settings-row {
+    @apply border-b border-aa-border-subtle py-3 space-y-3 first:pt-0;
+  }
+  .aa-settings-row-title {
+    @apply text-aa-13 font-medium text-aa-text-primary;
+  }
+  .aa-settings-row-sub {
+    @apply text-aa-11 leading-aa-1.4 text-aa-text-secondary;
+  }
+  .aa-settings-sample-label {
+    @apply text-aa-10 font-bold tracking-wider text-aa-text-secondary;
+  }
+  .aa-settings-sample-body {
+    @apply text-aa-13 leading-relaxed text-aa-neutral-700;
+  }
+
+  /* src/components/interviews/AddRoundDrawer.tsx */
+  .aa-drawer-field-label {
+    @apply block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5;
+  }
+  .aa-drawer-field-input {
+    @apply w-full px-3 py-aa-px-9 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors;
+  }
+
+  /* src/components/interviews/DebriefWorkspace.tsx */
+  .aa-workspace-field-label {
+    @apply block text-aa-13 font-semibold text-aa-text-primary mb-1.5;
+  }
+  .aa-workspace-field-input {
+    @apply w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors;
+  }
+
+  /* src/components/interviews/PrepWorkspace.tsx */
+  .aa-btn-link {
+    @apply text-aa-caption font-semibold text-aa-primary hover:underline disabled:opacity-50 disabled:no-underline;
+  }
+
+  /* src/components/options/ApplicationsList.tsx */
+  .aa-table-heading {
+    @apply text-aa-10 font-semibold uppercase tracking-wider text-aa-text-secondary;
+  }
+
+  /* src/components/options/ApplicationsOverview.tsx */
+  .aa-card-heading {
+    @apply text-aa-13 font-semibold text-aa-text-primary;
+  }
+  .aa-card-sub {
+    @apply text-aa-caption text-aa-text-secondary mt-0.5;
+  }
+
+  /* src/components/interviews/DebriefsListPage.tsx — same surface as
+     .aa-card but without built-in padding (callers vary it). */
+  .aa-card-base {
+    @apply bg-aa-surface border border-aa-border rounded-aa-lg;
+  }
+
+  /* src/components/profile/{Education,CertificateEditor,ProjectEditor,
+     ExperienceEditor}.tsx — shared invalid-field input style. */
+  .aa-input-error {
+    @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors;
+  }
+
+  /* src/components/documentPreview/DocumentPreviewPanel.tsx */
+  .aa-toolbar-btn {
+    @apply w-7 h-7 grid place-items-center rounded-aa-sm text-aa-neutral-500 hover:bg-aa-neutral-200 transition-colors;
+  }
 }

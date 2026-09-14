@@ -46,7 +46,7 @@ export function ScoreGauge({
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="text-[13px] font-bold leading-none"
+          className="text-aa-13 font-bold leading-none"
           style={{ color: textColor }}>
           {percentage}%
         </span>

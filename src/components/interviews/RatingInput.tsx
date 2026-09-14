@@ -63,7 +63,7 @@ export function RatingInput({ value, onChange, label = "Rating" }: Props) {
           />
         )
       })}
-      <span className="ml-1.5 text-[12px] text-aa-text-secondary tabular-nums">
+      <span className="ml-1.5 text-aa-caption text-aa-text-secondary tabular-nums">
         {value != null ? `${value}/5` : "—"}
       </span>
     </div>

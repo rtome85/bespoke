@@ -56,7 +56,7 @@ export function SegmentedControl<T extends string>({
       role="radiogroup"
       aria-label={ariaLabel}
       onKeyDown={onKeyDown}
-      className="inline-flex rounded-aa-md border border-aa-border p-[3px]">
+      className="inline-flex rounded-aa-md border border-aa-border p-aa-px-3">
       {options.map((opt, i) => {
         const on = value === opt.value
         return (
@@ -67,7 +67,7 @@ export function SegmentedControl<T extends string>({
             aria-checked={on}
             tabIndex={on || (!hasSelection && i === 0) ? 0 : -1}
             onClick={() => onChange(opt.value)}
-            className={`px-4 py-2 rounded-aa-sm text-[12px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary ${
+            className={`px-4 py-2 rounded-aa-sm text-aa-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary ${
               on
                 ? "bg-aa-primary text-aa-text-on-primary"
                 : "text-aa-text-secondary hover:text-aa-text-primary"

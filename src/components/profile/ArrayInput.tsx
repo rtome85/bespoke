@@ -2,8 +2,6 @@ import { Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import type { ReactNode } from "react"
 
-import { ACCENT_BUTTON_CLASS, OUTLINE_BUTTON_CLASS } from "~constants/options"
-
 interface ArrayInputProps<T> {
   items: T[]
   getItemKey: (item: T) => string
@@ -43,7 +41,7 @@ export function ArrayInput<T>({
     return (
       <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 py-8 text-center">
         <p className="text-sm text-aa-text-secondary mb-4">{emptyMessage}</p>
-        <button onClick={onAdd} className={ACCENT_BUTTON_CLASS}>
+        <button onClick={onAdd} className="aa-btn-accent">
           Add {addButtonText}
         </button>
       </div>
@@ -59,7 +57,7 @@ export function ArrayInput<T>({
           <div
             key={key}
             className="rounded-aa-md border border-aa-border bg-aa-surface">
-            <div className="flex items-center gap-3 px-[14px] py-3">
+            <div className="flex items-center gap-3 px-3.5 py-3">
               {renderSummary ? (
                 renderSummary(item, index)
               ) : (
@@ -72,19 +70,19 @@ export function ArrayInput<T>({
                 onClick={() => toggleExpanded(key)}
                 className="shrink-0 text-aa-neutral-500 hover:text-aa-text-primary transition-colors"
                 title={isExpanded ? "Close" : "Edit item"}>
-                <Pencil className="w-[15px] h-[15px]" />
+                <Pencil className="w-aa-px-15 h-aa-px-15" />
               </button>
 
               <button
                 onClick={() => onRemove(index)}
                 className="shrink-0 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
                 title="Delete item">
-                <Trash2 className="w-[15px] h-[15px]" />
+                <Trash2 className="w-aa-px-15 h-aa-px-15" />
               </button>
             </div>
 
             {isExpanded && (
-              <div className="px-[14px] pb-4 border-t border-aa-border pt-4">
+              <div className="px-3.5 pb-4 border-t border-aa-border pt-4">
                 {renderItem(item, index, (updatedItem) =>
                   onUpdate(index, updatedItem)
                 )}
@@ -96,8 +94,8 @@ export function ArrayInput<T>({
 
       <button
         onClick={onAdd}
-        className={`w-full flex items-center justify-center gap-2 ${OUTLINE_BUTTON_CLASS}`}>
-        <Plus className="w-[15px] h-[15px]" />
+        className={`w-full flex items-center justify-center gap-2 aa-btn-outline`}>
+        <Plus className="w-aa-px-15 h-aa-px-15" />
         Add {addButtonText}
       </button>
     </div>

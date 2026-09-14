@@ -39,9 +39,6 @@ interface Props {
   }) => void
 }
 
-const toolbarBtn =
-  "w-7 h-7 grid place-items-center rounded-aa-sm text-aa-neutral-500 hover:bg-aa-neutral-200 transition-colors"
-
 // Fills its own dedicated browser window (opened centered on screen by
 // background/messages/openDocumentPreview.ts) — a real window, not an
 // overlay, since a chrome.sidePanel can't paint outside its own docked
@@ -229,7 +226,7 @@ export function DocumentPreviewPanel({
             onClick={() => wrapSelection("**")}
             disabled={viewMode === "preview"}
             aria-label="Bold"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Bold className="w-3.5 h-3.5" />
           </button>
           <button
@@ -237,7 +234,7 @@ export function DocumentPreviewPanel({
             onClick={() => wrapSelection("*")}
             disabled={viewMode === "preview"}
             aria-label="Italic"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Italic className="w-3.5 h-3.5" />
           </button>
           <button
@@ -245,7 +242,7 @@ export function DocumentPreviewPanel({
             onClick={() => insertLink()}
             disabled={viewMode === "preview"}
             aria-label="Insert link"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Link className="w-3.5 h-3.5" />
           </button>
           <button
@@ -253,7 +250,7 @@ export function DocumentPreviewPanel({
             onClick={toggleBullets}
             disabled={viewMode === "preview"}
             aria-label="Toggle bullet list"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <List className="w-3.5 h-3.5" />
           </button>
           <span className="w-px h-4 bg-aa-border mx-0.5" />
@@ -262,7 +259,7 @@ export function DocumentPreviewPanel({
             onClick={() => setHeading(1)}
             disabled={viewMode === "preview"}
             aria-label="Heading 1"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Heading1 className="w-3.5 h-3.5" />
           </button>
           <button
@@ -270,7 +267,7 @@ export function DocumentPreviewPanel({
             onClick={() => setHeading(2)}
             disabled={viewMode === "preview"}
             aria-label="Heading 2"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Heading2 className="w-3.5 h-3.5" />
           </button>
           <button
@@ -278,7 +275,7 @@ export function DocumentPreviewPanel({
             onClick={() => setHeading(3)}
             disabled={viewMode === "preview"}
             aria-label="Heading 3"
-            className={toolbarBtn}>
+            className="aa-toolbar-btn">
             <Heading3 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -296,7 +293,7 @@ export function DocumentPreviewPanel({
             type="button"
             onClick={() => setContent(original)}
             disabled={!isEdited}
-            className="flex items-center gap-1.5 text-[11px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            className="flex items-center gap-1.5 text-aa-11 font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             <RotateCcw className="w-3 h-3" />
             Revert
           </button>
@@ -310,10 +307,10 @@ export function DocumentPreviewPanel({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             spellCheck={false}
-            className="w-full h-full min-h-[320px] px-4 py-3.5 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] leading-relaxed text-aa-text-primary font-mono focus:outline-none focus:border-aa-primary transition-colors resize-none"
+            className="w-full h-full min-h-80 px-4 py-3.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 leading-relaxed text-aa-text-primary font-mono focus:outline-none focus:border-aa-primary transition-colors resize-none"
           />
         ) : (
-          <div className="min-h-[320px] h-full overflow-y-auto px-8 py-6 bg-aa-surface border border-aa-border rounded-aa-md">
+          <div className="min-h-80 h-full overflow-y-auto px-8 py-6 bg-aa-surface border border-aa-border rounded-aa-md">
             <MarkdownPreview content={content} />
           </div>
         )}
@@ -321,7 +318,7 @@ export function DocumentPreviewPanel({
 
       <div className="shrink-0 border-t border-aa-border bg-aa-surface-subtle px-5 py-3.5 flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-1.5 text-[11px] text-aa-text-secondary">
+          <span className="flex items-center gap-1.5 text-aa-11 text-aa-text-secondary">
             <Check className="w-3 h-3 text-aa-success" />
             Edits save automatically
           </span>
@@ -329,21 +326,21 @@ export function DocumentPreviewPanel({
             <button
               type="button"
               onClick={handleDownloadMarkdown}
-              className="flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-3.5 py-2 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+              className="flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-3.5 py-2 text-aa-11 font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
               <FileText className="w-3.5 h-3.5" />
               Markdown
             </button>
             <button
               type="button"
               onClick={handleDownloadPdf}
-              className="flex items-center gap-1.5 rounded-aa-sm bg-aa-primary px-3.5 py-2 text-[11px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+              className="flex items-center gap-1.5 rounded-aa-sm bg-aa-primary px-3.5 py-2 text-aa-11 font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
               <Download className="w-3.5 h-3.5" />
               PDF
             </button>
           </div>
         </div>
         {downloadError && (
-          <p className="text-[12px] text-aa-error-strong">{downloadError}</p>
+          <p className="text-aa-caption text-aa-error-strong">{downloadError}</p>
         )}
       </div>
     </div>

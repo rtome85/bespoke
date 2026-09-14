@@ -5,11 +5,6 @@ import { LanguageEditor } from "~components/profile/LanguageEditor"
 import { PersonalInfo } from "~components/profile/PersonalInfo"
 import { ProjectEditor } from "~components/profile/ProjectEditor"
 import { SkillEditor } from "~components/profile/SkillEditor"
-import {
-  CARD_CLASS,
-  DIVIDER_CLASS,
-  SECTION_HEADING_CLASS
-} from "~constants/options"
 import type { UserProfile } from "~types/userProfile"
 
 export type ProfileSettingsView =
@@ -29,9 +24,9 @@ interface Props {
 export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
   if (view === "personal-info") {
     return (
-      <div className={CARD_CLASS}>
-        <h2 className={SECTION_HEADING_CLASS}>Personal Information</h2>
-        <hr className={DIVIDER_CLASS} />
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Personal Information</h2>
+        <hr className="aa-divider" />
         <PersonalInfo
           personalInfo={userProfile.personalInfo}
           onChange={(personalInfo) =>
@@ -45,17 +40,17 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
   if (view === "education") {
     return (
       <div className="space-y-6">
-        <div className={CARD_CLASS}>
-          <h2 className={SECTION_HEADING_CLASS}>Education</h2>
-          <hr className={DIVIDER_CLASS} />
+        <div className="aa-card">
+          <h2 className="aa-section-heading">Education</h2>
+          <hr className="aa-divider" />
           <EducationEditor
             education={userProfile.education}
             onChange={(education) => onChange({ ...userProfile, education })}
           />
         </div>
 
-        <div className={CARD_CLASS}>
-          <h2 className={SECTION_HEADING_CLASS}>Certificates</h2>
+        <div className="aa-card">
+          <h2 className="aa-section-heading">Certificates</h2>
           <p className="text-sm text-aa-text-secondary mb-4">
             Certifications, online courses, bootcamps and professional training.
           </p>
@@ -72,9 +67,9 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "skills") {
     return (
-      <div className={CARD_CLASS}>
-        <h2 className={SECTION_HEADING_CLASS}>Skills &amp; Expertise</h2>
-        <hr className={DIVIDER_CLASS} />
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Skills &amp; Expertise</h2>
+        <hr className="aa-divider" />
         <SkillEditor
           skills={userProfile.skills}
           onChange={(skills) => onChange({ ...userProfile, skills })}
@@ -85,9 +80,9 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "experience") {
     return (
-      <div className={CARD_CLASS}>
-        <h2 className={SECTION_HEADING_CLASS}>Work Experience</h2>
-        <hr className={DIVIDER_CLASS} />
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Work Experience</h2>
+        <hr className="aa-divider" />
         <ExperienceEditor
           experiences={userProfile.workExperience}
           onChange={(workExperience) =>
@@ -100,9 +95,9 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "projects") {
     return (
-      <div className={CARD_CLASS}>
-        <h2 className={SECTION_HEADING_CLASS}>Personal Projects</h2>
-        <hr className={DIVIDER_CLASS} />
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Personal Projects</h2>
+        <hr className="aa-divider" />
         <ProjectEditor
           projects={userProfile.personalProjects}
           onChange={(personalProjects) =>
@@ -114,9 +109,9 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
   }
 
   return (
-    <div className={CARD_CLASS}>
-      <h2 className={SECTION_HEADING_CLASS}>Languages</h2>
-      <hr className={DIVIDER_CLASS} />
+    <div className="aa-card">
+      <h2 className="aa-section-heading">Languages</h2>
+      <hr className="aa-divider" />
       <LanguageEditor
         languages={userProfile.languages}
         onChange={(languages) => onChange({ ...userProfile, languages })}

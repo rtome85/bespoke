@@ -1,9 +1,5 @@
 import type { Dispatch, SetStateAction } from "react"
 
-import {
-  FORM_FIELD_INPUT_CLASS,
-  FORM_FIELD_LABEL_CLASS
-} from "~constants/dialog"
 import type { SaveApplicationFormData } from "~types/dialog"
 import {
   APPLICATION_STATUSES,
@@ -21,7 +17,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
       <div>
         <label
           htmlFor="save-application-company"
-          className={FORM_FIELD_LABEL_CLASS}>
+          className="aa-field-label">
           Company *
         </label>
         <input
@@ -34,14 +30,14 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
               company: event.target.value
             }))
           }
-          className={FORM_FIELD_INPUT_CLASS}
+          className="aa-field-input"
         />
       </div>
 
       <div>
         <label
           htmlFor="save-application-job-title"
-          className={FORM_FIELD_LABEL_CLASS}>
+          className="aa-field-label">
           Job title *
         </label>
         <input
@@ -54,7 +50,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
               jobTitle: event.target.value
             }))
           }
-          className={FORM_FIELD_INPUT_CLASS}
+          className="aa-field-input"
         />
       </div>
 
@@ -62,7 +58,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
         <div className="flex-1">
           <label
             htmlFor="save-application-status"
-            className={FORM_FIELD_LABEL_CLASS}>
+            className="aa-field-label">
             Status
           </label>
           <select
@@ -74,7 +70,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
                 status: event.target.value as ApplicationStatus
               }))
             }
-            className={FORM_FIELD_INPUT_CLASS}>
+            className="aa-field-input">
             {APPLICATION_STATUSES.map((status) => (
               <option key={status} value={status}>
                 {status}
@@ -85,7 +81,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
         <div className="flex-1">
           <label
             htmlFor="save-application-date"
-            className={FORM_FIELD_LABEL_CLASS}>
+            className="aa-field-label">
             Date applied *
           </label>
           <input
@@ -98,7 +94,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
                 date: event.target.value
               }))
             }
-            className={FORM_FIELD_INPUT_CLASS}
+            className="aa-field-input"
           />
         </div>
       </div>
@@ -106,7 +102,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
       <div>
         <label
           htmlFor="save-application-job-url"
-          className={FORM_FIELD_LABEL_CLASS}>
+          className="aa-field-label">
           Job posting URL
         </label>
         <input
@@ -120,7 +116,7 @@ export function ApplicationDetailsFields({ formData, setFormData }: Props) {
             }))
           }
           placeholder="https://…"
-          className={FORM_FIELD_INPUT_CLASS}
+          className="aa-field-input"
         />
       </div>
     </div>

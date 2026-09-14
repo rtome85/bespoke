@@ -30,17 +30,17 @@ export function RoundStrip({ app, round, right, onViewInSchedule }: Props) {
   return (
     <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-4 flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-[15px] font-semibold text-aa-text-primary truncate">
+        <p className="text-aa-15 font-semibold text-aa-text-primary truncate">
           {app.company} — {roundLabel(round)}
         </p>
-        <p className="text-[12px] text-aa-text-secondary mt-0.5 truncate">
+        <p className="text-aa-caption text-aa-text-secondary mt-0.5 truncate">
           {facts || "Not scheduled yet"}
         </p>
         {onViewInSchedule && (
           <button
             type="button"
             onClick={onViewInSchedule}
-            className="inline-flex items-center gap-0.5 mt-1.5 text-[12px] font-semibold text-aa-primary hover:underline">
+            className="inline-flex items-center gap-0.5 mt-1.5 text-aa-caption font-semibold text-aa-primary hover:underline">
             View in Schedule
             <ChevronRight className="w-3.5 h-3.5" />
           </button>

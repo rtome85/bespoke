@@ -1,4 +1,3 @@
-import { INPUT_CLASS } from "~constants/options"
 import { encodeRoute, providerModels } from "~lib/options/modelRouting"
 import {
   PROVIDER_META,
@@ -39,7 +38,7 @@ export function ModelRouteSelect({
       value={targetRoute}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
-      className={`${INPUT_CLASS} disabled:opacity-50 disabled:cursor-not-allowed`}>
+      className={`aa-input disabled:opacity-50 disabled:cursor-not-allowed`}>
       {!hasTargetOption && (
         <option value={targetRoute}>
           {PROVIDER_META[target.provider].name} · {target.model} (not connected)

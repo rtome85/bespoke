@@ -1,13 +1,6 @@
 import { RefreshCw } from "lucide-react"
 
 import {
-  HINT_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  OUTLINE_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS
-} from "~constants/options"
-import {
   PROVIDER_META,
   type LLMProviderId,
   type ProviderConfig
@@ -41,8 +34,8 @@ export function ProviderConfigurationFields({
     <div className="border-t border-aa-border p-aa-5 space-y-5">
       {meta.local && (
         <div>
-          <span className={LABEL_CLASS}>Endpoint</span>
-          <div className="inline-flex rounded-aa-md border border-aa-border p-[3px]">
+          <span className="aa-label">Endpoint</span>
+          <div className="inline-flex rounded-aa-md border border-aa-border p-aa-px-3">
             {[
               {
                 label: "Ollama Cloud",
@@ -60,7 +53,7 @@ export function ProviderConfigurationFields({
                   key={option.label}
                   type="button"
                   onClick={() => onUpdate({ baseUrl: option.url })}
-                  className={`px-3 py-1.5 rounded-aa-sm text-[12px] font-semibold transition-colors ${
+                  className={`px-3 py-1.5 rounded-aa-sm text-aa-caption font-semibold transition-colors ${
                     selected
                       ? "bg-aa-primary text-aa-text-on-primary"
                       : "text-aa-text-secondary hover:text-aa-text-primary"
@@ -74,7 +67,7 @@ export function ProviderConfigurationFields({
       )}
 
       <div>
-        <label htmlFor={apiKeyId} className={LABEL_CLASS}>
+        <label htmlFor={apiKeyId} className="aa-label">
           API key{meta.local ? " (cloud only)" : " *"}
         </label>
         <input
@@ -91,10 +84,10 @@ export function ProviderConfigurationFields({
                   ? "sk-ant-…"
                   : "AIza…"
           }
-          className={INPUT_CLASS}
+          className="aa-input"
         />
         {meta.keyUrl && (
-          <p className={HINT_CLASS}>
+          <p className="aa-hint">
             Get a key from{" "}
             <a
               href={meta.keyUrl}
@@ -108,7 +101,7 @@ export function ProviderConfigurationFields({
       </div>
 
       <div>
-        <label htmlFor={baseUrlId} className={LABEL_CLASS}>
+        <label htmlFor={baseUrlId} className="aa-label">
           Base URL
         </label>
         <input
@@ -117,9 +110,9 @@ export function ProviderConfigurationFields({
           value={config?.baseUrl ?? ""}
           onChange={(event) => onUpdate({ baseUrl: event.target.value })}
           placeholder={meta.defaultBaseUrl}
-          className={INPUT_CLASS}
+          className="aa-input"
         />
-        <p className={HINT_CLASS}>
+        <p className="aa-hint">
           {meta.local
             ? "Edit to use a remote host, container name, or custom port."
             : "Leave blank unless you use a proxy or gateway."}
@@ -131,20 +124,20 @@ export function ProviderConfigurationFields({
           type="button"
           onClick={onTest}
           disabled={test?.type === "loading"}
-          className={OUTLINE_BUTTON_CLASS}>
+          className="aa-btn-outline">
           {test?.type === "loading" ? "Testing…" : "Test connection"}
         </button>
         <button
           type="button"
           onClick={onRefreshModels}
           disabled={test?.type === "loading"}
-          className={SECONDARY_BUTTON_CLASS}>
+          className="aa-btn-secondary">
           <RefreshCw className="w-3.5 h-3.5 inline -mt-0.5 mr-1.5" />
           Refresh models
         </button>
         {test && test.type !== "loading" && test.message && (
           <span
-            className={`text-[12px] font-semibold ${
+            className={`text-aa-caption font-semibold ${
               test.type === "ok"
                 ? "text-aa-success-strong"
                 : "text-aa-error-strong"
@@ -155,18 +148,18 @@ export function ProviderConfigurationFields({
       </div>
 
       <div>
-        <span className={LABEL_CLASS}>Available models</span>
+        <span className="aa-label">Available models</span>
         <div className="flex flex-wrap gap-1.5">
           {models.map((model) => (
             <span
               key={model}
-              className="text-[11px] font-mono rounded-aa-sm border border-aa-border bg-aa-neutral-50 px-2 py-1 text-aa-text-secondary">
+              className="text-aa-11 font-mono rounded-aa-sm border border-aa-border bg-aa-neutral-50 px-2 py-1 text-aa-text-secondary">
               {model}
             </span>
           ))}
         </div>
         {!config?.models?.length && (
-          <p className={HINT_CLASS}>
+          <p className="aa-hint">
             Built-in list. Test the connection, then refresh to pull the live
             catalogue.
           </p>
