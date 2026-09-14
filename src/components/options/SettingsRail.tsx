@@ -1,4 +1,5 @@
 import { Briefcase, Settings as SettingsIcon } from "lucide-react"
+import { useLayoutEffect, useRef, useState } from "react"
 
 import type { AppSection, SettingsNavGroup } from "~types/options"
 
@@ -28,30 +29,56 @@ export function SettingsRail({
   onSection: (s: AppSection) => void
   email?: string
 }) {
+  const sectionButtonRefs = useRef<Partial<Record<AppSection, HTMLButtonElement>>>(
+    {}
+  )
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(
+    null
+  )
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const btn = sectionButtonRefs.current[section]
+      if (!btn) return
+      setIndicator({ left: btn.offsetLeft, width: btn.offsetWidth })
+    }
+    measure()
+    window.addEventListener("resize", measure)
+    return () => window.removeEventListener("resize", measure)
+  }, [section])
+
   return (
     <aside className="w-14 lg:w-60 shrink-0 bg-aa-neutral-900 sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto py-5 px-2 lg:px-4 flex flex-col gap-4 lg:gap-6">
       <div
         aria-label="Section"
-        className="flex items-center gap-[3px] p-[3px] rounded-aa-pill bg-aa-neutral-800 mb-4 lg:mb-6">
+        className="relative flex items-center justify-center gap-[3px] p-[3px] rounded-aa-pill bg-aa-neutral-800 mb-4 lg:mb-6">
+        {indicator ? (
+          <div
+            aria-hidden="true"
+            className="absolute top-[3px] bottom-[3px] rounded-aa-pill bg-aa-primary transition-all duration-200 ease-out"
+            style={{ left: indicator.left, width: indicator.width }}
+          />
+        ) : null}
         {SECTION_TABS.map((t) => {
           const on = section === t.id
           const Icon = t.icon
           return (
             <button
               key={t.id}
+              ref={(el) => {
+                if (el) sectionButtonRefs.current[t.id] = el
+              }}
               onClick={() => onSection(t.id)}
               title={t.label}
-              className={`flex-1 flex items-center justify-center lg:justify-start gap-2 px-2 lg:px-8 py-[7px] rounded-aa-pill border-0 cursor-pointer transition-colors ${
-                on
-                  ? "bg-aa-primary"
-                  : "bg-transparent hover:bg-aa-neutral-700"
+              className={`relative z-10 flex items-center justify-center gap-2 px-3 py-[7px] rounded-aa-pill border-0 cursor-pointer ${
+                on ? "" : "hover:bg-aa-neutral-700"
               }`}>
               <Icon
                 size={14}
-                className={`shrink-0 ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
+                className={`lg:hidden shrink-0 transition-colors ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
               />
               <span
-                className={`hidden lg:inline text-[12px] font-semibold ${
+                className={`hidden lg:inline whitespace-nowrap text-[12px] font-semibold transition-colors ${
                   on ? "text-aa-text-on-primary" : "text-aa-neutral-400"
                 }`}>
                 {t.label}
