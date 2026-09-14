@@ -49,7 +49,7 @@ export function ModelRoutingSettingsScreen({
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {noProviders && (
         <div className={INFO_MESSAGE_CLASS}>
           No AI provider is connected yet. Add one on the{" "}
