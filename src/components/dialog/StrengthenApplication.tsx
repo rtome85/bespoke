@@ -34,13 +34,12 @@ export function StrengthenApplication({
           </div>
           <div className="flex flex-col">
             {weaknesses.map((text, index) => (
-              <>
-                <GapRow
-                  text={text}
-                  added={addedGapSkills[index] ?? null}
-                  onAdd={(name, years) => onAddGapSkill(index, name, years)}
-                />
-              </>
+              <GapRow
+                key={text}
+                text={text}
+                added={addedGapSkills[index] ?? null}
+                onAdd={(name, years) => onAddGapSkill(index, name, years)}
+              />
             ))}
           </div>
         </div>
