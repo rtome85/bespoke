@@ -1,10 +1,6 @@
 import { X } from "lucide-react"
 import type { FormEventHandler } from "react"
 
-import {
-  FORM_FIELD_INPUT_CLASS,
-  FORM_FIELD_LABEL_CLASS
-} from "~constants/dialog"
 import type { RoutingLabels } from "~types/dialog"
 import type { UserProfile } from "~types/userProfile"
 
@@ -39,12 +35,12 @@ export function MatchFormScreen({
 }: Props) {
   return (
     <div className="min-h-screen bg-aa-surface-subtle flex flex-col font-aa text-aa-text-primary">
-      <div className="h-[60px] shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
+      <div className="h-aa-px-60 shrink-0 bg-aa-surface px-6 flex items-center justify-between border-b border-aa-border">
         <div className="flex flex-col gap-0.5">
-          <h1 className="text-[17px] font-bold tracking-[-0.3px] text-aa-text-primary leading-none">
+          <h1 className="text-aa-17 font-bold tracking-aa-tighter-3 text-aa-text-primary leading-none">
             Check your match
           </h1>
-          <p className="text-[12px] text-aa-text-secondary leading-none">
+          <p className="text-aa-caption text-aa-text-secondary leading-none">
             Confirm the job details, then analyze
           </p>
         </div>
@@ -62,7 +58,7 @@ export function MatchFormScreen({
             <div>
               <label
                 htmlFor="match-company-name"
-                className={FORM_FIELD_LABEL_CLASS}>
+                className="aa-field-label">
                 Company name *
               </label>
               <input
@@ -72,14 +68,14 @@ export function MatchFormScreen({
                 onChange={(event) => onCompanyNameChange(event.target.value)}
                 placeholder="e.g. Google, Microsoft"
                 required
-                className={FORM_FIELD_INPUT_CLASS}
+                className="aa-field-input"
               />
             </div>
 
             <div>
               <label
                 htmlFor="match-job-title"
-                className={FORM_FIELD_LABEL_CLASS}>
+                className="aa-field-label">
                 Job title *
               </label>
               <input
@@ -89,7 +85,7 @@ export function MatchFormScreen({
                 onChange={(event) => onJobTitleChange(event.target.value)}
                 placeholder="e.g. Senior Software Engineer"
                 required
-                className={FORM_FIELD_INPUT_CLASS}
+                className="aa-field-input"
               />
             </div>
 
@@ -97,7 +93,7 @@ export function MatchFormScreen({
               <div>
                 <label
                   htmlFor="match-job-description"
-                  className={FORM_FIELD_LABEL_CLASS}>
+                  className="aa-field-label">
                   Job description (extracted)
                 </label>
                 <textarea
@@ -107,13 +103,13 @@ export function MatchFormScreen({
                     onJobDescriptionChange(event.target.value)
                   }
                   rows={8}
-                  className={`${FORM_FIELD_INPUT_CLASS} resize-y`}
+                  className={`aa-field-input resize-y`}
                 />
               </div>
             )}
 
             <div>
-              <label className={FORM_FIELD_LABEL_CLASS}>AI model</label>
+              <label className="aa-field-label">AI model</label>
               <div className="w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-sm space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-aa-text-secondary">Match scoring</span>
@@ -133,13 +129,13 @@ export function MatchFormScreen({
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="mt-1.5 text-[11px] font-semibold text-aa-primary hover:underline">
+                className="mt-1.5 text-aa-11 font-semibold text-aa-primary hover:underline">
                 Change in Settings → Model routing
               </button>
             </div>
 
             <div className="border-t border-aa-border pt-4">
-              <p className="text-[12px] text-aa-text-secondary">
+              <p className="text-aa-caption text-aa-text-secondary">
                 Profile: {userProfile.skills?.length ?? 0} skills,{" "}
                 {userProfile.workExperience?.length ?? 0} experiences,{" "}
                 {userProfile.personalProjects?.length ?? 0} projects,{" "}
@@ -149,7 +145,7 @@ export function MatchFormScreen({
 
             <button
               type="submit"
-              className="w-full px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-[13px] font-semibold hover:bg-aa-primary-hover transition-colors">
+              className="w-full px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-aa-13 font-semibold hover:bg-aa-primary-hover transition-colors">
               Analyze match
             </button>
           </form>

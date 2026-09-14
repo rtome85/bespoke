@@ -1,13 +1,6 @@
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 
-import {
-  ACCENT_BUTTON_CLASS,
-  ERROR_MESSAGE_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  SECONDARY_BUTTON_CLASS
-} from "~constants/options"
 import type { WorkExperience } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -29,13 +22,6 @@ const validateExperience = (exp: WorkExperience): string[] => {
     errors.push("At least one achievement is required")
   return errors
 }
-
-const labelCls = LABEL_CLASS
-
-const inputCls = INPUT_CLASS
-
-const inputErrorCls =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProps) {
   const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null)
@@ -103,23 +89,23 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Job Title *</label>
+            <label className="aa-label">Job Title *</label>
             <input
               type="text"
               value={experience.jobTitle}
               onChange={(e) => onUpdate({ ...experience, jobTitle: e.target.value })}
               placeholder="e.g., Senior Frontend Developer"
-              className={hasErrors && !experience.jobTitle ? inputErrorCls : inputCls}
+              className={hasErrors && !experience.jobTitle ? "aa-input-error" : "aa-input"}
             />
           </div>
           <div>
-            <label className={labelCls}>Company *</label>
+            <label className="aa-label">Company *</label>
             <input
               type="text"
               value={experience.company}
               onChange={(e) => onUpdate({ ...experience, company: e.target.value })}
               placeholder="e.g., Tech Corp"
-              className={hasErrors && !experience.company ? inputErrorCls : inputCls}
+              className={hasErrors && !experience.company ? "aa-input-error" : "aa-input"}
             />
           </div>
         </div>
@@ -144,7 +130,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
         </div>
 
         <div>
-          <label className={labelCls}>Achievements *</label>
+          <label className="aa-label">Achievements *</label>
           <div className="space-y-2">
             {experience.achievements.map((achievement, achievementIndex) => (
               <div key={achievementIndex} className="flex gap-2">
@@ -153,14 +139,14 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
                   value={achievement}
                   onChange={(e) => updateAchievement(achievementIndex, e.target.value)}
                   placeholder="e.g., Led redesign of main product UI"
-                  className={hasErrors && !achievement ? inputErrorCls : inputCls}
+                  className={hasErrors && !achievement ? "aa-input-error" : "aa-input"}
                 />
                 {experience.achievements.length > 1 && (
                   <button
                     onClick={() => removeAchievement(achievementIndex)}
                     className="shrink-0 px-2.5 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
                     title="Remove achievement">
-                    <Trash2 className="w-[15px] h-[15px]" />
+                    <Trash2 className="w-aa-px-15 h-aa-px-15" />
                   </button>
                 )}
               </div>
@@ -168,13 +154,13 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
           </div>
           <button
             onClick={addAchievement}
-            className="mt-2 text-[13px] font-semibold text-aa-primary hover:text-aa-primary-hover transition-colors">
+            className="mt-2 text-aa-13 font-semibold text-aa-primary hover:text-aa-primary-hover transition-colors">
             + Add achievement
           </button>
         </div>
 
         {hasErrors && (
-          <div className={ERROR_MESSAGE_CLASS}>
+          <div className="aa-message-error">
             {errors.map((error, i) => (
               <p key={i} className="text-sm">• {error}</p>
             ))}
@@ -193,12 +179,12 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
           </h3>
           {renderExperienceItem(editingExperience, 0, setEditingExperience)}
           <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingExperience} className={ACCENT_BUTTON_CLASS}>
+            <button onClick={saveEditingExperience} className="aa-btn-accent">
               Save experience
             </button>
             <button
               onClick={() => setEditingExperience(null)}
-              className={SECONDARY_BUTTON_CLASS}>
+              className="aa-btn-secondary">
               Cancel
             </button>
           </div>

@@ -60,9 +60,6 @@ function relTime(iso?: string): string {
   return `${Math.floor(d / 365)}y ago`
 }
 
-const th =
-  "text-[10px] font-semibold uppercase tracking-wider text-aa-text-secondary"
-
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
 export function ApplicationsList({
@@ -324,16 +321,16 @@ export function ApplicationsList({
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary mb-4">
+      <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary mb-4">
         Applications
       </h1>
 
       {applications.length === 0 ? (
         <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 py-16 text-center">
-          <p className="text-[14px] font-semibold text-aa-text-primary">
+          <p className="text-aa-sm font-semibold text-aa-text-primary">
             No tracked applications yet
           </p>
-          <p className="text-[13px] text-aa-text-secondary mt-1">
+          <p className="text-aa-13 text-aa-text-secondary mt-1">
             Run a match from a job posting and save it.
           </p>
         </div>
@@ -347,7 +344,7 @@ export function ApplicationsList({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search company, role, tag"
-                className="w-64 pl-8 pr-3 py-[7px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors"
+                className="w-64 pl-8 pr-3 py-aa-px-7 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -358,7 +355,7 @@ export function ApplicationsList({
                     key={s}
                     type="button"
                     onClick={() => setStatusFilter(s)}
-                    className={`px-3 py-[6px] rounded-aa-pill text-[11px] font-semibold transition-colors ${
+                    className={`px-3 py-1.5 rounded-aa-pill text-aa-11 font-semibold transition-colors ${
                       on
                         ? "bg-aa-primary text-aa-text-on-primary"
                         : "bg-aa-surface border border-aa-border text-aa-text-secondary hover:text-aa-text-primary"
@@ -373,15 +370,15 @@ export function ApplicationsList({
           {/* Table */}
           <div className="bg-aa-surface border border-aa-border rounded-aa-lg overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-2.5 border-b border-aa-border bg-aa-neutral-50">
-              <span className={`${th} flex-1`}>Company · Role</span>
-              <span className={`${th} w-16 text-right`}>Match</span>
-              <span className={`${th} w-40`}>Status</span>
-              <span className={`${th} w-24`}>Updated</span>
+              <span className={`aa-table-heading flex-1`}>Company · Role</span>
+              <span className={`aa-table-heading w-16 text-right`}>Match</span>
+              <span className={`aa-table-heading w-40`}>Status</span>
+              <span className={`aa-table-heading w-24`}>Updated</span>
               <span className="w-4" />
             </div>
 
             {rows.length === 0 ? (
-              <p className="text-[13px] text-aa-text-secondary text-center py-8">
+              <p className="text-aa-13 text-aa-text-secondary text-center py-8">
                 Nothing matches those filters.
               </p>
             ) : (
@@ -395,15 +392,15 @@ export function ApplicationsList({
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 border-b border-aa-border last:border-0 text-left hover:bg-aa-neutral-50 transition-colors">
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[13px] font-semibold text-aa-text-primary truncate">
+                    <span className="block text-aa-13 font-semibold text-aa-text-primary truncate">
                       {a.company}
                     </span>
-                    <span className="block text-[12px] text-aa-text-secondary truncate">
+                    <span className="block text-aa-caption text-aa-text-secondary truncate">
                       {a.jobTitle}
                     </span>
                   </span>
                   <span
-                    className={`w-16 text-right text-[12px] font-semibold tabular-nums ${
+                    className={`w-16 text-right text-aa-caption font-semibold tabular-nums ${
                       a.matchPercentage == null
                         ? "text-aa-neutral-400"
                         : "text-aa-text-primary"
@@ -412,11 +409,11 @@ export function ApplicationsList({
                   </span>
                   <span className="w-40">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded-aa-pill text-[10px] font-bold uppercase tracking-wide ${STATUS_PILL[a.status]}`}>
+                      className={`inline-block px-2 py-0.5 rounded-aa-pill text-aa-10 font-bold uppercase tracking-wide ${STATUS_PILL[a.status]}`}>
                       {a.status}
                     </span>
                   </span>
-                  <span className="w-24 text-[12px] text-aa-text-secondary">
+                  <span className="w-24 text-aa-caption text-aa-text-secondary">
                     {relTime(a.statusUpdatedAt ?? a.createdAt)}
                   </span>
                   <ChevronRight className="w-4 h-4 text-aa-neutral-400 shrink-0" />
@@ -428,14 +425,14 @@ export function ApplicationsList({
           {rows.length > PAGE_SIZE_OPTIONS[0] && (
             <div className="flex items-center justify-between mt-3 px-4 py-2.5 bg-aa-surface border border-aa-border rounded-aa-lg">
               <div className="flex items-center gap-2">
-                <span className="text-[12px] text-aa-text-secondary">
+                <span className="text-aa-caption text-aa-text-secondary">
                   Rows per page
                 </span>
                 <div className="relative">
                   <select
                     value={pageSize}
                     onChange={(e) => setPageSize(Number(e.target.value))}
-                    className="appearance-none pl-2.5 pr-6 py-1 bg-aa-surface border border-aa-border rounded-aa-md text-[12px] font-semibold text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
+                    className="appearance-none pl-2.5 pr-6 py-1 bg-aa-surface border border-aa-border rounded-aa-md text-aa-caption font-semibold text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
                     {PAGE_SIZE_OPTIONS.map((size) => (
                       <option key={size} value={size}>
                         {size}
@@ -447,7 +444,7 @@ export function ApplicationsList({
               </div>
 
               <div className="flex items-center gap-4">
-                <span className="text-[12px] text-aa-text-secondary">
+                <span className="text-aa-caption text-aa-text-secondary">
                   Page {currentPage + 1} of {pageCount}
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -500,12 +497,12 @@ export function ApplicationsList({
           }`}
           onClick={closeDrawer}>
           <div
-            className={`absolute inset-y-0 right-0 w-[420px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-y-0 right-0 w-aa-px-420 max-w-aa-viewport-safe bg-aa-surface border-l border-aa-border shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
               drawerVisible ? "translate-x-0" : "translate-x-full"
             }`}
             onClick={(e) => e.stopPropagation()}>
             <div className="shrink-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-aa-text-primary">
+              <span className="text-aa-13 font-semibold text-aa-text-primary">
                 Application
               </span>
               <button
@@ -519,10 +516,10 @@ export function ApplicationsList({
             <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
               <div className="bg-aa-surface-brand-soft rounded-aa-lg p-6 flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="text-[26px] font-extrabold tracking-tight text-aa-text-primary">
+                  <h2 className="text-aa-26 font-extrabold tracking-tight text-aa-text-primary">
                     {open.company}
                   </h2>
-                  <p className="text-[14px] text-aa-text-secondary mt-1">
+                  <p className="text-aa-sm text-aa-text-secondary mt-1">
                     {open.jobTitle}
                   </p>
                   {open.jobUrl && (
@@ -530,18 +527,18 @@ export function ApplicationsList({
                       href={open.jobUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-2 text-[13px] font-semibold text-aa-primary hover:underline">
+                      className="inline-flex items-center gap-1.5 mt-2 text-aa-13 font-semibold text-aa-primary hover:underline">
                       <ExternalLink className="w-3.5 h-3.5" />
                       Job posting
                     </a>
                   )}
                 </div>
                 {open.matchPercentage != null && (
-                  <div className="shrink-0 flex flex-col items-center justify-center w-[84px] h-[84px] rounded-full border-[3px] border-aa-success-strong">
-                    <span className="text-[22px] font-extrabold text-aa-success-strong leading-none">
+                  <div className="shrink-0 flex flex-col items-center justify-center w-aa-px-84 h-aa-px-84 rounded-full border-3 border-aa-success-strong">
+                    <span className="text-aa-22 font-extrabold text-aa-success-strong leading-none">
                       {open.matchPercentage}%
                     </span>
-                    <span className="text-[12px] text-aa-text-secondary mt-1">
+                    <span className="text-aa-caption text-aa-text-secondary mt-1">
                       Match
                     </span>
                   </div>
@@ -554,11 +551,11 @@ export function ApplicationsList({
                   className={`flex flex-col gap-5 overflow-hidden transition-all duration-500 ease-in-out ${
                     showStrengthen
                       ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
-                      : "max-h-[3000px] opacity-100 translate-y-0"
+                      : "max-h-aa-expanded opacity-100 translate-y-0"
                   }`}
                   aria-hidden={showStrengthen}>
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                    <label className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                       Status
                     </label>
                     <select
@@ -569,14 +566,14 @@ export function ApplicationsList({
                         })
                         flashSaved()
                       }}
-                      className="w-full px-3 py-[9px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
+                      className="w-full px-3 py-aa-px-9 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors">
                       {APPLICATION_STATUSES.map((s) => (
                         <option key={s} value={s}>
                           {s}
                         </option>
                       ))}
                     </select>
-                    <p className="text-[11px] text-aa-text-secondary mt-1">
+                    <p className="text-aa-11 text-aa-text-secondary mt-1">
                       Last change{" "}
                       {relTime(open.statusUpdatedAt ?? open.createdAt)}
                     </p>
@@ -584,14 +581,14 @@ export function ApplicationsList({
 
                   {(open.tags ?? []).length > 0 && (
                     <div>
-                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                      <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                         Tags
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {open.tags!.map((t) => (
                           <span
                             key={t}
-                            className="px-2 py-0.5 rounded-aa-pill bg-aa-neutral-100 text-[11px] text-aa-text-secondary">
+                            className="px-2 py-0.5 rounded-aa-pill bg-aa-neutral-100 text-aa-11 text-aa-text-secondary">
                             {t}
                           </span>
                         ))}
@@ -600,7 +597,7 @@ export function ApplicationsList({
                   )}
 
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                    <label className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                       Notes
                     </label>
                     <textarea
@@ -611,16 +608,16 @@ export function ApplicationsList({
                       }}
                       rows={4}
                       placeholder="Recruiter name, next step, prep reminders…"
-                      className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
+                      className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
                     />
                   </div>
 
                   {open.matchSummary && (
                     <div>
-                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                      <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                         Match summary
                       </span>
-                      <p className="text-[13px] text-aa-neutral-700 leading-relaxed">
+                      <p className="text-aa-13 text-aa-neutral-700 leading-relaxed">
                         {open.matchSummary}
                       </p>
                     </div>
@@ -628,7 +625,7 @@ export function ApplicationsList({
 
                   {(open.resumeContent || open.coverLetterContent || canGenerate) && (
                     <div>
-                      <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
+                      <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5">
                         Documents
                       </span>
 
@@ -651,16 +648,16 @@ export function ApplicationsList({
                                   openDocumentPreview(file.tab, documents)
                                 }
                                 className="w-full flex items-center gap-2 px-3 py-3 text-left hover:bg-aa-neutral-50 transition-colors">
-                                <FileText className="w-[15px] h-[15px] text-aa-neutral-500 shrink-0" />
-                                <span className="flex-1 min-w-0 truncate text-[13px] font-medium text-aa-text-primary">
+                                <FileText className="w-aa-px-15 h-aa-px-15 text-aa-neutral-500 shrink-0" />
+                                <span className="flex-1 min-w-0 truncate text-aa-13 font-medium text-aa-text-primary">
                                   {file.label}
                                 </span>
-                                <Eye className="w-[15px] h-[15px] text-aa-neutral-400 shrink-0" />
+                                <Eye className="w-aa-px-15 h-aa-px-15 text-aa-neutral-400 shrink-0" />
                               </button>
                             ))}
                           </div>
                           {previewError && (
-                            <p className="text-[13px] text-aa-error-strong mt-2">
+                            <p className="text-aa-13 text-aa-error-strong mt-2">
                               {previewError}
                             </p>
                           )}
@@ -668,20 +665,20 @@ export function ApplicationsList({
                             <button
                               type="button"
                               onClick={() => setShowStrengthen(true)}
-                              className="w-full mt-2 rounded-aa-md bg-aa-primary py-[9px] text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+                              className="w-full mt-2 rounded-aa-md bg-aa-primary py-aa-px-9 text-aa-caption font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
                               Regenerate
                             </button>
                           )}
                         </>
                       ) : (
                         <div className="space-y-2">
-                          <p className="text-[12px] text-aa-text-secondary">
+                          <p className="text-aa-caption text-aa-text-secondary">
                             Saved for later — no CV or cover letter yet.
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowStrengthen(true)}
-                            className="inline-flex items-center gap-2 rounded-aa-md bg-aa-primary px-3.5 py-2 text-[12px] font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
+                            className="inline-flex items-center gap-2 rounded-aa-md bg-aa-primary px-3.5 py-2 text-aa-caption font-semibold text-aa-text-on-primary hover:bg-aa-primary-hover transition-colors">
                             <Sparkles className="w-3.5 h-3.5" />
                             Generate CV + cover letter
                           </button>
@@ -695,7 +692,7 @@ export function ApplicationsList({
                   ref={strengthenPanelRef}
                   className={`overflow-hidden transition-all duration-500 ease-in-out ${
                     showStrengthen
-                      ? "max-h-[3000px] opacity-100 translate-y-0"
+                      ? "max-h-aa-expanded opacity-100 translate-y-0"
                       : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
                   }`}
                   aria-hidden={!showStrengthen}>
@@ -730,7 +727,7 @@ export function ApplicationsList({
 
             <div className="shrink-0 bg-aa-surface border-t border-aa-border px-5 py-3 flex items-center justify-between">
               <span
-                className={`inline-flex items-center gap-1.5 text-[12px] font-semibold text-aa-success-strong transition-opacity duration-300 ${
+                className={`inline-flex items-center gap-1.5 text-aa-caption font-semibold text-aa-success-strong transition-opacity duration-300 ${
                   showSaved ? "opacity-100" : "opacity-0"
                 }`}>
                 <Check className="w-3.5 h-3.5" />
@@ -744,13 +741,13 @@ export function ApplicationsList({
                       onDelete(open.id)
                       closeDrawer()
                     }}
-                    className="text-[12px] font-semibold text-aa-error-strong hover:underline">
+                    className="text-aa-caption font-semibold text-aa-error-strong hover:underline">
                     Confirm delete
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
+                    className="text-aa-caption font-semibold text-aa-text-secondary hover:underline">
                     Cancel
                   </button>
                 </span>
@@ -758,7 +755,7 @@ export function ApplicationsList({
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(true)}
-                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
+                  className="inline-flex items-center gap-1.5 text-aa-caption font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
                   <Trash2 className="w-3.5 h-3.5" />
                   Delete application
                 </button>

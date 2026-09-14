@@ -21,7 +21,7 @@ function DocumentPreviewTab() {
   if (!draft) {
     return (
       <div className="h-screen bg-aa-surface flex items-center justify-center font-aa">
-        <p className="text-[13px] text-aa-text-secondary">Loading…</p>
+        <p className="text-aa-13 text-aa-text-secondary">Loading…</p>
       </div>
     )
   }

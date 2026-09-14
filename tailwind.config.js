@@ -133,7 +133,40 @@ module.exports = {
         "aa-8": "var(--aa-space-8)",
         "aa-10": "var(--aa-space-10)",
         "aa-12": "var(--aa-space-12)",
-        "aa-16": "var(--aa-space-16)"
+        "aa-16": "var(--aa-space-16)",
+
+        // Fills gaps in the 4px-multiplier scale above (aa-1 == 4px, etc.)
+        // for one-off values that fall off that grid. Named by literal
+        // pixel value to stay unambiguous next to the multiplier keys.
+        "aa-px-1": "1px",
+        "aa-px-3": "3px",
+        "aa-px-5": "5px",
+        "aa-px-7": "7px",
+        "aa-px-9": "9px",
+        "aa-px-13": "13px",
+        "aa-px-15": "15px",
+        "aa-px-17": "17px",
+        "aa-px-18": "18px",
+        "aa-px-22": "22px",
+        "aa-px-26": "26px",
+        "aa-px-30": "30px",
+        "aa-px-46": "46px",
+        "aa-px-60": "60px",
+        "aa-px-84": "84px",
+        "aa-px-90": "90px",
+        "aa-px-130": "130px",
+        "aa-px-140": "140px",
+        "aa-px-52": "52px",
+        "aa-px-168": "168px",
+        "aa-px-300": "300px",
+        "aa-px-380": "380px",
+        "aa-px-400": "400px",
+        "aa-px-420": "420px",
+        "aa-px-460": "460px",
+
+        // Shared header height — also consumed via extend.height below for
+        // the calc() case.
+        "aa-appbar": "var(--aa-appbar-height)"
       },
       borderRadius: {
         sm: "var(--radius-sm)",
@@ -143,7 +176,24 @@ module.exports = {
         "aa-md": "var(--aa-radius-md)",
         "aa-lg": "var(--aa-radius-lg)",
         "aa-xl": "var(--aa-radius-xl)",
-        "aa-pill": "var(--aa-radius-pill)"
+        "aa-pill": "var(--aa-radius-pill)",
+        "aa-2xs": "2px"
+      },
+      borderWidth: {
+        3: "3px"
+      },
+      height: {
+        // width/height/maxWidth/maxHeight/minHeight/inset/gap all inherit
+        // `spacing` by default, so aa-appbar/aa-px-* above already work as
+        // h-aa-appbar etc. This covers the one calc() case.
+        "aa-below-appbar": "calc(100vh - var(--aa-appbar-height))"
+      },
+      maxWidth: {
+        "aa-viewport-safe": "92vw"
+      },
+      maxHeight: {
+        "aa-expanded": "3000px",
+        "aa-vh-90": "90vh"
       },
       fontSize: {
         "aa-h1": ["32px", { lineHeight: "40px", fontWeight: "700" }],
@@ -151,7 +201,21 @@ module.exports = {
         "aa-h3": ["18px", { lineHeight: "28px", fontWeight: "600" }],
         "aa-body": ["16px", { lineHeight: "24px" }],
         "aa-sm": ["14px", { lineHeight: "20px" }],
-        "aa-caption": ["12px", { lineHeight: "16px" }]
+        "aa-caption": ["12px", { lineHeight: "16px" }],
+
+        // Gaps in the scale above, named by literal size like aa-caption.
+        "aa-10": ["10px", { lineHeight: "14px" }],
+        "aa-11": ["11px", { lineHeight: "16px" }],
+        "aa-13": ["13px", { lineHeight: "18px" }],
+        "aa-15": ["15px", { lineHeight: "22px" }],
+        "aa-17": ["17px", { lineHeight: "24px" }],
+        "aa-20": ["20px", { lineHeight: "28px" }],
+        "aa-22": ["22px", { lineHeight: "30px" }],
+        "aa-26": ["26px", { lineHeight: "32px" }],
+        "aa-28": ["28px", { lineHeight: "36px" }],
+        "aa-56": ["56px", { lineHeight: "60px" }],
+        // Relative size for inline code nested inside body text.
+        "aa-code": "0.9em"
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
@@ -159,7 +223,22 @@ module.exports = {
         xl: "var(--shadow-xl)"
       },
       letterSpacing: {
-        widest: "0.15em"
+        widest: "0.15em",
+        "aa-tighter-2": "-0.2px",
+        "aa-tighter-3": "-0.3px",
+        "aa-tighter-4": "-0.4px",
+        "aa-tighter-15": "-1.5px",
+        "aa-wider-8": "0.08em",
+        "aa-wider-10": "0.1em",
+        "aa-wider-6px": "0.6px"
+      },
+      lineHeight: {
+        "aa-1.2": "1.2",
+        "aa-1.35": "1.35",
+        "aa-1.4": "1.4",
+        "aa-1.45": "1.45",
+        "aa-1.55": "1.55",
+        "aa-1.6": "1.6"
       }
     },
     plugins: []

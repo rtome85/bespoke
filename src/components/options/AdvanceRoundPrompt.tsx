@@ -9,7 +9,7 @@ export function AdvanceRoundPrompt({ onAdd, onDismiss }: Props) {
   return (
     <div
       role="status"
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-4 py-3 bg-aa-text-primary text-aa-surface rounded-aa-lg shadow-xl text-[13px]">
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-4 py-3 bg-aa-text-primary text-aa-surface rounded-aa-lg shadow-xl text-aa-13">
       <span>Round logged. Schedule the next one?</span>
       <button
         type="button"

@@ -22,7 +22,7 @@ export function CompanyResearchCard({
       {isLoading ? (
         <div className="flex items-center gap-aa-2 animate-pulse">
           <Building2 className="w-4 h-4 text-aa-neutral-500" />
-          <span className="text-[14px] font-semibold text-aa-text-primary">
+          <span className="text-aa-sm font-semibold text-aa-text-primary">
             Researching {companyName}...
           </span>
         </div>
@@ -31,24 +31,24 @@ export function CompanyResearchCard({
           <>
             <div className="flex items-center gap-aa-2">
               <Building2 className="w-4 h-4 text-aa-neutral-500" />
-              <h3 className="text-[14px] font-semibold text-aa-text-primary">
+              <h3 className="text-aa-sm font-semibold text-aa-text-primary">
                 About {companyName}
               </h3>
             </div>
 
             <div className="flex flex-wrap gap-aa-2">
-              <span className="inline-flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px] text-aa-text-secondary">
+              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
                 <Building2 className="w-3 h-3 text-aa-neutral-400" />
                 {info.industry}
               </span>
-              <span className="inline-flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px] text-aa-text-secondary">
+              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
                 <Users className="w-3 h-3 text-aa-neutral-400" />
                 {info.size}
               </span>
             </div>
 
             {info.description && (
-              <p className="text-[12px] text-aa-neutral-600 leading-[1.6]">
+              <p className="text-aa-caption text-aa-neutral-600 leading-aa-1.6">
                 {info.description}
               </p>
             )}
@@ -57,7 +57,7 @@ export function CompanyResearchCard({
               <div>
                 <button
                   onClick={onToggleProjects}
-                  className="flex items-center gap-1 text-[12px] font-semibold text-aa-text-link">
+                  className="flex items-center gap-1 text-aa-caption font-semibold text-aa-text-link">
                   <ChevronRight
                     className="w-3 h-3 transition-transform duration-200"
                     style={{
@@ -69,7 +69,7 @@ export function CompanyResearchCard({
                   Notable projects / products ({info.notableProjects.length})
                 </button>
                 {projectsExpanded && (
-                  <ul className="list-disc list-inside text-[12px] text-aa-neutral-600 space-y-1 pl-1 mt-2">
+                  <ul className="list-disc list-inside text-aa-caption text-aa-neutral-600 space-y-1 pl-1 mt-2">
                     {info.notableProjects.map((project, index) => (
                       <li key={`${project}-${index}`}>{project}</li>
                     ))}
@@ -83,7 +83,7 @@ export function CompanyResearchCard({
               info.ratings.teamlyzer) && (
               <div className="flex flex-wrap gap-2">
                 {info.ratings.glassdoor && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Glassdoor</span>
                     <span
                       className={
@@ -96,7 +96,7 @@ export function CompanyResearchCard({
                   </span>
                 )}
                 {info.ratings.indeed && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Indeed</span>
                     <span
                       className={
@@ -109,7 +109,7 @@ export function CompanyResearchCard({
                   </span>
                 )}
                 {info.ratings.teamlyzer && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[10px] py-[6px] text-[11px]">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Teamlyzer</span>
                     <span
                       className={

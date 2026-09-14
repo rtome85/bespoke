@@ -1,10 +1,6 @@
 import type { Dispatch, SetStateAction } from "react"
 
-import {
-  FORM_FIELD_INPUT_CLASS,
-  FORM_FIELD_LABEL_CLASS,
-  PRESET_TAGS
-} from "~constants/dialog"
+import { PRESET_TAGS } from "~constants/dialog"
 import type { SaveApplicationFormData } from "~types/dialog"
 
 interface Props {
@@ -15,7 +11,7 @@ interface Props {
 export function ApplicationTagsField({ formData, setFormData }: Props) {
   return (
     <div>
-      <label className={`${FORM_FIELD_LABEL_CLASS} mb-2`}>Tags</label>
+      <label className={`aa-field-label mb-2`}>Tags</label>
       <div className="flex flex-wrap gap-2 mb-2">
         {PRESET_TAGS.map((tag) => {
           const active = formData.tags.includes(tag)
@@ -31,7 +27,7 @@ export function ApplicationTagsField({ formData, setFormData }: Props) {
                     : [...current.tags, tag]
                 }))
               }
-              className={`px-3 py-1 rounded-aa-pill text-[11px] font-semibold border transition-colors ${
+              className={`px-3 py-1 rounded-aa-pill text-aa-11 font-semibold border transition-colors ${
                 active
                   ? "bg-aa-primary text-aa-text-on-primary border-aa-primary"
                   : "border-aa-border text-aa-text-secondary hover:text-aa-text-primary hover:border-aa-neutral-400"
@@ -48,7 +44,7 @@ export function ApplicationTagsField({ formData, setFormData }: Props) {
           .map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-aa-pill text-[11px] text-aa-text-secondary border border-aa-border">
+              className="flex items-center gap-1 px-2.5 py-1 rounded-aa-pill text-aa-11 text-aa-text-secondary border border-aa-border">
               {tag}
               <button
                 type="button"
@@ -71,7 +67,7 @@ export function ApplicationTagsField({ formData, setFormData }: Props) {
       <input
         type="text"
         placeholder="Add custom tag, press Enter"
-        className={FORM_FIELD_INPUT_CLASS}
+        className="aa-field-input"
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault()

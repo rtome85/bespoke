@@ -89,13 +89,13 @@ export function MatchReportScreen({
 
   return (
     <div className="min-h-screen bg-aa-surface flex flex-col font-aa text-aa-text-primary">
-      <div className="flex-1 overflow-y-auto px-aa-6 pt-[36px] pb-aa-8 flex flex-col gap-aa-6">
+      <div className="flex-1 overflow-y-auto px-aa-6 pt-9 pb-aa-8 flex flex-col gap-aa-6">
         <div className="flex items-center justify-between gap-aa-4">
-          <div className="flex flex-col gap-[6px]">
-            <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.4px] text-aa-text-primary">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-aa-h2 font-bold leading-aa-1.2 tracking-aa-tighter-4 text-aa-text-primary">
               {fullName || "Match report"}
             </h1>
-            <p className="text-[13px] leading-[1.4] text-aa-text-secondary">
+            <p className="text-aa-13 leading-aa-1.4 text-aa-text-secondary">
               {jobTitle || "This role"}
               {companyName ? ` — ${companyName}` : ""}
             </p>
@@ -103,7 +103,7 @@ export function MatchReportScreen({
           <div
             className={`overflow-hidden shrink-0 transition-all duration-500 ease-in-out ${
               triageDecision === "apply"
-                ? "w-[60px] opacity-100 scale-100"
+                ? "w-aa-px-60 opacity-100 scale-100"
                 : "w-0 opacity-0 scale-75"
             }`}>
             <ScoreGauge
@@ -119,7 +119,7 @@ export function MatchReportScreen({
             className={`flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out ${
               triageDecision === "apply"
                 ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
-                : "max-h-[3000px] opacity-100 translate-y-0"
+                : "max-h-aa-expanded opacity-100 translate-y-0"
             }`}
             inert={triageDecision === "apply"}
             aria-hidden={triageDecision === "apply"}>
@@ -152,7 +152,7 @@ export function MatchReportScreen({
           <div
             className={`overflow-hidden transition-all duration-500 ease-in-out ${
               triageDecision === "apply"
-                ? "max-h-[3000px] opacity-100 translate-y-0"
+                ? "max-h-aa-expanded opacity-100 translate-y-0"
                 : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
             }`}
             inert={triageDecision !== "apply"}
@@ -179,7 +179,7 @@ export function MatchReportScreen({
                 />
               )}
               {!documents && previewError && (
-                <p className="text-[13px] text-aa-error-strong">
+                <p className="text-aa-13 text-aa-error-strong">
                   {previewError}
                 </p>
               )}

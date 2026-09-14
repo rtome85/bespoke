@@ -28,12 +28,12 @@ export function GeneratedDocumentsCard({
             className={`flex items-center justify-between px-aa-4 py-aa-4 ${
               index === 0 ? "border-b border-aa-border" : ""
             }`}>
-            <span className="text-[14px] font-semibold text-aa-text-primary">
+            <span className="text-aa-sm font-semibold text-aa-text-primary">
               {file.label}
             </span>
             <button
               onClick={() => onPreview(file.tab, documents)}
-              className="flex items-center gap-[6px] rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-[14px] py-2 text-[11px] font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
+              className="flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-3.5 py-2 text-aa-11 font-semibold text-aa-text-secondary hover:bg-aa-neutral-200 transition-colors">
               <Eye size={14} />
               Preview
             </button>
@@ -41,7 +41,7 @@ export function GeneratedDocumentsCard({
         ))}
       </div>
       {previewError && (
-        <p className="text-[13px] text-aa-error-strong">{previewError}</p>
+        <p className="text-aa-13 text-aa-error-strong">{previewError}</p>
       )}
     </>
   )

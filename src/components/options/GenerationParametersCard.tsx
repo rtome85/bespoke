@@ -1,9 +1,3 @@
-import {
-  CARD_CLASS,
-  DIVIDER_CLASS,
-  OUTLINE_BUTTON_CLASS,
-  SECTION_HEADING_CLASS
-} from "~constants/options"
 import { DEFAULT_LLM_TUNING, type LLMTuningConfig } from "~types/config"
 
 interface Props {
@@ -46,10 +40,10 @@ const PARAMETERS = [
 
 export function GenerationParametersCard({ tuning, onChange }: Props) {
   return (
-    <div className={CARD_CLASS}>
+    <div className="aa-card">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className={SECTION_HEADING_CLASS}>Generation parameters</h2>
+          <h2 className="aa-section-heading">Generation parameters</h2>
           <p className="text-sm text-aa-text-secondary -mt-1">
             Applied to every routed model. Defaults suit most cases.
           </p>
@@ -64,11 +58,11 @@ export function GenerationParametersCard({ tuning, onChange }: Props) {
               maxTokens: DEFAULT_LLM_TUNING.maxTokens
             })
           }
-          className={OUTLINE_BUTTON_CLASS}>
+          className="aa-btn-outline">
           Reset to defaults
         </button>
       </div>
-      <hr className={DIVIDER_CLASS} />
+      <hr className="aa-divider" />
       <div className="space-y-5">
         {PARAMETERS.map(
           ({ label, key, min, max, step, format, lowLabel, highLabel }) => {
@@ -103,7 +97,7 @@ export function GenerationParametersCard({ tuning, onChange }: Props) {
                   }
                   className="w-full accent-aa-primary"
                 />
-                <div className="flex justify-between text-[10px] text-aa-text-secondary mt-0.5">
+                <div className="flex justify-between text-aa-10 text-aa-text-secondary mt-0.5">
                   <span>{lowLabel}</span>
                   <span>{highLabel}</span>
                 </div>

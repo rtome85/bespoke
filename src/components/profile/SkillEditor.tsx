@@ -1,7 +1,6 @@
 import { Plus, X } from "lucide-react"
 import { useRef, useState } from "react"
 
-import { ACCENT_BUTTON_CLASS } from "~constants/options"
 import type { Skill } from "~types/userProfile"
 
 interface SkillEditorProps {
@@ -104,7 +103,7 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
           </p>
           <button
             onClick={() => nameInputRef.current?.focus()}
-            className={ACCENT_BUTTON_CLASS}>
+            className="aa-btn-accent">
             Add your first skill
           </button>
         </div>
@@ -124,10 +123,10 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
                 onClick={() => handleEditSkill(skill)}
                 title="Edit skill"
                 className="flex items-center gap-2 pl-3 pr-1 py-2 cursor-pointer">
-                <span className="text-[13px] font-medium text-aa-text-primary">
+                <span className="text-aa-13 font-medium text-aa-text-primary">
                   {skill.name}
                 </span>
-                <span className="text-[11px] text-aa-text-secondary">
+                <span className="text-aa-11 text-aa-text-secondary">
                   {skill.yearsOfExperience}y
                 </span>
               </button>
@@ -136,7 +135,7 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
                 onClick={() => handleRemoveSkill(skill.id)}
                 title="Remove skill"
                 className="pr-3 py-2 text-aa-neutral-400 hover:text-aa-error-strong transition-colors">
-                <X className="w-[13px] h-[13px]" />
+                <X className="w-aa-px-13 h-aa-px-13" />
               </button>
             </div>
           ))}
@@ -155,32 +154,32 @@ export function SkillEditor({ skills, onChange }: SkillEditorProps) {
             }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             placeholder="Skill name (e.g. React, Python)"
-            className="w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors"
+            className="w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors"
           />
         </div>
-        <div className="w-[90px]">
+        <div className="w-aa-px-90">
           <input
             type="number"
             min="1"
             max="50"
             value={formYears}
             onChange={(e) => setFormYears(parseInt(e.target.value) || 1)}
-            className="w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm text-center focus:outline-none focus:border-aa-primary transition-colors"
+            className="w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm text-center focus:outline-none focus:border-aa-primary transition-colors"
           />
-          <p className="text-[11px] text-aa-text-secondary text-center mt-0.5">
+          <p className="text-aa-11 text-aa-text-secondary text-center mt-0.5">
             years
           </p>
         </div>
         <button
           onClick={handleSubmit}
-          className={`flex items-center gap-2 whitespace-nowrap ${ACCENT_BUTTON_CLASS}`}>
-          <Plus className="w-[15px] h-[15px]" />
+          className={`flex items-center gap-2 whitespace-nowrap aa-btn-accent`}>
+          <Plus className="w-aa-px-15 h-aa-px-15" />
           {editingId ? "Update" : "Add"}
         </button>
         {editingId && (
           <button
             onClick={handleCancelEdit}
-            className="px-3 py-[9px] text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
+            className="px-3 py-aa-px-9 text-aa-13 font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
             Cancel
           </button>
         )}

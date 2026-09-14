@@ -1,7 +1,5 @@
 import type { ChangeEvent } from "react"
 
-import { LABEL_CLASS } from "~constants/options"
-
 interface DatePickerProps {
   label: string
   value: string | null
@@ -36,7 +34,7 @@ export function DatePicker({
 
   return (
     <div>
-      <label className={LABEL_CLASS}>
+      <label className="aa-label">
         {label}
         {required && <span className="text-aa-error-strong ml-1">*</span>}
       </label>
@@ -47,7 +45,7 @@ export function DatePicker({
         onChange={handleDateChange}
         disabled={currentPosition}
         required={required && !currentPosition}
-        className="w-full px-3 py-[10px] bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm
+        className="w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm
                  focus:outline-none focus:border-aa-primary transition-colors
                  disabled:bg-aa-neutral-100 disabled:text-aa-text-disabled disabled:cursor-not-allowed"
       />

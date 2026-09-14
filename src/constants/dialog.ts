@@ -6,12 +6,6 @@ export const PRESET_TAGS = [
   "Top priority"
 ]
 
-export const FORM_FIELD_LABEL_CLASS =
-  "block text-[12px] font-semibold text-aa-text-secondary mb-1.5"
-
-export const FORM_FIELD_INPUT_CLASS =
-  "w-full px-3.5 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm placeholder:text-aa-neutral-400 focus:outline-none focus:border-aa-primary transition-colors"
-
 export const QUOTES = [
   {
     text: "The secret of getting ahead is getting started.",

@@ -1,11 +1,5 @@
 import { ChevronDown } from "lucide-react"
 
-import {
-  HINT_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  OUTLINE_BUTTON_CLASS
-} from "~constants/options"
 import type { PerplexityConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
 
@@ -45,16 +39,16 @@ export function PerplexityProviderPanel({
             <span className="font-semibold text-aa-text-primary text-sm">
               Perplexity Sonar
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border bg-aa-neutral-100 text-aa-text-secondary border-aa-border">
+            <span className="text-aa-10 font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border bg-aa-neutral-100 text-aa-text-secondary border-aa-border">
               Paid
             </span>
           </span>
-          <span className="block text-[12px] text-aa-text-secondary mt-0.5">
+          <span className="block text-aa-caption text-aa-text-secondary mt-0.5">
             Company research only — never scoring, drafting, or interview prep
           </span>
         </span>
         <span
-          className={`flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${
+          className={`flex items-center gap-1.5 text-aa-11 font-semibold shrink-0 ${
             isConnected ? "text-aa-success-strong" : "text-aa-text-secondary"
           }`}>
           <span
@@ -88,7 +82,7 @@ export function PerplexityProviderPanel({
           </label>
 
           <div>
-            <label htmlFor="perplexity-api-key" className={LABEL_CLASS}>
+            <label htmlFor="perplexity-api-key" className="aa-label">
               API key *
             </label>
             <input
@@ -99,9 +93,9 @@ export function PerplexityProviderPanel({
                 onChange({ ...config, apiKey: event.target.value })
               }
               placeholder="pplx-…"
-              className={INPUT_CLASS}
+              className="aa-input"
             />
-            <p className={HINT_CLASS}>
+            <p className="aa-hint">
               Get a key from{" "}
               <a
                 href="https://www.perplexity.ai/settings/api"
@@ -118,22 +112,22 @@ export function PerplexityProviderPanel({
               type="button"
               onClick={onTest}
               disabled={testStatus.type === "loading"}
-              className={OUTLINE_BUTTON_CLASS}>
+              className="aa-btn-outline">
               {testStatus.type === "loading" ? "Testing…" : "Test connection"}
             </button>
             {testStatus.type === "success" && (
-              <span className="text-[12px] font-semibold text-aa-success-strong">
+              <span className="text-aa-caption font-semibold text-aa-success-strong">
                 {testStatus.message}
               </span>
             )}
             {testStatus.type === "error" && (
-              <span className="text-[12px] font-semibold text-aa-error-strong">
+              <span className="text-aa-caption font-semibold text-aa-error-strong">
                 {testStatus.message}
               </span>
             )}
           </div>
 
-          <p className={HINT_CLASS}>
+          <p className="aa-hint">
             The company research prompt lives on the{" "}
             <button
               type="button"

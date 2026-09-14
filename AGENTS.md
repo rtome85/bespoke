@@ -130,6 +130,19 @@ from `react` (`import type { KeyboardEvent } from "react"`).
 variables in `src/style.css` mapped in `tailwind.config.js`. Prefer an existing
 token over a raw color. `lucide-react` for icons.
 
+**No arbitrary Tailwind values, no class-string consts.** Never write a
+bracketed arbitrary value (`text-[13px]`, `w-[300px]`, `tracking-[0.08em]`) —
+extend the `aa-*` scale in `tailwind.config.js` instead (`fontSize`,
+`spacing`, `letterSpacing`, `lineHeight`, `borderWidth`, `borderRadius`,
+`maxWidth`, `maxHeight` all have `aa-*` entries; `spacing` alone covers
+width/height/padding/margin/gap/inset since Tailwind's defaults inherit it).
+Likewise never hold a reusable Tailwind class string in a JS/TS const
+(`const CARD_CLASS = "bg-aa-surface border …"` or a local `const card = "…"`)
+— add a named class to the `@layer components` block in `src/style.css`
+instead (`.aa-card`, `.aa-input`, `.aa-btn-accent`, …) and reference it as a
+plain string in `className`. Check `tailwind.config.js` / `style.css` for an
+existing token or component class before adding a new one.
+
 **IDs.** `crypto.randomUUID()` for profile sub-entities; rounds are
 `` `rnd_${crypto.randomUUID()}` ``. Storage helpers assign `id` / `createdAt` —
 callers pass an `Omit<…, "id" | "createdAt">` payload.

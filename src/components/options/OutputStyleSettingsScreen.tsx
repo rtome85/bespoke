@@ -3,7 +3,6 @@ import type { ReactNode } from "react"
 import { Spectrum } from "~components/options/Spectrum"
 import {
   BULLET_DENSITY,
-  CARD_CLASS,
   COVER_LETTER_SAMPLE,
   FOCUS,
   READING_LEVEL,
@@ -18,20 +17,6 @@ interface Props {
   onChange: (tuning: LLMTuningConfig) => void
 }
 
-const SECTION_LABEL_CLASS =
-  "text-[11px] font-bold tracking-[0.08em] text-aa-text-secondary pt-1"
-
-const ROW_CLASS = "border-b border-aa-border-subtle py-3 space-y-3 first:pt-0"
-
-const ROW_TITLE_CLASS = "text-[13px] font-medium text-aa-text-primary"
-
-const ROW_SUB_CLASS = "text-[11px] leading-[1.4] text-aa-text-secondary"
-
-const SAMPLE_LABEL_CLASS =
-  "text-[10px] font-bold tracking-[0.05em] text-aa-text-secondary"
-
-const SAMPLE_BODY_CLASS = "text-[13px] leading-relaxed text-aa-neutral-700"
-
 function SettingRow({
   label,
   sub,
@@ -42,10 +27,10 @@ function SettingRow({
   children: ReactNode
 }) {
   return (
-    <div className={ROW_CLASS}>
+    <div className="aa-settings-row">
       <div className="space-y-0.5">
-        <p className={ROW_TITLE_CLASS}>{label}</p>
-        <p className={ROW_SUB_CLASS}>{sub}</p>
+        <p className="aa-settings-row-title">{label}</p>
+        <p className="aa-settings-row-sub">{sub}</p>
       </div>
       {children}
     </div>
@@ -68,10 +53,10 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
   const readingIndex = fallbackIndex(READING_LEVEL.indexOf(tuning.readingLevel))
 
   return (
-    <div className={CARD_CLASS}>
+    <div className="aa-card">
       <div className="flex gap-8">
         <div className="flex-1">
-          <p className={SECTION_LABEL_CLASS}>SCORING</p>
+          <p className="aa-settings-section-label">SCORING</p>
           <SettingRow
             label="Match strictness"
             sub="How rigorously your profile is scored against the job's requirements">
@@ -87,7 +72,7 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
             />
           </SettingRow>
 
-          <p className={SECTION_LABEL_CLASS}>WRITING</p>
+          <p className="aa-settings-section-label">WRITING</p>
           <SettingRow
             label="Tone"
             sub="Voice used across the CV and cover letter">
@@ -146,16 +131,16 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
           </SettingRow>
         </div>
 
-        <div className="w-[300px] shrink-0">
+        <div className="w-aa-px-300 shrink-0">
           <div className="rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5 space-y-4">
-            <p className={SAMPLE_LABEL_CLASS}>SAMPLE BULLET</p>
-            <p className={SAMPLE_BODY_CLASS}>
+            <p className="aa-settings-sample-label">SAMPLE BULLET</p>
+            <p className="aa-settings-sample-body">
               {SAMPLE_BULLETS[tuning.writingTone][tuning.resumeFocus]}
             </p>
             <hr className="border-0 border-t border-aa-border" />
-            <p className={SAMPLE_LABEL_CLASS}>COVER LETTER OPENER</p>
-            <p className={SAMPLE_BODY_CLASS}>{COVER_LETTER_SAMPLE}</p>
-            <p className="text-[11px] text-aa-text-secondary">
+            <p className="aa-settings-sample-label">COVER LETTER OPENER</p>
+            <p className="aa-settings-sample-body">{COVER_LETTER_SAMPLE}</p>
+            <p className="text-aa-11 text-aa-text-secondary">
               Updates live as you change any setting on this page.
             </p>
           </div>
@@ -175,7 +160,7 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
               readingLevel: DEFAULT_LLM_TUNING.readingLevel
             })
           }
-          className="text-[12px] font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
+          className="text-aa-caption font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
           Reset to defaults
         </button>
       </div>

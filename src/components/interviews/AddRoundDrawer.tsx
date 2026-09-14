@@ -25,11 +25,6 @@ interface Props {
   onDone?: () => void
 }
 
-const label =
-  "block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary mb-1.5"
-const field =
-  "w-full px-3 py-[9px] bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors"
-
 const TYPE_OPTIONS: { value: RoundType; label: string }[] = [
   { value: "HR", label: "HR Interview" },
   { value: "Technical", label: "Technical" },
@@ -211,10 +206,10 @@ export function AddRoundDrawer({
         aria-label={
           mode === "edit" ? "Edit interview round" : "Add interview round"
         }
-        className="absolute inset-y-0 right-0 w-[460px] max-w-[92vw] bg-aa-surface border-l border-aa-border shadow-xl flex flex-col focus:outline-none"
+        className="absolute inset-y-0 right-0 w-aa-px-460 max-w-aa-viewport-safe bg-aa-surface border-l border-aa-border shadow-xl flex flex-col focus:outline-none"
         onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 shrink-0 bg-aa-surface border-b border-aa-border px-5 h-14 flex items-center justify-between">
-          <span className="text-[14px] font-semibold text-aa-text-primary">
+          <span className="text-aa-sm font-semibold text-aa-text-primary">
             {mode === "edit" ? "Edit interview round" : "Add interview round"}
           </span>
           <button
@@ -228,7 +223,7 @@ export function AddRoundDrawer({
 
         {mode === "create" && createApps.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-6 text-center">
-            <p className="text-[13px] text-aa-text-secondary leading-relaxed">
+            <p className="text-aa-13 text-aa-text-secondary leading-relaxed">
               No application can take a new round right now. Every non-rejected
               application already has an open interview round — debrief it
               first.
@@ -238,9 +233,9 @@ export function AddRoundDrawer({
           <>
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
               <div>
-                <span className={label}>Application</span>
+                <span className="aa-drawer-field-label">Application</span>
                 {mode === "edit" ? (
-                  <p className="text-[13px] font-semibold text-aa-text-primary">
+                  <p className="text-aa-13 font-semibold text-aa-text-primary">
                     {selectedApp
                       ? `${selectedApp.company} — ${selectedApp.jobTitle}`
                       : "—"}
@@ -249,7 +244,7 @@ export function AddRoundDrawer({
                   <select
                     value={appId}
                     onChange={(e) => setAppId(e.target.value)}
-                    className={field}>
+                    className="aa-drawer-field-input">
                     {createApps.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.company} — {a.jobTitle}
@@ -258,18 +253,18 @@ export function AddRoundDrawer({
                   </select>
                 )}
                 {selectedApp && (
-                  <p className="text-[11px] text-aa-text-secondary mt-1">
+                  <p className="text-aa-11 text-aa-text-secondary mt-1">
                     Currently “{selectedApp.status}”
                   </p>
                 )}
               </div>
 
               <div>
-                <label className={label}>Round type</label>
+                <label className="aa-drawer-field-label">Round type</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as RoundType)}
-                  className={field}>
+                  className="aa-drawer-field-input">
                   {type === "" && (
                     <option value="" disabled>
                       Choose a round type…
@@ -287,34 +282,34 @@ export function AddRoundDrawer({
                     value={customLabel}
                     onChange={(e) => setCustomLabel(e.target.value)}
                     placeholder="e.g. System design, Hiring manager"
-                    className={`${field} mt-2`}
+                    className="aa-drawer-field-input mt-2"
                   />
                 )}
               </div>
 
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className={label}>Date</label>
+                  <label className="aa-drawer-field-label">Date</label>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className={field}
+                    className="aa-drawer-field-input"
                   />
                 </div>
-                <div className="w-[140px]">
-                  <label className={label}>Time</label>
+                <div className="w-aa-px-140">
+                  <label className="aa-drawer-field-label">Time</label>
                   <input
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className={field}
+                    className="aa-drawer-field-input"
                   />
                 </div>
               </div>
 
               <div>
-                <span className={label}>Format</span>
+                <span className="aa-drawer-field-label">Format</span>
                 <SegmentedControl<RoundFormat>
                   ariaLabel="Format"
                   options={FORMAT_OPTIONS}
@@ -324,30 +319,30 @@ export function AddRoundDrawer({
               </div>
 
               <div>
-                <label className={label}>Interviewer(s)</label>
+                <label className="aa-drawer-field-label">Interviewer(s)</label>
                 <input
                   type="text"
                   value={interviewers}
                   onChange={(e) => setInterviewers(e.target.value)}
                   placeholder="Jane R. — Engineering Manager"
-                  className={field}
+                  className="aa-drawer-field-input"
                 />
-                <p className="text-[11px] text-aa-text-secondary mt-1">
+                <p className="text-aa-11 text-aa-text-secondary mt-1">
                   One per line for a panel.
                 </p>
               </div>
 
               {nextNote && (
                 <div>
-                  <span className={label}>What happens next</span>
-                  <p className="text-[13px] text-aa-neutral-700 leading-relaxed">
+                  <span className="aa-drawer-field-label">What happens next</span>
+                  <p className="text-aa-13 text-aa-neutral-700 leading-relaxed">
                     {nextNote}
                   </p>
                 </div>
               )}
 
               {error && (
-                <p className="text-[12px] text-aa-error-strong">{error}</p>
+                <p className="text-aa-caption text-aa-error-strong">{error}</p>
               )}
             </div>
 
@@ -357,13 +352,13 @@ export function AddRoundDrawer({
                   type="button"
                   onClick={submit}
                   disabled={busy || !selectedApp}
-                  className="px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+                  className="px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
                   {mode === "edit" ? "Save changes" : "Add round"}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-[13px] font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
+                  className="text-aa-13 font-semibold text-aa-text-secondary hover:text-aa-text-primary transition-colors">
                   Cancel
                 </button>
               </div>
@@ -375,13 +370,13 @@ export function AddRoundDrawer({
                       type="button"
                       onClick={remove}
                       disabled={busy}
-                      className="text-[12px] font-semibold text-aa-error-strong hover:underline">
+                      className="text-aa-caption font-semibold text-aa-error-strong hover:underline">
                       Confirm delete
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="text-[12px] font-semibold text-aa-text-secondary hover:underline">
+                      className="text-aa-caption font-semibold text-aa-text-secondary hover:underline">
                       Keep
                     </button>
                   </span>
@@ -389,7 +384,7 @@ export function AddRoundDrawer({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="text-[12px] font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
+                    className="text-aa-caption font-semibold text-aa-text-secondary hover:text-aa-error-strong transition-colors">
                     Delete round
                   </button>
                 ))}

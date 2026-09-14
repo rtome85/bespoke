@@ -77,7 +77,7 @@ export function ProvidersSettingsScreen({
         onOpenPrompts={onOpenPrompts}
       />
 
-      <p className="text-[12px] text-aa-text-secondary flex items-start gap-2">
+      <p className="text-aa-caption text-aa-text-secondary flex items-start gap-2">
         <span className="text-aa-primary mt-px">•</span>
         Keys are stored locally in this browser and sent only to the provider
         you enable — never to Bespoke.

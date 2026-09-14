@@ -50,7 +50,7 @@ function renderInline(tokens: Token[] | undefined): ReactNode {
         return (
           <code
             key={i}
-            className="px-1 py-0.5 rounded-aa-sm bg-aa-neutral-100 text-[0.9em] font-mono">
+            className="px-1 py-0.5 rounded-aa-sm bg-aa-neutral-100 text-aa-code font-mono">
             {t.text}
           </code>
         )
@@ -78,7 +78,7 @@ function renderBlock(token: Token, i: number): ReactNode {
         return (
           <h1
             key={i}
-            className="text-[20px] font-bold text-aa-text-primary mt-5 first:mt-0">
+            className="text-aa-20 font-bold text-aa-text-primary mt-5 first:mt-0">
             {text}
           </h1>
         )
@@ -86,7 +86,7 @@ function renderBlock(token: Token, i: number): ReactNode {
         return (
           <h2
             key={i}
-            className="text-[16px] font-bold text-aa-text-primary mt-4 first:mt-0">
+            className="text-aa-body font-bold text-aa-text-primary mt-4 first:mt-0">
             {text}
           </h2>
         )
@@ -94,14 +94,14 @@ function renderBlock(token: Token, i: number): ReactNode {
         return (
           <h3
             key={i}
-            className="text-[14px] font-bold text-aa-text-primary mt-3 first:mt-0">
+            className="text-aa-sm font-bold text-aa-text-primary mt-3 first:mt-0">
             {text}
           </h3>
         )
       return (
         <h4
           key={i}
-          className="text-[13px] font-bold text-aa-text-primary mt-2 first:mt-0">
+          className="text-aa-13 font-bold text-aa-text-primary mt-2 first:mt-0">
           {text}
         </h4>
       )
@@ -111,7 +111,7 @@ function renderBlock(token: Token, i: number): ReactNode {
       return (
         <p
           key={i}
-          className="text-[13px] leading-relaxed text-aa-text-primary mt-2 first:mt-0">
+          className="text-aa-13 leading-relaxed text-aa-text-primary mt-2 first:mt-0">
           {renderInline(t.tokens)}
         </p>
       )
@@ -124,13 +124,13 @@ function renderBlock(token: Token, i: number): ReactNode {
       return t.ordered ? (
         <ol
           key={i}
-          className="mt-2 pl-5 list-decimal text-[13px] leading-relaxed text-aa-text-primary">
+          className="mt-2 pl-5 list-decimal text-aa-13 leading-relaxed text-aa-text-primary">
           {items}
         </ol>
       ) : (
         <ul
           key={i}
-          className="mt-2 pl-5 list-disc text-[13px] leading-relaxed text-aa-text-primary">
+          className="mt-2 pl-5 list-disc text-aa-13 leading-relaxed text-aa-text-primary">
           {items}
         </ul>
       )
@@ -144,7 +144,7 @@ function renderBlock(token: Token, i: number): ReactNode {
         return (
           <p
             key={i}
-            className="text-[13px] leading-relaxed text-aa-text-primary mt-2">
+            className="text-aa-13 leading-relaxed text-aa-text-primary mt-2">
             {token.text}
           </p>
         )

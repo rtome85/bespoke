@@ -56,7 +56,7 @@ export function MatchBreakdown({ match, openSection, onToggle }: Props) {
               onClick={() => onToggle(row.key)}
               className="w-full flex items-center gap-aa-3 px-aa-4 py-aa-4 text-left">
               <ChevronRight
-                className="w-[18px] h-[18px] text-aa-neutral-500 shrink-0 transition-transform duration-200"
+                className="w-aa-px-18 h-aa-px-18 text-aa-neutral-500 shrink-0 transition-transform duration-200"
                 style={{
                   transform: open ? "rotate(90deg)" : "rotate(0deg)"
                 }}
@@ -65,19 +65,19 @@ export function MatchBreakdown({ match, openSection, onToggle }: Props) {
                 className="w-4 h-4 shrink-0"
                 style={{ color: row.color }}
               />
-              <span className="flex-1 text-[15px] font-semibold text-aa-text-primary">
+              <span className="flex-1 text-aa-15 font-semibold text-aa-text-primary">
                 {row.label}
               </span>
-              <span className="text-[13px] font-semibold text-aa-text-secondary tabular-nums">
+              <span className="text-aa-13 font-semibold text-aa-text-secondary tabular-nums">
                 {row.items.length}
               </span>
             </button>
             {open && (
-              <ul className="flex flex-col gap-aa-3 px-aa-4 pb-aa-4 pl-[46px]">
+              <ul className="flex flex-col gap-aa-3 px-aa-4 pb-aa-4 pl-aa-px-46">
                 {row.items.map((item, itemIndex) => (
                   <li
                     key={itemIndex}
-                    className="flex gap-aa-2 text-[14px] leading-[1.45] text-aa-neutral-700">
+                    className="flex gap-aa-2 text-aa-sm leading-aa-1.45 text-aa-neutral-700">
                     <span
                       className="shrink-0 font-semibold"
                       style={{ color: row.color }}>

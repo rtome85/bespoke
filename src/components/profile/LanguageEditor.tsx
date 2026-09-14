@@ -1,7 +1,6 @@
 import { ChevronDown, Plus, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
-import { OUTLINE_BUTTON_CLASS } from "~constants/options"
 import type { Language } from "~types/userProfile"
 
 interface LanguageEditorProps {
@@ -63,7 +62,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
         displayLanguages.map((lang, index) => (
           <div
             key={lang.id}
-            className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-[14px] py-3">
+            className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-3.5 py-3">
             <input
               ref={(el) => {
                 nameRefs.current[lang.id] = el
@@ -85,7 +84,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
                   updateLanguage(lang.id, { level: e.target.value })
                 }
                 aria-label={`Proficiency level, row ${index + 1}`}
-                className="appearance-none w-[130px] bg-aa-surface border border-aa-border rounded-aa-md pl-3 pr-8 py-[7px] text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary cursor-pointer">
+                className="appearance-none w-aa-px-130 bg-aa-surface border border-aa-border rounded-aa-md pl-3 pr-8 py-aa-px-7 text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary cursor-pointer">
                 {LEVELS.map((l) => (
                   <option key={l} value={l}>
                     {l}
@@ -99,7 +98,7 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
               onClick={() => handleRemove(lang.id)}
               className="shrink-0 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
               title="Remove language">
-              <Trash2 className="w-[15px] h-[15px]" />
+              <Trash2 className="w-aa-px-15 h-aa-px-15" />
             </button>
           </div>
         ))
@@ -107,8 +106,8 @@ export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
 
       <button
         onClick={handleAdd}
-        className={`w-full flex items-center justify-center gap-2 ${OUTLINE_BUTTON_CLASS}`}>
-        <Plus className="w-[15px] h-[15px]" />
+        className={`w-full flex items-center justify-center gap-2 aa-btn-outline`}>
+        <Plus className="w-aa-px-15 h-aa-px-15" />
         Add language
       </button>
 

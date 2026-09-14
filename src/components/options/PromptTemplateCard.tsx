@@ -15,11 +15,11 @@ export function PromptTemplateCard({ template, isActive, onApply }: Props) {
           : "border-aa-border bg-aa-surface hover:border-aa-neutral-400"
       }`}>
       <div className="flex items-start justify-between mb-2">
-        <h3 className="font-semibold text-aa-text-primary text-[13px]">
+        <h3 className="font-semibold text-aa-text-primary text-aa-13">
           {template.name}
         </h3>
         {isActive && (
-          <span className="text-[10px] font-bold uppercase tracking-wider rounded-aa-pill bg-aa-success-soft text-aa-success-strong px-2 py-0.5 shrink-0 ml-2">
+          <span className="text-aa-10 font-bold uppercase tracking-wider rounded-aa-pill bg-aa-success-soft text-aa-success-strong px-2 py-0.5 shrink-0 ml-2">
             Active
           </span>
         )}
@@ -39,7 +39,7 @@ export function PromptTemplateCard({ template, isActive, onApply }: Props) {
         type="button"
         onClick={onApply}
         disabled={isActive}
-        className={`w-full py-2 rounded-aa-md text-[12px] font-semibold transition-colors ${
+        className={`w-full py-2 rounded-aa-md text-aa-caption font-semibold transition-colors ${
           isActive
             ? "bg-aa-neutral-100 text-aa-text-secondary cursor-default"
             : "bg-aa-primary text-aa-text-on-primary hover:bg-aa-primary-hover"

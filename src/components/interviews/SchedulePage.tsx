@@ -46,23 +46,23 @@ function RoundRow({
       type="button"
       onClick={() => onEdit({ app, round })}
       className="w-full flex items-center gap-3 px-4 py-3 border-b border-aa-border last:border-0 text-left hover:bg-aa-neutral-50 transition-colors">
-      <span className="w-16 shrink-0 text-[12px] font-semibold tabular-nums text-aa-text-primary">
+      <span className="w-16 shrink-0 text-aa-caption font-semibold tabular-nums text-aa-text-primary">
         {round.time || "—"}
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-[13px] font-semibold text-aa-text-primary truncate">
+        <span className="block text-aa-13 font-semibold text-aa-text-primary truncate">
           {app.company}
         </span>
-        <span className="block text-[12px] text-aa-text-secondary truncate">
+        <span className="block text-aa-caption text-aa-text-secondary truncate">
           {roundLabel(round)}
           {round.interviewers ? ` · ${round.interviewers.split("\n")[0]}` : ""}
         </span>
       </span>
       <span
-        className={`shrink-0 inline-block px-2 py-0.5 rounded-aa-pill text-[10px] font-bold uppercase tracking-wide ${TYPE_TAG[round.type]}`}>
+        className={`shrink-0 inline-block px-2 py-0.5 rounded-aa-pill text-aa-10 font-bold uppercase tracking-wide ${TYPE_TAG[round.type]}`}>
         {roundTypeTag(round)}
       </span>
-      <span className="w-24 shrink-0 text-[12px] text-aa-text-secondary text-right">
+      <span className="w-24 shrink-0 text-aa-caption text-aa-text-secondary text-right">
         {formatLabel(round.format) || "—"}
       </span>
       <ChevronRight className="w-4 h-4 text-aa-neutral-400 shrink-0" />
@@ -72,7 +72,7 @@ function RoundRow({
 
 function Band({ children }: { children: ReactNode }) {
   return (
-    <div className="px-4 py-2 bg-aa-neutral-50 border-b border-aa-border text-[10px] font-bold uppercase tracking-wider text-aa-text-secondary">
+    <div className="px-4 py-2 bg-aa-neutral-50 border-b border-aa-border text-aa-10 font-bold uppercase tracking-wider text-aa-text-secondary">
       {children}
     </div>
   )
@@ -137,7 +137,7 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <h1 className="text-[28px] font-bold tracking-[-0.4px] text-aa-text-primary">
+        <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary">
           Schedule
         </h1>
         <button
@@ -149,7 +149,7 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
               ? undefined
               : "Every application already has an open round, or is rejected"
           }
-          className="px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+          className="px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
           Add round
         </button>
       </div>
@@ -159,13 +159,13 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
           <div
             key={s.label}
             className="bg-aa-surface border border-aa-border rounded-aa-lg p-4">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-aa-text-secondary">
+            <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary">
               {s.label}
             </span>
-            <span className="block text-[22px] font-bold text-aa-text-primary leading-none mt-2">
+            <span className="block text-aa-22 font-bold text-aa-text-primary leading-none mt-2">
               {s.value}
             </span>
-            <span className="block text-[11px] text-aa-text-secondary mt-1.5 truncate">
+            <span className="block text-aa-11 text-aa-text-secondary mt-1.5 truncate">
               {s.sub}
             </span>
           </div>
@@ -174,10 +174,10 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
 
       {!hasAny ? (
         <div className="bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6 py-16 text-center">
-          <p className="text-[14px] font-semibold text-aa-text-primary">
+          <p className="text-aa-sm font-semibold text-aa-text-primary">
             No interviews scheduled
           </p>
-          <p className="text-[13px] text-aa-text-secondary mt-1">
+          <p className="text-aa-13 text-aa-text-secondary mt-1">
             {apps.length === 0
               ? "Track an application first, then add its interview rounds here."
               : "Add a round to start building the agenda."}
@@ -208,7 +208,7 @@ export function SchedulePage({ apps, onAdd, onEdit }: Props) {
           ))}
 
           {up.length === 0 && unsched.length === 0 && (
-            <p className="text-[13px] text-aa-text-secondary text-center py-8">
+            <p className="text-aa-13 text-aa-text-secondary text-center py-8">
               Nothing upcoming.
             </p>
           )}

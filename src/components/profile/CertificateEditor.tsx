@@ -1,12 +1,5 @@
 import { useState } from "react"
 
-import {
-  ACCENT_BUTTON_CLASS,
-  ERROR_MESSAGE_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  SECONDARY_BUTTON_CLASS
-} from "~constants/options"
 import type { Certificate } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -33,13 +26,6 @@ const formatDate = (iso: string | null | undefined): string => {
   const [y, m] = iso.split("-")
   return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][+m - 1]} ${y}`
 }
-
-const labelCls = LABEL_CLASS
-
-const inputCls = INPUT_CLASS
-
-const inputErrorCls =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function CertificateEditor({ certificates, onChange }: CertificateEditorProps) {
   const safeCerts = certificates || []
@@ -88,24 +74,24 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Certificate / Course Name *</label>
+            <label className="aa-label">Certificate / Course Name *</label>
             <input
               type="text"
               value={cert.name}
               onChange={(e) => onUpdate({ ...cert, name: e.target.value })}
               placeholder="e.g. AWS Certified Developer"
-              className={hasErrors && !cert.name ? inputErrorCls : inputCls}
+              className={hasErrors && !cert.name ? "aa-input-error" : "aa-input"}
             />
           </div>
 
           <div>
-            <label className={labelCls}>Issuing Organisation *</label>
+            <label className="aa-label">Issuing Organisation *</label>
             <input
               type="text"
               value={cert.issuer}
               onChange={(e) => onUpdate({ ...cert, issuer: e.target.value })}
               placeholder="e.g. Amazon Web Services"
-              className={hasErrors && !cert.issuer ? inputErrorCls : inputCls}
+              className={hasErrors && !cert.issuer ? "aa-input-error" : "aa-input"}
             />
           </div>
         </div>
@@ -131,18 +117,18 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
         </div>
 
         <div>
-          <label className={labelCls}>Credential URL</label>
+          <label className="aa-label">Credential URL</label>
           <input
             type="url"
             value={cert.credentialUrl || ""}
             onChange={(e) => onUpdate({ ...cert, credentialUrl: e.target.value })}
             placeholder="https://www.credential.net/..."
-            className={inputCls}
+            className="aa-input"
           />
         </div>
 
         {hasErrors && (
-          <div className={ERROR_MESSAGE_CLASS}>
+          <div className="aa-message-error">
             {errors.map((e, i) => <p key={i} className="text-sm">• {e}</p>)}
           </div>
         )}
@@ -159,12 +145,12 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
           </h3>
           {renderCertificateItem(editingCert, 0, setEditingCert)}
           <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingCert} className={ACCENT_BUTTON_CLASS}>
+            <button onClick={saveEditingCert} className="aa-btn-accent">
               Save certificate
             </button>
             <button
               onClick={() => setEditingCert(null)}
-              className={SECONDARY_BUTTON_CLASS}>
+              className="aa-btn-secondary">
               Cancel
             </button>
           </div>

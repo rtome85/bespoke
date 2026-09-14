@@ -41,10 +41,6 @@ function mergeItems(prev: PrepItem[] = [], nextTexts: string[]): PrepItem[] {
   return [...ai, ...prev.filter((p) => p.userAdded)]
 }
 
-const card = "bg-aa-surface border border-aa-border rounded-aa-lg p-aa-6"
-const linkBtn =
-  "text-[12px] font-semibold text-aa-primary hover:underline disabled:opacity-50 disabled:no-underline"
-
 function SectionCard({
   title,
   generatedAt,
@@ -61,21 +57,21 @@ function SectionCard({
   children: ReactNode
 }) {
   return (
-    <div className={card}>
+    <div className="aa-card">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h3 className="text-[13px] font-semibold text-aa-text-primary">
+          <h3 className="text-aa-13 font-semibold text-aa-text-primary">
             {title}
           </h3>
           {generatedAt && (
-            <p className="text-[11px] text-aa-text-secondary mt-0.5">
+            <p className="text-aa-11 text-aa-text-secondary mt-0.5">
               generated {relativeDayLabel(generatedAt.slice(0, 10))}
             </p>
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {onCopy && (
-            <button type="button" onClick={onCopy} className={linkBtn}>
+            <button type="button" onClick={onCopy} className="aa-btn-link">
               Copy
             </button>
           )}
@@ -84,7 +80,7 @@ function SectionCard({
               type="button"
               onClick={onRegenerate}
               disabled={busy}
-              className={`${linkBtn} inline-flex items-center gap-1`}>
+              className="aa-btn-link inline-flex items-center gap-1">
               {busy ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
@@ -221,7 +217,7 @@ export function PrepWorkspace({
         <div className="flex items-center gap-2 min-w-0">
           <BackLink label="Prep" onClick={onBack} />
           <span className="text-aa-neutral-400">/</span>
-          <span className="text-[14px] font-semibold text-aa-text-primary truncate">
+          <span className="text-aa-sm font-semibold text-aa-text-primary truncate">
             {app.company} — {roundLabel(round)}
           </span>
         </div>
@@ -229,7 +225,7 @@ export function PrepWorkspace({
           type="button"
           onClick={ready ? regenerateAll : generateAll}
           disabled={anyBusy}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-[9px] bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+          className="shrink-0 inline-flex items-center gap-2 px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
           {anyBusy ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
@@ -246,7 +242,7 @@ export function PrepWorkspace({
           onViewInSchedule={onViewInSchedule}
           right={
             <span
-              className={`inline-block px-2 py-0.5 rounded-aa-pill text-[10px] font-bold uppercase tracking-wide ${
+              className={`inline-block px-2 py-0.5 rounded-aa-pill text-aa-10 font-bold uppercase tracking-wide ${
                 ready
                   ? "bg-aa-success-soft text-aa-success-strong"
                   : "bg-aa-neutral-100 text-aa-text-secondary"
@@ -256,15 +252,15 @@ export function PrepWorkspace({
           }
         />
 
-        {error && <p className="text-[12px] text-aa-error-strong">{error}</p>}
-        {hint && <p className="text-[12px] text-aa-warning-strong">{hint}</p>}
+        {error && <p className="text-aa-caption text-aa-error-strong">{error}</p>}
+        {hint && <p className="text-aa-caption text-aa-warning-strong">{hint}</p>}
 
         {!ready ? (
-          <div className={`${card} text-center py-12`}>
-            <p className="text-[14px] font-semibold text-aa-text-primary">
+          <div className="aa-card text-center py-12">
+            <p className="text-aa-sm font-semibold text-aa-text-primary">
               No prep generated yet
             </p>
-            <p className="text-[13px] text-aa-text-secondary mt-1 max-w-md mx-auto">
+            <p className="text-aa-13 text-aa-text-secondary mt-1 max-w-md mx-auto">
               Company research, likely topics for a {roundLabel(round)}, and
               talking points drawn from your profile — about 20 seconds.
             </p>
@@ -272,7 +268,7 @@ export function PrepWorkspace({
               type="button"
               onClick={generateAll}
               disabled={anyBusy}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-[13px] font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
               {anyBusy ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
@@ -297,7 +293,7 @@ export function PrepWorkspace({
               onRegenerate={() => void genResearch(true)}
               busy={busy.research}>
               {prep.companyResearch ? (
-                <p className="text-[13px] text-aa-neutral-700 leading-relaxed whitespace-pre-line">
+                <p className="text-aa-13 text-aa-neutral-700 leading-relaxed whitespace-pre-line">
                   {prep.companyResearch}
                 </p>
               ) : (
@@ -305,7 +301,7 @@ export function PrepWorkspace({
                   type="button"
                   onClick={() => void genResearch(false)}
                   disabled={busy.research}
-                  className={linkBtn}>
+                  className="aa-btn-link">
                   Fetch company research
                 </button>
               )}
@@ -337,11 +333,11 @@ export function PrepWorkspace({
           </>
         )}
 
-        <div className={card}>
-          <h3 className="text-[13px] font-semibold text-aa-text-primary">
+        <div className="aa-card">
+          <h3 className="text-aa-13 font-semibold text-aa-text-primary">
             My notes
           </h3>
-          <p className="text-[11px] text-aa-text-secondary mt-0.5 mb-2">
+          <p className="text-aa-11 text-aa-text-secondary mt-0.5 mb-2">
             Kept when you regenerate.
           </p>
           <textarea
@@ -349,7 +345,7 @@ export function PrepWorkspace({
             onChange={(e) => onNotesChange(e.target.value)}
             rows={4}
             placeholder="Questions to ask, things to double-check, reminders…"
-            className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-[13px] text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
+            className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
           />
         </div>
       </div>

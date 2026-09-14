@@ -51,7 +51,7 @@ export function ProviderPanel({
               {meta.name}
             </span>
             <span
-              className={`text-[10px] font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border ${
+              className={`text-aa-10 font-bold uppercase tracking-wider rounded-aa-sm px-1.5 py-0.5 border ${
                 meta.local
                   ? "bg-aa-success-soft text-aa-success-strong border-aa-success-strong"
                   : "bg-aa-neutral-100 text-aa-text-secondary border-aa-border"
@@ -59,14 +59,14 @@ export function ProviderPanel({
               {meta.local ? "Free" : "Paid"}
             </span>
           </span>
-          <span className="block text-[12px] text-aa-text-secondary mt-0.5">
+          <span className="block text-aa-caption text-aa-text-secondary mt-0.5">
             {meta.local
               ? "Local or Ollama Cloud — no per-token cost"
               : `Usage-based API · ${models.length} models`}
           </span>
         </span>
         <span
-          className={`flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${
+          className={`flex items-center gap-1.5 text-aa-11 font-semibold shrink-0 ${
             isConnected ? "text-aa-success-strong" : "text-aa-text-secondary"
           }`}>
           <span

@@ -1,12 +1,5 @@
 import { useState } from "react"
 
-import {
-  ACCENT_BUTTON_CLASS,
-  ERROR_MESSAGE_CLASS,
-  INPUT_CLASS,
-  LABEL_CLASS,
-  SECONDARY_BUTTON_CLASS
-} from "~constants/options"
 import type { PersonalProject } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -29,13 +22,6 @@ const validateProject = (project: PersonalProject): string[] => {
   if (project.githubRepoUrl && !isValidUrl(project.githubRepoUrl)) errors.push("Invalid GitHub repository URL")
   return errors
 }
-
-const labelCls = LABEL_CLASS
-
-const inputCls = INPUT_CLASS
-
-const inputErrorCls =
-  "w-full px-3 py-[10px] bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors"
 
 export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
   const [editingProject, setEditingProject] = useState<PersonalProject | null>(null)
@@ -77,56 +63,56 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
     return (
       <div className="space-y-4">
         <div>
-          <label className={labelCls}>Project Title *</label>
+          <label className="aa-label">Project Title *</label>
           <input
             type="text"
             value={project.title}
             onChange={(e) => onUpdate({ ...project, title: e.target.value })}
             placeholder="e.g., E-commerce Platform"
-            className={hasErrors && !project.title ? inputErrorCls : inputCls}
+            className={hasErrors && !project.title ? "aa-input-error" : "aa-input"}
           />
         </div>
 
         <div>
-          <label className={labelCls}>Description *</label>
+          <label className="aa-label">Description *</label>
           <textarea
             value={project.description}
             onChange={(e) => onUpdate({ ...project, description: e.target.value })}
             placeholder="Describe your project, its purpose, technologies used, and your role..."
             rows={4}
             maxLength={500}
-            className={`${hasErrors && !project.description ? inputErrorCls : inputCls} resize-none`}
+            className={`${hasErrors && !project.description ? "aa-input-error" : "aa-input"} resize-none`}
           />
-          <p className="mt-1 text-[11px] text-aa-text-secondary">
+          <p className="mt-1 text-aa-11 text-aa-text-secondary">
             {project.description.length}/500 characters
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Live Demo URL</label>
+            <label className="aa-label">Live Demo URL</label>
             <input
               type="url"
               value={project.liveDemoUrl || ""}
               onChange={(e) => onUpdate({ ...project, liveDemoUrl: e.target.value })}
               placeholder="https://your-project-demo.com"
-              className={inputCls}
+              className="aa-input"
             />
           </div>
           <div>
-            <label className={labelCls}>GitHub Repository URL</label>
+            <label className="aa-label">GitHub Repository URL</label>
             <input
               type="url"
               value={project.githubRepoUrl || ""}
               onChange={(e) => onUpdate({ ...project, githubRepoUrl: e.target.value })}
               placeholder="https://github.com/username/repo"
-              className={inputCls}
+              className="aa-input"
             />
           </div>
         </div>
 
         {hasErrors && (
-          <div className={ERROR_MESSAGE_CLASS}>
+          <div className="aa-message-error">
             {errors.map((error, i) => (
               <p key={i} className="text-sm">• {error}</p>
             ))}
@@ -145,12 +131,12 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
           </h3>
           {renderProjectItem(editingProject, 0, setEditingProject)}
           <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingProject} className={ACCENT_BUTTON_CLASS}>
+            <button onClick={saveEditingProject} className="aa-btn-accent">
               Save project
             </button>
             <button
               onClick={() => setEditingProject(null)}
-              className={SECONDARY_BUTTON_CLASS}>
+              className="aa-btn-secondary">
               Cancel
             </button>
           </div>

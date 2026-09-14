@@ -42,7 +42,7 @@ export function Checklist({
             aria-checked={!!it.checked}
             aria-label={it.text}
             onClick={() => patch(i, { checked: !it.checked })}
-            className={`mt-[2px] w-4 h-4 shrink-0 grid place-items-center rounded-aa-sm border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary ${
+            className={`mt-0.5 w-4 h-4 shrink-0 grid place-items-center rounded-aa-sm border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary ${
               it.checked
                 ? "bg-aa-primary border-aa-primary text-aa-text-on-primary"
                 : "border-aa-border hover:border-aa-neutral-400"
@@ -50,7 +50,7 @@ export function Checklist({
             {it.checked && <Check className="w-3 h-3" />}
           </button>
           <span
-            className={`flex-1 text-[13px] leading-snug ${
+            className={`flex-1 text-aa-13 leading-snug ${
               it.checked
                 ? "text-aa-text-secondary line-through"
                 : "text-aa-text-primary"
@@ -94,7 +94,7 @@ export function Checklist({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && add()}
           placeholder={addLabel}
-          className="flex-1 bg-transparent text-[13px] text-aa-text-primary placeholder:text-aa-neutral-400 focus:outline-none py-1"
+          className="flex-1 bg-transparent text-aa-13 text-aa-text-primary placeholder:text-aa-neutral-400 focus:outline-none py-1"
         />
       </div>
     </div>
