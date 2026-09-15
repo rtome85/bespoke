@@ -378,6 +378,7 @@ function shortMonth(key: string): string {
   return new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short" })
 }
 
+/** Applications sent per period, with the share that has since been answered. */
 export function activityBuckets(
   apps: SavedApplication[],
   range: ActivityRange = "8w",
@@ -421,6 +422,9 @@ export function activityBuckets(
   }
 
   for (const app of apps) {
+    // Applied-only: a saved job was never sent, so it is not "waiting" on
+    // anyone and would put a bar under a week in which nothing was sent.
+    if (!everApplied(app)) continue
     const day = appliedDay(app)
     if (!day) continue
     const key = range === "8w" ? mondayOf(day) : day.slice(0, 7)

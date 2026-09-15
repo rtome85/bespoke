@@ -16,7 +16,8 @@ const CHART_HEIGHT = 120
 /**
  * Volume over time, split by whether the applications in each bucket ever got
  * an answer — so a tall bar of silence reads differently from a tall bar that
- * converted.
+ * converted. Counts applications actually sent, matching the 30-day figure on
+ * the Tracked tile; saved-but-unsent jobs belong to "Needs you", not here.
  *
  * Counts sit above every bar rather than on hover: the previous chart revealed
  * them only to a mouse, which left keyboard and touch users with an unlabelled
@@ -30,7 +31,7 @@ export function ActivityCard({ apps }: { apps: SavedApplication[] }) {
   return (
     <OverviewCard
       title="Activity"
-      sub="Applications tracked per period, split by whether they got a reply."
+      sub="Applications sent per period, split by whether they got a reply."
       action={
         <div
           role="group"
@@ -59,7 +60,7 @@ export function ActivityCard({ apps }: { apps: SavedApplication[] }) {
             <div
               key={bucket.key}
               role="img"
-              aria-label={`${bucket.label}: ${bucket.total} tracked, ${bucket.replied} replied${
+              aria-label={`${bucket.label}: ${bucket.total} sent, ${bucket.replied} replied${
                 bucket.partial ? ", current period so far" : ""
               }`}
               className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
