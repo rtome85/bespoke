@@ -16,6 +16,11 @@ export interface PerplexityConfig {
    * Optional in storage — consumers fall back to `DEFAULT_INTERVIEW_PREP_PROMPT`.
    */
   interviewPrepPrompt?: string
+  /**
+   * Verdict of the last connection test, mirroring `ProviderConfig`. Voided
+   * whenever `apiKey` changes — a verdict belongs to the key that earned it.
+   */
+  lastTested?: { ok: boolean; at: string; message: string }
 }
 
 export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}} and return ONLY a raw JSON object. No markdown, no code fences, no explanation — just the JSON.

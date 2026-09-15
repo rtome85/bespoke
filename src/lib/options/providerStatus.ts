@@ -120,16 +120,23 @@ export function providerStatus(
   return local ? CONNECTED : UNTESTED
 }
 
-/** Status of the Perplexity account, which has no persisted test verdict. */
+/**
+ * Status of the Perplexity account. Same rule as `providerStatus`: a saved
+ * key is not a connected one. Its verdict is voided whenever the key
+ * changes (see `changePerplexityConfig`), so a stored pass always refers to
+ * the key currently in the field.
+ */
 export function perplexityStatus(
   config: PerplexityConfig,
   test: OperationStatus
 ): ProviderStatus {
   if (!config.apiKey) return NOT_CONNECTED
+  if (!config.enabled) return DISABLED
   if (test.type === "loading") return TESTING
-  if (test.type === "error") return FAILED
   if (test.type === "success") return CONNECTED
-  return config.enabled ? CONNECTED : DISABLED
+  if (test.type === "error") return FAILED
+  if (config.lastTested) return config.lastTested.ok ? CONNECTED : FAILED
+  return UNTESTED
 }
 
 /** Every row of the providers roster, in display order. */

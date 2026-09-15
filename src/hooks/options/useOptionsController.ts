@@ -16,6 +16,7 @@ import { useSavedApplications } from "~lib/useSavedApplications"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   type LLMProviderId,
+  type PerplexityConfig,
   type ProviderConfig
 } from "~types/config"
 import type {
@@ -75,8 +76,25 @@ export function useOptionsController() {
 
   const { providerTest, testProvider, refreshProviderModels } =
     useProviderTesting({ providers, updateProvider })
-  const { status: perplexityTestStatus, testConnection: testPerplexity } =
-    usePerplexityConnectionTest(perplexityConfig)
+  const {
+    status: perplexityTestStatus,
+    testConnection: testPerplexity,
+    resetStatus: resetPerplexityStatus
+  } = usePerplexityConnectionTest(perplexityConfig, setPerplexityConfig)
+
+  /**
+   * A verdict belongs to the key that earned it: editing the key voids both
+   * the stored verdict and the banner, so a new key cannot inherit the
+   * previous one's pass. Other edits (prompts, the enable flag) pass through.
+   */
+  const changePerplexityConfig = (next: PerplexityConfig) => {
+    if (next.apiKey === perplexityConfig.apiKey) {
+      setPerplexityConfig(next)
+      return
+    }
+    setPerplexityConfig({ ...next, lastTested: undefined })
+    resetPerplexityStatus()
+  }
   const { remindersOn, toggleReminders } = useInterviewReminders(apps)
   const syncConfig = useSyncConfig()
   const { syncStatus, connectDrive, forcePull, disconnectDrive } =
@@ -180,7 +198,7 @@ export function useOptionsController() {
       userProfile,
       setUserProfile,
       perplexityConfig,
-      setPerplexityConfig,
+      setPerplexityConfig: changePerplexityConfig,
       customPrompts,
       llmTuning,
       setLlmTuning,
