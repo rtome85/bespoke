@@ -1,9 +1,11 @@
+import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import type { Education } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
 import { DatePicker } from "./DatePicker"
+import { ProfileEntryModal } from "./ProfileEntryModal"
 
 interface EducationEditorProps {
   education: Education[]
@@ -67,7 +69,17 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
     onUpdate: (edu: Education) => void
   ) => {
     const errors = validateEducation(edu)
-    const hasErrors = errors.length > 0
+    // An untouched draft is not yet wrong: hold the required-field errors
+    // back until something has been entered, so the add dialog doesn't open
+    // already flagging three problems.
+    const isBlank =
+      !edu.degree?.trim() &&
+      !edu.institution?.trim() &&
+      !edu.fieldOfStudy?.trim() &&
+      !edu.startDate &&
+      !edu.endDate &&
+      !edu.description?.trim()
+    const hasErrors = errors.length > 0 && !isBlank
     const isCurrentPosition = edu.endDate === null
 
     return (
@@ -113,7 +125,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DatePicker
-            label="Start Date *"
+            label="Start Date"
             value={edu.startDate}
             onChange={(date) => onUpdate({ ...edu, startDate: date || "" })}
             required
@@ -160,62 +172,68 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
   }
 
   return (
-    <div>
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">
+          Degrees &amp; programmes
+        </h2>
+        <button
+          onClick={addEducation}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add education
+        </button>
+      </div>
+
       {editingEducation && (
-        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
-          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
-            Add new education
-          </h3>
+        <ProfileEntryModal
+          title="Add new education"
+          saveLabel="Save education"
+          onSave={saveEditingEducation}
+          onCancel={() => setEditingEducation(null)}>
           {renderEducationItem(editingEducation, 0, setEditingEducation)}
-          <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingEducation} className="aa-btn-accent">
-              Save education
-            </button>
-            <button
-              onClick={() => setEditingEducation(null)}
-              className="aa-btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </div>
+        </ProfileEntryModal>
       )}
 
-      <ArrayInput
-        items={safeEducation}
-        getItemKey={(edu) => edu.id}
-        onAdd={addEducation}
-        onUpdate={updateEducation}
-        onRemove={removeEducation}
-        renderItem={renderEducationItem}
-        renderSummary={(edu) => {
-          const fmt = (iso: string | null) => {
-            if (!iso) return "Present"
-            const [y, m] = iso.split("-")
-            return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
-          }
-          return (
-            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
-                  {edu.degree
-                    ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-aa-text-secondary"> · {edu.fieldOfStudy}</span>}</>
-                    : <span className="italic text-aa-text-disabled">Untitled degree</span>}
-                </p>
-                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
-                  {edu.institution || "—"}
-                </p>
+      <div className="aa-card-base">
+        <ArrayInput
+          items={safeEducation}
+          getItemKey={(edu) => edu.id}
+          onAdd={addEducation}
+          onUpdate={updateEducation}
+          onRemove={removeEducation}
+          renderItem={renderEducationItem}
+          renderSummary={(edu) => {
+            const fmt = (iso: string | null) => {
+              if (!iso) return "Present"
+              const [y, m] = iso.split("-")
+              return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+            }
+            return (
+              <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-aa-text-primary truncate">
+                    {edu.degree
+                      ? <>{edu.degree}{edu.fieldOfStudy && <span className="font-normal text-aa-text-secondary"> · {edu.fieldOfStudy}</span>}</>
+                      : <span className="italic text-aa-text-secondary">Untitled degree</span>}
+                  </p>
+                  <p className="text-xs text-aa-text-secondary truncate mt-0.5">
+                    {edu.institution || "—"}
+                  </p>
+                </div>
+                {edu.startDate && (
+                  <span className="shrink-0 text-aa-caption font-medium text-aa-neutral-500">
+                    {fmt(edu.startDate)} – {fmt(edu.endDate)}
+                  </span>
+                )}
               </div>
-              {edu.startDate && (
-                <span className="shrink-0 text-xs text-aa-text-secondary">
-                  {fmt(edu.startDate)} – {fmt(edu.endDate)}
-                </span>
-              )}
-            </div>
-          )
-        }}
-        emptyMessage="No education added yet. Add your educational background to get started!"
-        addButtonText="Education"
-      />
-    </div>
+            )
+          }}
+          emptyMessage="No education added yet. Add your educational background to get started!"
+          addButtonText="Education"
+          flush
+        />
+      </div>
+    </section>
   )
 }

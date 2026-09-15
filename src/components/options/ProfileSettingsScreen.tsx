@@ -39,28 +39,16 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "education") {
     return (
-      <div className="space-y-6">
-        <div className="aa-card">
-          <h2 className="aa-section-heading">Education</h2>
-          <hr className="aa-divider" />
-          <EducationEditor
-            education={userProfile.education}
-            onChange={(education) => onChange({ ...userProfile, education })}
-          />
-        </div>
+      <div className="space-y-aa-px-30">
+        <EducationEditor
+          education={userProfile.education}
+          onChange={(education) => onChange({ ...userProfile, education })}
+        />
 
-        <div className="aa-card">
-          <h2 className="aa-section-heading">Certificates</h2>
-          <p className="text-sm text-aa-text-secondary mb-4">
-            Certifications, online courses, bootcamps and professional training.
-          </p>
-          <CertificateEditor
-            certificates={userProfile.certificates ?? []}
-            onChange={(certificates) =>
-              onChange({ ...userProfile, certificates })
-            }
-          />
-        </div>
+        <CertificateEditor
+          certificates={userProfile.certificates ?? []}
+          onChange={(certificates) => onChange({ ...userProfile, certificates })}
+        />
       </div>
     )
   }

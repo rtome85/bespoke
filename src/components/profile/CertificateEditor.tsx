@@ -1,9 +1,11 @@
+import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import type { Certificate } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
 import { DatePicker } from "./DatePicker"
+import { ProfileEntryModal } from "./ProfileEntryModal"
 
 interface CertificateEditorProps {
   certificates: Certificate[]
@@ -67,8 +69,16 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
     onUpdate: (cert: Certificate) => void
   ) => {
     const errors = validateCertificate(cert)
-    const hasErrors = errors.length > 0
-    const noExpiry = cert.expiryDate === null
+    // An untouched draft is not yet wrong: hold the required-field errors
+    // back until something has been entered, so the add dialog doesn't open
+    // already flagging three problems.
+    const isBlank =
+      !cert.name?.trim() &&
+      !cert.issuer?.trim() &&
+      !cert.issueDate &&
+      !cert.expiryDate &&
+      !cert.credentialUrl?.trim()
+    const hasErrors = errors.length > 0 && !isBlank
 
     return (
       <div className="space-y-4">
@@ -98,21 +108,18 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DatePicker
-            label="Issue Date *"
+            label="Issue Date"
             value={cert.issueDate}
             onChange={(date) => onUpdate({ ...cert, issueDate: date || "" })}
             required
           />
 
+          {/* No "no expiry" toggle: an empty date already means the
+              certificate doesn't expire. */}
           <DatePicker
             label="Expiry Date"
             value={cert.expiryDate ?? null}
             onChange={(date) => onUpdate({ ...cert, expiryDate: date })}
-            showCurrentPosition
-            currentPosition={noExpiry}
-            onCurrentPositionChange={(noExp) =>
-              onUpdate({ ...cert, expiryDate: noExp ? null : cert.expiryDate })
-            }
           />
         </div>
 
@@ -137,56 +144,67 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
   }
 
   return (
-    <div>
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">
+          Certificates &amp; training
+        </h2>
+        <button
+          onClick={addCertificate}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add certificate
+        </button>
+      </div>
+
       {editingCert && (
-        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
-          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
-            Add new certificate
-          </h3>
+        <ProfileEntryModal
+          title="Add new certificate"
+          saveLabel="Save certificate"
+          onSave={saveEditingCert}
+          onCancel={() => setEditingCert(null)}>
           {renderCertificateItem(editingCert, 0, setEditingCert)}
-          <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingCert} className="aa-btn-accent">
-              Save certificate
-            </button>
-            <button
-              onClick={() => setEditingCert(null)}
-              className="aa-btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </div>
+        </ProfileEntryModal>
       )}
 
-      <ArrayInput
-        items={safeCerts}
-        getItemKey={(cert) => cert.id}
-        onAdd={addCertificate}
-        onUpdate={updateCertificate}
-        onRemove={removeCertificate}
-        renderItem={renderCertificateItem}
-        renderSummary={(cert) => (
-          <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
-                {cert.name || <span className="italic text-aa-text-disabled">Untitled certificate</span>}
-              </p>
-              <p className="text-xs text-aa-text-secondary truncate mt-0.5">
-                {cert.issuer || "—"}
-              </p>
+      <div className="aa-card-base">
+        <ArrayInput
+          items={safeCerts}
+          getItemKey={(cert) => cert.id}
+          onAdd={addCertificate}
+          onUpdate={updateCertificate}
+          onRemove={removeCertificate}
+          renderItem={renderCertificateItem}
+          renderSummary={(cert) => (
+            <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-aa-text-primary truncate">
+                  {cert.name || <span className="italic text-aa-text-secondary">Untitled certificate</span>}
+                </p>
+                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
+                  {cert.issuer || "—"}
+                </p>
+              </div>
+              {cert.issueDate && (
+                <div className="shrink-0 text-right">
+                  <span className="block text-aa-caption font-medium text-aa-neutral-500">
+                    {formatDate(cert.issueDate)}
+                  </span>
+                  {cert.expiryDate && (
+                    <span className="aa-status-warn mt-aa-px-3 flex items-center justify-end gap-1.5 text-aa-11 font-semibold">
+                      <span className="aa-status-dot" />
+                      Expires {formatDate(cert.expiryDate)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-            {cert.issueDate && (
-              <span className="shrink-0 text-xs text-aa-text-secondary">
-                {formatDate(cert.issueDate)}
-                {cert.expiryDate !== undefined && (
-                  <> – {cert.expiryDate ? formatDate(cert.expiryDate) : "No expiry"}</>
-                )}
-              </span>
-            )}
-          </div>
-        )}
-        emptyMessage="No certificates added yet. Add your certifications and training courses!"
-        addButtonText="Certificate"
-      />
-    </div>
+          )}
+          emptyMessage="No certificates added yet. Add your certifications and training courses!"
+          addButtonText="Certificate"
+          flush
+        />
+      </div>
+    </section>
   )
 }
