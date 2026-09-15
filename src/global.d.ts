@@ -19,3 +19,11 @@ declare module "data-text:*" {
   const src: string
   export default src
 }
+
+// The `react:` scheme runs the SVG through SVGR, so the default export is a
+// component that forwards props (className, aria-*) onto the <svg> root.
+declare module "react:*.svg" {
+  import type { FunctionComponent, SVGProps } from "react"
+  const Component: FunctionComponent<SVGProps<SVGSVGElement>>
+  export default Component
+}

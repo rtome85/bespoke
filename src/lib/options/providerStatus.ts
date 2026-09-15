@@ -23,9 +23,6 @@ export interface ProviderStatus {
 export interface ProviderRosterEntry {
   id: RosterProviderId
   name: string
-  /** Two-letter mark; Ollama is the one row drawn with an icon instead. */
-  monogram: string
-  local: boolean
   /** What using it costs — the roster's ACCESS column. */
   access: string
   /** Secondary line under the name: masked key, host, or why it's empty. */
@@ -33,18 +30,6 @@ export interface ProviderRosterEntry {
   /** One-line explanation of what the account costs and does, for the dialog. */
   blurb: string
   status: ProviderStatus
-}
-
-/**
- * Stylised marks, not derivable from the names (Perplexity reads "PX", and
- * "Anthropic" has only one capital to borrow).
- */
-const MONOGRAMS: Record<RosterProviderId, string> = {
-  ollama: "OL",
-  openai: "OA",
-  anthropic: "AN",
-  google: "GG",
-  perplexity: "PX"
 }
 
 const BLURBS: Record<RosterProviderId, string> = {
@@ -152,8 +137,6 @@ export function providerRoster(
     return {
       id,
       name: meta.name,
-      monogram: MONOGRAMS[id],
-      local: meta.local,
       access: meta.local ? "Local · Free" : "Usage-based",
       meta: meta.local
         ? hostOf(config?.baseUrl || meta.defaultBaseUrl)
@@ -168,8 +151,6 @@ export function providerRoster(
   rows.push({
     id: "perplexity",
     name: "Perplexity",
-    monogram: MONOGRAMS.perplexity,
-    local: false,
     access: "Research only",
     meta: perplexityConfig.apiKey
       ? maskKey(perplexityConfig.apiKey)

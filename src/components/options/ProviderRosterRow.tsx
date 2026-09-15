@@ -1,5 +1,6 @@
-import { ChevronRight, Server } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
+import { ProviderIcon } from "~components/options/ProviderIcon"
 import type { ProviderRosterEntry } from "~lib/options/providerStatus"
 
 interface Props {
@@ -25,13 +26,10 @@ export function ProviderRosterRow({ entry, isOpen, onOpen }: Props) {
           className={`grid h-aa-px-30 w-aa-px-30 shrink-0 place-items-center rounded-aa-md ${
             isOpen ? "bg-aa-surface" : "bg-aa-neutral-100"
           }`}>
-          {entry.local ? (
-            <Server className="h-aa-px-17 w-aa-px-17 text-aa-neutral-700" />
-          ) : (
-            <span className="text-aa-11 font-bold text-aa-neutral-700">
-              {entry.monogram}
-            </span>
-          )}
+          <ProviderIcon
+            id={entry.id}
+            className="h-aa-px-17 w-aa-px-17 text-aa-neutral-700"
+          />
         </span>
         <span className="min-w-0">
           <span className="block truncate text-aa-sm font-semibold text-aa-text-primary">

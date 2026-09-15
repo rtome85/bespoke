@@ -1,9 +1,10 @@
-import { Server, X } from "lucide-react"
+import { X } from "lucide-react"
 import { useId, useRef } from "react"
 import { createPortal } from "react-dom"
 
 import { PerplexityConfigurationFields } from "~components/options/PerplexityConfigurationFields"
 import { ProviderConfigurationFields } from "~components/options/ProviderConfigurationFields"
+import { ProviderIcon } from "~components/options/ProviderIcon"
 import { useModalFocusTrap } from "~hooks/useModalFocusTrap"
 import { providerModels } from "~lib/options/modelRouting"
 import type { ProviderRosterEntry } from "~lib/options/providerStatus"
@@ -107,13 +108,10 @@ export function ProviderDetailModal({
         onClick={(event) => event.stopPropagation()}>
         <header className="flex items-center gap-aa-3 border-b border-aa-border px-aa-px-22 py-4">
           <span className="grid h-aa-px-34 w-aa-px-34 shrink-0 place-items-center rounded-aa-md bg-aa-neutral-100">
-            {entry.local ? (
-              <Server className="h-aa-px-18 w-aa-px-18 text-aa-neutral-700" />
-            ) : (
-              <span className="text-aa-caption font-bold text-aa-neutral-700">
-                {entry.monogram}
-              </span>
-            )}
+            <ProviderIcon
+              id={entry.id}
+              className="h-aa-px-18 w-aa-px-18 text-aa-neutral-700"
+            />
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-aa-2">
