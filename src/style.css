@@ -291,6 +291,38 @@ body {
     @apply bg-aa-surface border border-aa-border rounded-aa-lg;
   }
 
+  /* src/components/profile/ArrayInput.tsx — flush list chrome, used by the
+     Education screen via <ArrayInput flush>. Rows run edge to edge inside an
+     .aa-card-base section and are separated by hairlines, instead of each row
+     carrying its own border inside a padded .aa-card. When the remaining
+     profile lists move over, the boxed branch in ArrayInput and its `flush`
+     prop go away. */
+  .aa-list-row {
+    @apply flex items-center gap-aa-4 border-t border-aa-border-subtle px-aa-6 py-aa-px-13 transition-colors hover:bg-aa-neutral-100;
+  }
+  .aa-list-row-action {
+    @apply grid h-7 w-7 shrink-0 place-items-center rounded-aa-md border border-transparent text-aa-neutral-500 transition-colors hover:text-aa-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary;
+  }
+  /* The chip is the row's hover affordance, so it hangs off the row itself
+     rather than a group-hover: utility — @apply drops the `.group:hover` half
+     of that variant and would leave the chip permanently on. */
+  .aa-list-row:hover .aa-list-row-action {
+    @apply border-aa-border bg-aa-surface;
+  }
+  /* Expanded editor: same hairline and gutter as the rows above it. */
+  .aa-list-panel {
+    @apply border-t border-aa-border-subtle px-aa-6 py-aa-5;
+  }
+  /* Zero state stands alone inside the card, so it carries no hairline. */
+  .aa-list-empty {
+    @apply px-aa-6 py-aa-px-26 text-center;
+  }
+  /* Section title and its add button ride above the card, on the page
+     ground rather than inside the list surface. */
+  .aa-list-section-header {
+    @apply flex items-center justify-between gap-aa-6;
+  }
+
   /* src/components/profile/{Education,CertificateEditor,ProjectEditor,
      ExperienceEditor}.tsx — shared invalid-field input style. */
   .aa-input-error {
