@@ -195,6 +195,17 @@ the helpers in `selectors.ts` (`todayISO`, `addDaysISO`, `daysUntil`,
 - **`chrome.sidePanel` is MV3/Chrome-only** — guard with
   `typeof chrome.sidePanel === "undefined"` (it's in the chrome manifest override
   but absent under Firefox MV2).
+- **No `side_panel.default_path` in the manifest, deliberately.** That key makes
+  the panel available on *every* tab, so it follows the user when they switch
+  tabs. `handleContextMenuClick` registers it per tab instead
+  (`setOptions({ tabId, path, enabled: true })` dispatched immediately before
+  `open({ tabId })`, with no `await` between them — the first `await` loses the
+  click gesture and Chrome rejects `open()`).
+- **Closing the panel needs `window.close()` from inside the panel document.**
+  `setOptions({ enabled: false })` only stops it re-appearing on that tab; it
+  does not dismiss a panel that is already on screen. Work that must outlive the
+  close (opening a tab, disabling the panel) belongs in the service worker —
+  see `background/messages/openApplicationsList.ts`.
 - **Manifest permissions live in two places** in `package.json`:
   `manifest.permissions` **and** `manifest.overrides.chrome.permissions` — update
   both.

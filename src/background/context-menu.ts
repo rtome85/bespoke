@@ -38,22 +38,26 @@ export async function handleContextMenuClick(
   // Firefox (MV2) has no chrome.sidePanel — fall back to the old popup window.
   const hasSidePanel = typeof chrome.sidePanel !== "undefined"
 
-  // sidePanel.open() only counts as a response to the user's click if it's
-  // called before the function's first `await` — even a fast internal call
-  // like chrome.storage.local.set() is enough to lose the gesture and make
-  // Chrome reject it. Fire it synchronously first; the manifest's
-  // side_panel.default_path means it doesn't need setOptions() to resolve
-  // first. Re-enable it for this tab (in case a prior close disabled it)
-  // and show the "extracting" placeholder afterwards.
-  const openPromise = hasSidePanel
-    ? chrome.sidePanel.open({ tabId: tab.id })
-    : null
+  // The manifest deliberately has no side_panel.default_path — that would
+  // make the panel available on every tab, so switching tabs would carry it
+  // along. It's registered per tab here instead, which also re-enables it
+  // after a previous close disabled it for this tab.
+  //
+  // Both calls are dispatched without an `await` between them: setOptions()
+  // is queued first so the panel exists for this tab by the time open() is
+  // handled, and open() only counts as a response to the user's click while
+  // no `await` has run yet — even a fast internal call like
+  // chrome.storage.local.set() is enough to lose the gesture and make Chrome
+  // reject it.
   const enablePromise = hasSidePanel
     ? chrome.sidePanel.setOptions({
         tabId: tab.id,
         path: "tabs/dialog.html",
         enabled: true
       })
+    : null
+  const openPromise = hasSidePanel
+    ? chrome.sidePanel.open({ tabId: tab.id })
     : null
 
   if (!hasSidePanel) {
@@ -74,10 +78,16 @@ export async function handleContextMenuClick(
     try {
       await openPromise
     } catch {
-      // open() raced ahead of setOptions() and found no panel registered yet
-      // for this tab (e.g. its first-ever use, or one closeSidePanel() had
-      // disabled) — enablePromise has resolved by now, so retry.
-      await chrome.sidePanel.open({ tabId: tab.id })
+      // open() was handled before setOptions() registered the panel for this
+      // tab — enablePromise has resolved by now, so retry. The click gesture
+      // may have expired, in which case this throws too and the panel simply
+      // doesn't open; the extraction below still runs.
+      try {
+        await chrome.sidePanel.open({ tabId: tab.id })
+      } catch {
+        // Nothing left to try — leave the panel closed rather than throwing
+        // out of the context-menu listener.
+      }
     }
   }
 

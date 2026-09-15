@@ -56,10 +56,7 @@
           "notifications",
           "alarms",
           "sidePanel"
-        ],
-        "side_panel": {
-          "default_path": "tabs/dialog.html"
-        }
+        ]
       }
     },
     "oauth2": {
