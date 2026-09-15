@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 
 import { AnalysisSplash } from "~components/dialog/AnalysisSplash"
+import { DuplicateApplicationDialog } from "~components/dialog/DuplicateApplicationDialog"
 import { MatchFormScreen } from "~components/dialog/MatchFormScreen"
 import { MatchReportScreen } from "~components/dialog/MatchReportScreen"
 import { SaveApplicationScreen } from "~components/dialog/SaveApplicationScreen"
@@ -43,11 +44,15 @@ function IndexDialog() {
     triageDecision,
     setTriageDecision,
     addedGapSkills,
+    duplicateApplication,
     progress,
     quoteIndex,
     quoteVisible,
     submit: handleSubmit,
-    addGapSkill: handleAddGapSkill
+    addGapSkill: handleAddGapSkill,
+    dismissDuplicate: handleDismissDuplicate,
+    goToDuplicateApplication: handleGoToDuplicateApplication,
+    analyzeDuplicateAnyway: handleAnalyzeDuplicateAnyway
   } = useMatchAnalysis({
     initialView,
     initialPendingJobData,
@@ -184,20 +189,30 @@ function IndexDialog() {
   }
 
   return (
-    <MatchFormScreen
-      companyName={companyName}
-      jobTitle={jobTitle}
-      jobDescription={jobDescription}
-      routingLabels={routingLabels}
-      userProfile={userProfile}
-      status={status}
-      onCompanyNameChange={setCompanyName}
-      onJobTitleChange={setJobTitle}
-      onJobDescriptionChange={setJobDescription}
-      onSubmit={handleSubmit}
-      onOpenSettings={() => chrome.runtime.openOptionsPage()}
-      onClose={closeSidePanel}
-    />
+    <>
+      <MatchFormScreen
+        companyName={companyName}
+        jobTitle={jobTitle}
+        jobDescription={jobDescription}
+        routingLabels={routingLabels}
+        userProfile={userProfile}
+        status={status}
+        onCompanyNameChange={setCompanyName}
+        onJobTitleChange={setJobTitle}
+        onJobDescriptionChange={setJobDescription}
+        onSubmit={handleSubmit}
+        onOpenSettings={() => chrome.runtime.openOptionsPage()}
+        onClose={closeSidePanel}
+      />
+      {duplicateApplication && (
+        <DuplicateApplicationDialog
+          application={duplicateApplication}
+          onGoToApplications={handleGoToDuplicateApplication}
+          onAnalyzeAnyway={handleAnalyzeDuplicateAnyway}
+          onDismiss={handleDismissDuplicate}
+        />
+      )}
+    </>
   )
 }
 
