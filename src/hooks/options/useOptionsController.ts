@@ -16,6 +16,7 @@ import { useSavedApplications } from "~lib/useSavedApplications"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   type LLMProviderId,
+  type PerplexityConfig,
   type ProviderConfig
 } from "~types/config"
 import type {
@@ -29,7 +30,7 @@ export function useOptionsController() {
   const apps = useSavedApplications()
   const [roundDrawer, setRoundDrawer] = useState<RoundDrawerState>(null)
   const [advanceFor, setAdvanceFor] = useState<string | null>(null)
-  const [openProvider, setOpenProvider] = useState<string | null>("ollama")
+  const [openProvider, setOpenProvider] = useState<string | null>(null)
 
   const stored = useOptionsStoredState()
   const {
@@ -73,10 +74,41 @@ export function useOptionsController() {
       }
     }))
 
-  const { providerTest, testProvider, refreshProviderModels } =
-    useProviderTesting({ providers, updateProvider })
-  const { status: perplexityTestStatus, testConnection: testPerplexity } =
-    usePerplexityConnectionTest(perplexityConfig)
+  const {
+    providerTest,
+    testProvider,
+    refreshProviderModels,
+    cancelProviderOperations
+  } = useProviderTesting({ providers, updateProvider })
+  const {
+    status: perplexityTestStatus,
+    testConnection: testPerplexity,
+    resetStatus: resetPerplexityStatus
+  } = usePerplexityConnectionTest(perplexityConfig, setPerplexityConfig)
+
+  /**
+   * A verdict belongs to the key that earned it: editing the key voids both
+   * the stored verdict and the banner, so a new key cannot inherit the
+   * previous one's pass. Other edits (prompts, the enable flag) pass through.
+   */
+  const changePerplexityConfig = (next: PerplexityConfig) => {
+    if (next.apiKey === perplexityConfig.apiKey) {
+      setPerplexityConfig(next)
+      return
+    }
+    setPerplexityConfig({ ...next, lastTested: undefined })
+    resetPerplexityStatus()
+  }
+
+  /**
+   * Abandons a provider's in-flight test or model refresh, so a completion
+   * that lands after the dialog was cancelled cannot write to the config
+   * that cancelling restored.
+   */
+  const cancelPendingProviderWork = (provider: string) => {
+    if (provider === "perplexity") resetPerplexityStatus()
+    else cancelProviderOperations(provider as LLMProviderId)
+  }
   const { remindersOn, toggleReminders } = useInterviewReminders(apps)
   const syncConfig = useSyncConfig()
   const { syncStatus, connectDrive, forcePull, disconnectDrive } =
@@ -180,7 +212,7 @@ export function useOptionsController() {
       userProfile,
       setUserProfile,
       perplexityConfig,
-      setPerplexityConfig,
+      setPerplexityConfig: changePerplexityConfig,
       customPrompts,
       llmTuning,
       setLlmTuning,
@@ -193,6 +225,7 @@ export function useOptionsController() {
       providerTest,
       testProvider,
       refreshProviderModels,
+      cancelPendingProviderWork,
       perplexityTestStatus,
       testPerplexity,
       remindersOn,

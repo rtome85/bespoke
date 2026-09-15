@@ -17,6 +17,18 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     return
   }
 
+  // Same gate as testOllamaConnection: adapters swallow an auth failure and
+  // return the built-in list, so without this a keyless account reports a
+  // successful refresh.
+  if (!meta.local && !apiKey) {
+    res.send({
+      success: false,
+      message: "Please enter an API key first",
+      models: meta.fallbackModels
+    })
+    return
+  }
+
   try {
     const client = getLLMClient(provider, { apiKey: apiKey ?? "", baseUrl })
     const models = await client.listModels()

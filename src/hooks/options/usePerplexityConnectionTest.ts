@@ -3,10 +3,15 @@ import { useEffect, useRef, useState } from "react"
 import type { PerplexityConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
 
+type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
+
 const TEST_TIMEOUT_MS = 30_000
 const STATUS_RESET_MS = 5_000
 
-export function usePerplexityConnectionTest(config: PerplexityConfig) {
+export function usePerplexityConnectionTest(
+  config: PerplexityConfig,
+  setConfig: StorageSetter<PerplexityConfig>
+) {
   const [status, setStatus] = useState<OperationStatus>({
     type: "idle",
     message: ""
@@ -63,24 +68,29 @@ export function usePerplexityConnectionTest(config: PerplexityConfig) {
       )
 
       if (!mountedRef.current || controllerRef.current !== controller) return
-      setStatus(
-        response.ok
-          ? {
-              type: "success",
-              message: "Connection successful! Perplexity Sonar is ready."
-            }
-          : {
-              type: "error",
-              message: `Connection failed: ${response.status} ${response.statusText}`
-            }
-      )
+      const message = response.ok
+        ? "Connection successful! Perplexity Sonar is ready."
+        : `Connection failed: ${response.status} ${response.statusText}`
+      // The banner self-clears after STATUS_RESET_MS; the stored verdict is
+      // what keeps the roster's status honest across reloads.
+      setConfig((previous) => ({
+        ...previous,
+        lastTested: {
+          ok: response.ok,
+          at: new Date().toISOString(),
+          message
+        }
+      }))
+      setStatus({ type: response.ok ? "success" : "error", message })
     } catch {
       if (!mountedRef.current || controllerRef.current !== controller) return
-      setStatus({
-        type: "error",
-        message:
-          "Connection failed. Please check your internet connection and API key."
-      })
+      const message =
+        "Connection failed. Please check your internet connection and API key."
+      setConfig((previous) => ({
+        ...previous,
+        lastTested: { ok: false, at: new Date().toISOString(), message }
+      }))
+      setStatus({ type: "error", message })
     } finally {
       clearTimeout(requestTimer)
       if (controllerRef.current === controller) controllerRef.current = null
@@ -93,5 +103,13 @@ export function usePerplexityConnectionTest(config: PerplexityConfig) {
     )
   }
 
-  return { status, testConnection }
+  /** Drop an in-flight test and its banner; used when the key changes. */
+  const resetStatus = () => {
+    controllerRef.current?.abort()
+    controllerRef.current = null
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current)
+    setStatus({ type: "idle", message: "" })
+  }
+
+  return { status, testConnection, resetStatus }
 }
