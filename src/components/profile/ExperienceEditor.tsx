@@ -1,10 +1,11 @@
-import { Trash2 } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import type { WorkExperience } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
 import { DatePicker } from "./DatePicker"
+import { ProfileEntryModal } from "./ProfileEntryModal"
 
 interface ExperienceEditorProps {
   experiences: WorkExperience[]
@@ -65,7 +66,16 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
     onUpdate: (exp: WorkExperience) => void
   ) => {
     const errors = validateExperience(experience)
-    const hasErrors = errors.length > 0
+    // An untouched draft is not yet wrong: hold the required-field errors
+    // back until something has been entered, so the add dialog doesn't open
+    // already flagging four problems.
+    const isBlank =
+      !experience.jobTitle.trim() &&
+      !experience.company.trim() &&
+      !experience.startDate &&
+      !experience.endDate &&
+      experience.achievements.every((achievement) => !achievement.trim())
+    const hasErrors = errors.length > 0 && !isBlank
     const isCurrentPosition = experience.endDate === null
 
     const updateAchievement = (achievementIndex: number, value: string) => {
@@ -112,7 +122,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DatePicker
-            label="Start Date *"
+            label="Start Date"
             value={experience.startDate}
             onChange={(date) => onUpdate({ ...experience, startDate: date || "" })}
             required
@@ -171,60 +181,66 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
   }
 
   return (
-    <div>
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">
+          Roles &amp; positions
+        </h2>
+        <button
+          onClick={addExperience}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add experience
+        </button>
+      </div>
+
       {editingExperience && (
-        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
-          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
-            Add new work experience
-          </h3>
+        <ProfileEntryModal
+          title="Add new work experience"
+          saveLabel="Save experience"
+          onSave={saveEditingExperience}
+          onCancel={() => setEditingExperience(null)}>
           {renderExperienceItem(editingExperience, 0, setEditingExperience)}
-          <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingExperience} className="aa-btn-accent">
-              Save experience
-            </button>
-            <button
-              onClick={() => setEditingExperience(null)}
-              className="aa-btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </div>
+        </ProfileEntryModal>
       )}
 
-      <ArrayInput
-        items={experiences}
-        getItemKey={(experience) => experience.id}
-        onAdd={addExperience}
-        onUpdate={updateExperience}
-        onRemove={removeExperience}
-        renderItem={renderExperienceItem}
-        renderSummary={(exp) => {
-          const fmt = (iso: string | null) => {
-            if (!iso) return "Present"
-            const [y, m] = iso.split("-")
-            return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
-          }
-          return (
-            <div className="flex flex-1 items-center justify-between min-w-0 gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
-                  {exp.jobTitle || <span className="italic text-aa-text-disabled">Untitled role</span>}
-                </p>
-                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
-                  {exp.company || "—"}
-                </p>
+      <div className="aa-card-base">
+        <ArrayInput
+          items={experiences}
+          getItemKey={(experience) => experience.id}
+          onAdd={addExperience}
+          onUpdate={updateExperience}
+          onRemove={removeExperience}
+          renderItem={renderExperienceItem}
+          renderSummary={(exp) => {
+            const fmt = (iso: string | null) => {
+              if (!iso) return "Present"
+              const [y, m] = iso.split("-")
+              return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+            }
+            return (
+              <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-aa-text-primary truncate">
+                    {exp.jobTitle || <span className="italic text-aa-text-secondary">Untitled role</span>}
+                  </p>
+                  <p className="text-xs text-aa-text-secondary truncate mt-0.5">
+                    {exp.company || "—"}
+                  </p>
+                </div>
+                {exp.startDate && (
+                  <span className="shrink-0 text-aa-caption font-medium text-aa-neutral-500">
+                    {fmt(exp.startDate)} – {fmt(exp.endDate)}
+                  </span>
+                )}
               </div>
-              {exp.startDate && (
-                <span className="shrink-0 text-xs text-aa-text-secondary">
-                  {fmt(exp.startDate)} – {fmt(exp.endDate)}
-                </span>
-              )}
-            </div>
-          )
-        }}
-        emptyMessage="No work experience added yet. Add your first position to get started!"
-        addButtonText="Work Experience"
-      />
-    </div>
+            )
+          }}
+          emptyMessage="No work experience added yet. Add your first position to get started!"
+          addButtonText="Work Experience"
+          flush
+        />
+      </div>
+    </section>
   )
 }

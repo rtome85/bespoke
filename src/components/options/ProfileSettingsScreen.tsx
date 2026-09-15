@@ -68,16 +68,12 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "experience") {
     return (
-      <div className="aa-card">
-        <h2 className="aa-section-heading">Work Experience</h2>
-        <hr className="aa-divider" />
-        <ExperienceEditor
-          experiences={userProfile.workExperience}
-          onChange={(workExperience) =>
-            onChange({ ...userProfile, workExperience })
-          }
-        />
-      </div>
+      <ExperienceEditor
+        experiences={userProfile.workExperience}
+        onChange={(workExperience) =>
+          onChange({ ...userProfile, workExperience })
+        }
+      />
     )
   }
 
