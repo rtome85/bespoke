@@ -137,7 +137,8 @@ export function rate(
 // ── dates ────────────────────────────────────────────────────────────────────
 
 /** Local calendar day for an ISO timestamp, as "YYYY-MM-DD". */
-function dayOfISO(iso: string): string | null {
+function dayOfISO(iso?: string): string | null {
+  if (!iso) return null
   const d = new Date(iso)
   return isNaN(d.getTime()) ? null : todayISO(d)
 }
@@ -187,7 +188,7 @@ function median(values: number[]): number | null {
 }
 
 export interface TimingStats {
-  /** Median days from applying to the first status move, once replied. */
+  /** Median days from applying to the first reply, over what recorded one. */
   medianDaysToReply: number | null
   /** How many replies that median is based on. */
   replySample: number
@@ -214,7 +215,11 @@ export function timingStats(
 
   for (const app of apps) {
     if (everReplied(app)) {
-      const days = daysBetween(appliedDay(app), lastMoveDay(app))
+      // `firstReplyAt` only, never `statusUpdatedAt`: the latter advances with
+      // every later move, so an Applied → Interviewing → Offer application
+      // would report the offer date as its reply time. Applications answered
+      // before that field existed simply sit this metric out.
+      const days = daysBetween(appliedDay(app), dayOfISO(app.firstReplyAt))
       // A same-day or backdated move tells us nothing about response time.
       if (days !== null && days > 0) replyDays.push(days)
     } else if (app.status === "Applied") {

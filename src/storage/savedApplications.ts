@@ -96,6 +96,19 @@ export class OpenRoundError extends Error {
  * created round (for navigation). Throws `OpenRoundError` if a round is
  * already open.
  */
+/** Statuses that mean the other side answered. */
+const REPLY_STATUSES: ApplicationStatus[] = ["Interviewing", "Offer", "Reject"]
+
+/**
+ * Stamp `firstReplyAt` the first time an application lands on a reply status,
+ * and never afterwards — the whole point is that it does not move when the
+ * status does. Safe to call on every status write.
+ */
+function withFirstReply(app: SavedApplication, now: string): SavedApplication {
+  if (app.firstReplyAt || !REPLY_STATUSES.includes(app.status)) return app
+  return { ...app, firstReplyAt: now }
+}
+
 export async function addRound(
   appId: string,
   partial: Omit<Partial<InterviewRound>, "id" | "createdAt"> & {
@@ -115,11 +128,12 @@ export async function addRound(
         ...a,
         rounds: [...(a.rounds ?? []), round]
       }
+      const now = new Date().toISOString()
       if (a.status === "Saved" || a.status === "Applied") {
         next.status = "Interviewing"
-        next.statusUpdatedAt = new Date().toISOString()
+        next.statusUpdatedAt = now
       }
-      return next
+      return withFirstReply(next, now)
     })
   })
   await syncRoundAlarms(round)
@@ -167,7 +181,7 @@ export function setApplicationStatus(
         }
       }
 
-      return next
+      return withFirstReply(next, now)
     })
   )
 }
@@ -250,7 +264,7 @@ export function setRoundDebrief(
         next.status = target
         next.statusUpdatedAt = now
       }
-      return next
+      return withFirstReply(next, now)
     })
   )
 }

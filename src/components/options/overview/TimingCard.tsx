@@ -4,11 +4,11 @@ import type { SavedApplication } from "~types/userProfile"
 import { OverviewCard } from "./primitives"
 
 /**
- * How long things take. Only one timestamp per application survives
- * (`statusUpdatedAt`), so this reports what that supports — time to the first
- * reply, the longest current silence, and how long the applications sitting in
- * each stage have been sitting there — and claims nothing about stages the
- * data cannot reconstruct.
+ * How long things take: time to the first reply (from `firstReplyAt`, stamped
+ * once when an application is first answered), the longest current silence,
+ * and how long the applications sitting in each stage have been sitting there.
+ * Claims nothing about stages the data cannot reconstruct — per-transition
+ * durations would need a status history that storage does not keep.
  */
 export function TimingCard({ apps }: { apps: SavedApplication[] }) {
   const timing = timingStats(apps)
