@@ -76,6 +76,7 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
       !cert.name?.trim() &&
       !cert.issuer?.trim() &&
       !cert.issueDate &&
+      !cert.expiryDate &&
       !cert.credentialUrl?.trim()
     const hasErrors = errors.length > 0 && !isBlank
 

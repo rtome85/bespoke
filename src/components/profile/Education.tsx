@@ -77,6 +77,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
       !edu.institution?.trim() &&
       !edu.fieldOfStudy?.trim() &&
       !edu.startDate &&
+      !edu.endDate &&
       !edu.description?.trim()
     const hasErrors = errors.length > 0 && !isBlank
     const isCurrentPosition = edu.endDate === null
