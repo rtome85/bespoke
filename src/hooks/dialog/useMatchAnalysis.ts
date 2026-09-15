@@ -119,8 +119,14 @@ export function useMatchAnalysis({
     description: string,
     { skipDuplicateCheck = false }: { skipDuplicateCheck?: boolean } = {}
   ) => {
+    // Claimed up front so the duplicate lookup below is covered too: a fresh
+    // extraction can land while storage is being read, and its "extracting"
+    // splash must not be replaced by a dialog about the previous job.
+    const requestId = ++analysisRequestIdRef.current
+
     if (!skipDuplicateCheck) {
       const duplicate = await findStoredDuplicateApplication(company, title)
+      if (analysisRequestIdRef.current !== requestId) return
       if (duplicate) {
         // Already tracked — show the existing entry over the (prefilled)
         // form instead of spending an LLM call re-scoring the same opening.
@@ -130,8 +136,6 @@ export function useMatchAnalysis({
         return
       }
     }
-
-    const requestId = ++analysisRequestIdRef.current
 
     setLoading(true)
     setStatus("")
