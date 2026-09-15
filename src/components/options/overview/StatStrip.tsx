@@ -58,7 +58,7 @@ export function StatStrip({
       value: replyRate.value === null ? "—" : `${replyRate.value}%`,
       muted: replyRate.value === null,
       sub: rateHint(replyRate),
-      hash: "#/applications/all/Applied"
+      hash: "#/applications/all/replied"
     },
     {
       label: "Interview rate",
@@ -68,7 +68,7 @@ export function StatStrip({
         interviewRate.value === null
           ? rateHint(interviewRate)
           : `${counts.interviewed} ever reached a round`,
-      hash: "#/applications/all/Interviewing"
+      hash: "#/applications/all/interviewed"
     },
     {
       label: "Offers",

@@ -21,8 +21,18 @@ import { DocumentGenerationControls } from "~components/dialog/DocumentGeneratio
 import { GeneratedDocumentsCard } from "~components/dialog/GeneratedDocumentsCard"
 import { StrengthenApplication } from "~components/dialog/StrengthenApplication"
 import { useDocumentGenerationProgress } from "~hooks/dialog/useSimulatedProgress"
+import {
+  everApplied,
+  everInterviewed,
+  everReplied
+} from "~lib/overview/metrics"
 import { STORAGE_KEYS } from "~storage/keys"
 import type { AddedGapSkills } from "~types/dialog"
+import {
+  LIST_POPULATIONS,
+  type ListFilter,
+  type ListPopulation
+} from "~types/options"
 import type {
   DocumentPreviewDraft,
   DocumentPreviewTab
@@ -38,10 +48,10 @@ interface Props {
   applications: SavedApplication[]
   onUpdate: (id: string, patch: Partial<SavedApplication>) => void
   onDelete: (id: string) => void
-  /** Status the route asked for — how Overview links into a filtered list. */
-  routeStatus?: ApplicationStatus
+  /** Filter the route asked for — how Overview links into a slice of the list. */
+  routeFilter?: ListFilter
   /** Keeps the hash honest when the user changes the filter by hand. */
-  onStatusFilterChange?: (status: ApplicationStatus | "All") => void
+  onFilterChange?: (filter: ListFilter) => void
 }
 
 const STATUS_PILL: Record<ApplicationStatus, string> = {
@@ -66,27 +76,56 @@ function relTime(iso?: string): string {
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
+/**
+ * Populations Overview counts, as predicates. `interviewed` spans every
+ * application that ever reached a round — `Interviewing`, `Offer`, and the
+ * ones rejected after one — which no single status filter can express.
+ */
+const POPULATION_TEST: Record<
+  ListPopulation,
+  (app: SavedApplication) => boolean
+> = {
+  sent: everApplied,
+  replied: everReplied,
+  interviewed: everInterviewed
+}
+
+const POPULATION_LABEL: Record<ListPopulation, string> = {
+  sent: "Sent",
+  replied: "Replied",
+  interviewed: "Ever interviewed"
+}
+
+const isPopulation = (filter: ListFilter): filter is ListPopulation =>
+  (LIST_POPULATIONS as readonly string[]).includes(filter)
+
+function matchesFilter(app: SavedApplication, filter: ListFilter): boolean {
+  if (filter === "All") return true
+  if (isPopulation(filter)) return POPULATION_TEST[filter](app)
+  return app.status === filter
+}
+
 export function ApplicationsList({
   applications,
   onUpdate,
   onDelete,
-  routeStatus,
-  onStatusFilterChange
+  routeFilter,
+  onFilterChange
 }: Props) {
   const [query, setQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "All">(
-    routeStatus ?? "All"
+  const [statusFilter, setStatusFilter] = useState<ListFilter>(
+    routeFilter ?? "All"
   )
 
   // The route is the source of truth on arrival: landing here from an Overview
-  // row must show that status even if the list was left on another filter.
+  // row must show that slice even if the list was left on another filter.
   useEffect(() => {
-    setStatusFilter(routeStatus ?? "All")
-  }, [routeStatus])
+    setStatusFilter(routeFilter ?? "All")
+  }, [routeFilter])
 
-  const selectStatus = (next: ApplicationStatus | "All") => {
+  const selectStatus = (next: ListFilter) => {
     setStatusFilter(next)
-    onStatusFilterChange?.(next)
+    onFilterChange?.(next)
   }
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
@@ -194,7 +233,7 @@ export function ApplicationsList({
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
     return applications
-      .filter((a) => statusFilter === "All" || a.status === statusFilter)
+      .filter((a) => matchesFilter(a, statusFilter))
       .filter(
         (a) =>
           !q ||
@@ -388,6 +427,16 @@ export function ApplicationsList({
                   </button>
                 )
               })}
+              {isPopulation(statusFilter) ? (
+                <button
+                  type="button"
+                  onClick={() => selectStatus("All")}
+                  title="Clear this filter"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-aa-pill text-aa-11 font-semibold bg-aa-primary text-aa-text-on-primary transition-colors">
+                  {POPULATION_LABEL[statusFilter]}
+                  <X className="w-3 h-3" />
+                </button>
+              ) : null}
             </div>
           </div>
 

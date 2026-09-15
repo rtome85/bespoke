@@ -46,7 +46,7 @@ export function StagesReachedCard({
       conversion: rate(counts.applied, counts.tracked),
       conversionLabel: "of saved",
       tone: "bg-aa-primary",
-      hash: "#/applications/all/Applied"
+      hash: "#/applications/all/sent"
     },
     {
       label: "Interviewed",
@@ -54,7 +54,7 @@ export function StagesReachedCard({
       conversion: rate(counts.interviewed, counts.applied),
       conversionLabel: "of applied",
       tone: "bg-aa-primary",
-      hash: "#/applications/all/Interviewing"
+      hash: "#/applications/all/interviewed"
     },
     {
       label: "Offer",

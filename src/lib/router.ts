@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
-import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus
-} from "~types/userProfile"
+import { LIST_POPULATIONS, type ListFilter } from "~types/options"
+import { APPLICATION_STATUSES } from "~types/userProfile"
 
 // Hash routing for the app shell (`options.html`). No library — the shell has a
 // handful of screens and a flat structure.
 //
 //   #/applications                 All applications list  (default)
-//   #/applications/all/:status     All applications, filtered to one status
+//   #/applications/all/:filter     All applications, filtered to one status
+//                                  (`Applied`) or population (`interviewed`)
 //   #/applications/overview        Overview
 //   #/interviews/schedule          Schedule (agenda)
 //   #/interviews/prep              Prep — upcoming rounds
@@ -25,7 +24,7 @@ export interface Route {
   area: RouteArea
   /** "all" | "overview" | "schedule" | "prep" | "debriefs" | <settings tab> | "" */
   view: string
-  /** :roundId for the prep / debrief workspaces, :status for the list */
+  /** :roundId for the prep / debrief workspaces, :filter for the list */
   param?: string
   /** Normalized `#/...` for this route. */
   hash: string
@@ -76,8 +75,7 @@ export function normalizeRoute(hash: string): Route {
   // optional status as its param (`#/applications/all/Interviewing`) so the
   // Overview can link straight into a filtered list.
   const view = rawView === "overview" ? "overview" : "all"
-  const param =
-    view === "all" && isApplicationStatus(rawParam) ? rawParam : undefined
+  const param = view === "all" && isListFilter(rawParam) ? rawParam : undefined
   return {
     area: "applications",
     view,
@@ -86,8 +84,11 @@ export function normalizeRoute(hash: string): Route {
   }
 }
 
-function isApplicationStatus(value: string): value is ApplicationStatus {
-  return (APPLICATION_STATUSES as string[]).includes(value)
+function isListFilter(value: string): value is ListFilter {
+  return (
+    (APPLICATION_STATUSES as readonly string[]).includes(value) ||
+    (LIST_POPULATIONS as readonly string[]).includes(value)
+  )
 }
 
 /** Legacy `?section=…&view=…` deep links (old popup / analytics tab bookmarks). */
