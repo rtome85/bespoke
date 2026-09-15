@@ -1,8 +1,10 @@
+import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import type { PersonalProject } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
+import { ProfileEntryModal } from "./ProfileEntryModal"
 
 interface ProjectEditorProps {
   projects: PersonalProject[]
@@ -58,7 +60,15 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
     onUpdate: (project: PersonalProject) => void
   ) => {
     const errors = validateProject(project)
-    const hasErrors = errors.length > 0
+    // An untouched draft is not yet wrong: hold the required-field errors
+    // back until something has been entered, so the add dialog doesn't open
+    // already flagging two problems.
+    const isBlank =
+      !project.title.trim() &&
+      !project.description.trim() &&
+      !project.liveDemoUrl?.trim() &&
+      !project.githubRepoUrl?.trim()
+    const hasErrors = errors.length > 0 && !isBlank
 
     return (
       <div className="space-y-4">
@@ -123,50 +133,56 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
   }
 
   return (
-    <div>
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">
+          Personal &amp; open-source projects
+        </h2>
+        <button
+          onClick={addProject}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add project
+        </button>
+      </div>
+
       {editingProject && (
-        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-aa-4 mb-6">
-          <h3 className="text-sm font-semibold text-aa-text-primary mb-4">
-            Add new personal project
-          </h3>
+        <ProfileEntryModal
+          title="Add new personal project"
+          saveLabel="Save project"
+          onSave={saveEditingProject}
+          onCancel={() => setEditingProject(null)}>
           {renderProjectItem(editingProject, 0, setEditingProject)}
-          <div className="flex gap-3 mt-4">
-            <button onClick={saveEditingProject} className="aa-btn-accent">
-              Save project
-            </button>
-            <button
-              onClick={() => setEditingProject(null)}
-              className="aa-btn-secondary">
-              Cancel
-            </button>
-          </div>
-        </div>
+        </ProfileEntryModal>
       )}
 
-      <ArrayInput
-        items={projects}
-        getItemKey={(project) => project.id}
-        onAdd={addProject}
-        onUpdate={updateProject}
-        onRemove={removeProject}
-        renderItem={renderProjectItem}
-        renderSummary={(project) => (
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-aa-text-primary truncate leading-tight">
-              {project.title || <span className="italic text-aa-text-disabled">Untitled project</span>}
-            </p>
-            {project.description && (
-              <p className="text-xs text-aa-text-secondary truncate mt-0.5">
-                {project.description.length > 80
-                  ? project.description.slice(0, 80) + "…"
-                  : project.description}
+      <div className="aa-card-base">
+        <ArrayInput
+          items={projects}
+          getItemKey={(project) => project.id}
+          onAdd={addProject}
+          onUpdate={updateProject}
+          onRemove={removeProject}
+          renderItem={renderProjectItem}
+          renderSummary={(project) => (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-aa-text-primary truncate">
+                {project.title || <span className="italic text-aa-text-secondary">Untitled project</span>}
               </p>
-            )}
-          </div>
-        )}
-        emptyMessage="No personal projects added yet. Add your first project to showcase your work!"
-        addButtonText="Personal Project"
-      />
-    </div>
+              {project.description && (
+                <p className="text-xs text-aa-text-secondary truncate mt-0.5">
+                  {project.description.length > 80
+                    ? project.description.slice(0, 80) + "…"
+                    : project.description}
+                </p>
+              )}
+            </div>
+          )}
+          emptyMessage="No personal projects added yet. Add your first project to showcase your work!"
+          addButtonText="Personal Project"
+          flush
+        />
+      </div>
+    </section>
   )
 }

@@ -79,16 +79,12 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
 
   if (view === "projects") {
     return (
-      <div className="aa-card">
-        <h2 className="aa-section-heading">Personal Projects</h2>
-        <hr className="aa-divider" />
-        <ProjectEditor
-          projects={userProfile.personalProjects}
-          onChange={(personalProjects) =>
-            onChange({ ...userProfile, personalProjects })
-          }
-        />
-      </div>
+      <ProjectEditor
+        projects={userProfile.personalProjects}
+        onChange={(personalProjects) =>
+          onChange({ ...userProfile, personalProjects })
+        }
+      />
     )
   }
 
