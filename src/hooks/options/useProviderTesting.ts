@@ -20,7 +20,7 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
   const testProvider = async (id: LLMProviderId) => {
     setProviderTest((state) => ({
       ...state,
-      [id]: { type: "loading", message: "" }
+      [id]: { type: "loading", message: "", source: "test" }
     }))
     try {
       const result = await sendToBackground({
@@ -42,7 +42,7 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
       })
       setProviderTest((state) => ({
         ...state,
-        [id]: { type: result?.success ? "ok" : "err", message }
+        [id]: { type: result?.success ? "ok" : "err", message, source: "test" }
       }))
     } catch {
       updateProvider(id, {
@@ -54,7 +54,7 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
       })
       setProviderTest((state) => ({
         ...state,
-        [id]: { type: "err", message: "Connection failed." }
+        [id]: { type: "err", message: "Connection failed.", source: "test" }
       }))
     }
   }
@@ -62,7 +62,7 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
   const refreshProviderModels = async (id: LLMProviderId) => {
     setProviderTest((state) => ({
       ...state,
-      [id]: { type: "loading", message: "" }
+      [id]: { type: "loading", message: "", source: "models" }
     }))
     try {
       const result = await sendToBackground({
@@ -73,30 +73,27 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
           baseUrl: providers[id]?.baseUrl
         }
       })
-      const listed = Array.isArray(result?.models)
-      updateProvider(id, {
-        ...(listed ? { models: result.models } : {}),
-        lastTested: {
-          ok: !!result?.success,
-          at: new Date().toISOString(),
-          message: result?.success
-            ? `${result.models.length} models`
-            : result?.message ?? "Failed to list models"
-        }
-      })
+      if (result?.success && Array.isArray(result.models)) {
+        updateProvider(id, { models: result.models })
+      }
       setProviderTest((state) => ({
         ...state,
         [id]: {
           type: result?.success ? "ok" : "err",
           message: result?.success
             ? `${result.models.length} models`
-            : result?.message ?? "Failed to list models"
+            : result?.message ?? "Failed to list models",
+          source: "models"
         }
       }))
     } catch {
       setProviderTest((state) => ({
         ...state,
-        [id]: { type: "err", message: "Failed to list models." }
+        [id]: {
+          type: "err",
+          message: "Failed to list models.",
+          source: "models"
+        }
       }))
     }
   }

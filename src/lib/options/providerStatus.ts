@@ -86,25 +86,36 @@ function hostOf(baseUrl: string): string {
 }
 
 /**
- * Status of one routable provider. A live test in this session wins; after
- * that we fall back to the persisted `lastTested` verdict, and finally to
- * whether a key exists at all. A saved-but-never-verified key is called out
- * rather than being reported as connected.
+ * Status of one routable provider.
+ *
+ * Credentials gate everything: a remote account with no key is never
+ * connected, whatever a result in this session claims — `listModels` falls
+ * back to the built-in catalogue rather than failing, so a model refresh
+ * reports success even when the endpoint rejected the request. Only a
+ * connection test is a verdict on reachability, which is why a "models"
+ * result is ignored here.
+ *
+ * After that: a live test wins, then the persisted `lastTested` verdict,
+ * and finally whether a key exists at all. A saved-but-never-verified key
+ * is called out rather than being reported as connected.
  */
 export function providerStatus(
   id: LLMProviderId,
   providers: ProvidersConfig,
   test: ProviderTestState
 ): ProviderStatus {
-  const live = test[id]
-  if (live?.type === "loading") return TESTING
-  if (live?.type === "ok") return CONNECTED
-  if (live?.type === "err") return FAILED
-
   const config = providers[id]
   const local = PROVIDER_META[id].local
   if (!config || (!local && !config.apiKey)) return NOT_CONNECTED
   if (config.enabled === false) return DISABLED
+
+  const live = test[id]
+  if (live?.source === "test") {
+    if (live.type === "loading") return TESTING
+    if (live.type === "ok") return CONNECTED
+    if (live.type === "err") return FAILED
+  }
+
   if (config.lastTested) return config.lastTested.ok ? CONNECTED : FAILED
   return local ? CONNECTED : UNTESTED
 }
@@ -114,9 +125,9 @@ export function perplexityStatus(
   config: PerplexityConfig,
   test: OperationStatus
 ): ProviderStatus {
+  if (!config.apiKey) return NOT_CONNECTED
   if (test.type === "loading") return TESTING
   if (test.type === "error") return FAILED
-  if (!config.apiKey) return NOT_CONNECTED
   if (test.type === "success") return CONNECTED
   return config.enabled ? CONNECTED : DISABLED
 }

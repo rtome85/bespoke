@@ -56,6 +56,12 @@ export type SettingsNavGroup = {
 export type ProviderTestResult = {
   type: "idle" | "loading" | "ok" | "err"
   message: string
+  /**
+   * Which action produced this. Only "test" is a verdict on reachability —
+   * a model refresh reports success off the built-in fallback list even
+   * when the endpoint rejected the request.
+   */
+  source?: "test" | "models"
 }
 
 export type ProviderTestState = Partial<
