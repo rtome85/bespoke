@@ -85,8 +85,15 @@ function bandInsight(bands: MatchBand[]): string | null {
   const measured = bands.filter((b) => b.interviewRate.value !== null)
   if (measured.length < 2) return null
 
-  const best = measured[0]
-  const worst = measured[measured.length - 1]
+  // Rank by rate, not by band: the whole point of the card is that a lower
+  // band can outconvert a higher one, and reading position for performance
+  // would then state the opposite of what the bars show. Sorting is stable,
+  // so tied rates keep band order and the higher band reads as the best.
+  const ranked = [...measured].sort(
+    (a, b) => b.interviewRate.value! - a.interviewRate.value!
+  )
+  const best = ranked[0]
+  const worst = ranked[ranked.length - 1]
   const bestRate = best.interviewRate.value!
   const worstRate = worst.interviewRate.value!
 
