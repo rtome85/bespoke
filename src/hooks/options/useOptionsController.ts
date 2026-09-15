@@ -29,7 +29,7 @@ export function useOptionsController() {
   const apps = useSavedApplications()
   const [roundDrawer, setRoundDrawer] = useState<RoundDrawerState>(null)
   const [advanceFor, setAdvanceFor] = useState<string | null>(null)
-  const [openProvider, setOpenProvider] = useState<string | null>("ollama")
+  const [openProvider, setOpenProvider] = useState<string | null>(null)
 
   const stored = useOptionsStoredState()
   const {

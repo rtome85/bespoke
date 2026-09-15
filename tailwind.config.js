@@ -150,6 +150,7 @@ module.exports = {
         "aa-px-22": "22px",
         "aa-px-26": "26px",
         "aa-px-30": "30px",
+        "aa-px-34": "34px",
         "aa-px-46": "46px",
         "aa-px-60": "60px",
         "aa-px-84": "84px",
@@ -163,6 +164,7 @@ module.exports = {
         "aa-px-400": "400px",
         "aa-px-420": "420px",
         "aa-px-460": "460px",
+        "aa-px-640": "640px",
 
         // Shared header height — also consumed via extend.height below for
         // the calc() case.

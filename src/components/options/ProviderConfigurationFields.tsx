@@ -31,7 +31,7 @@ export function ProviderConfigurationFields({
   const baseUrlId = `provider-${id}-base-url`
 
   return (
-    <div className="border-t border-aa-border p-aa-5 space-y-5">
+    <div className="p-aa-px-22 space-y-5">
       {meta.local && (
         <div>
           <span className="aa-label">Endpoint</span>

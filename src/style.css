@@ -297,6 +297,68 @@ body {
     @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-error text-aa-text-primary text-sm rounded-aa-md focus:outline-none focus:border-aa-error transition-colors;
   }
 
+  /* src/components/options/{ProviderRosterRow,ProviderDetailModal}.tsx —
+     connection status. The tone class colours the label and picks the
+     matching (lighter) fill for the dot, so callers name a tone once.
+     Tone names are written out in full at the call sites so Tailwind's
+     scanner keeps them. */
+  .aa-status {
+    @apply flex items-center gap-aa-2 text-aa-caption font-semibold;
+  }
+  .aa-status-dot {
+    @apply h-aa-px-7 w-aa-px-7 shrink-0 rounded-full;
+  }
+  .aa-status-chip {
+    @apply inline-flex items-center gap-aa-2 rounded-aa-pill px-aa-px-9 py-aa-px-3 text-aa-11 font-semibold;
+  }
+  .aa-status-chip .aa-status-dot {
+    @apply h-1.5 w-1.5;
+  }
+  .aa-status-ok {
+    @apply text-aa-success-strong;
+  }
+  .aa-status-ok .aa-status-dot {
+    @apply bg-aa-success;
+  }
+  .aa-status-ok.aa-status-chip {
+    @apply bg-aa-success-soft;
+  }
+  .aa-status-warn {
+    @apply text-aa-warning-strong;
+  }
+  .aa-status-warn .aa-status-dot {
+    @apply bg-aa-warning;
+  }
+  .aa-status-warn.aa-status-chip {
+    @apply bg-aa-warning-soft;
+  }
+  .aa-status-bad {
+    @apply text-aa-error-strong;
+  }
+  .aa-status-bad .aa-status-dot {
+    @apply bg-aa-error;
+  }
+  .aa-status-bad.aa-status-chip {
+    @apply bg-aa-error-soft;
+  }
+  .aa-status-idle {
+    @apply text-aa-text-secondary;
+  }
+  .aa-status-idle .aa-status-dot {
+    @apply bg-aa-neutral-300;
+  }
+  .aa-status-idle.aa-status-chip {
+    @apply bg-aa-neutral-100;
+  }
+
+  /* src/components/options/ProviderRosterRow.tsx — one track set shared by
+     the roster header and every row so the columns stay in lockstep. The
+     provider column flexes; the rest hold the widths from the design. */
+  .aa-roster-grid {
+    @apply grid items-center gap-aa-4;
+    grid-template-columns: minmax(0, 1fr) 112px 148px 18px;
+  }
+
   /* src/components/documentPreview/DocumentPreviewPanel.tsx */
   .aa-toolbar-btn {
     @apply w-7 h-7 grid place-items-center rounded-aa-sm text-aa-neutral-500 hover:bg-aa-neutral-200 transition-colors;

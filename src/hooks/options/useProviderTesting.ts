@@ -31,15 +31,27 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
           baseUrl: providers[id]?.baseUrl
         }
       })
+      const message =
+        result?.message ?? (result?.success ? "Connected." : "Failed.")
+      updateProvider(id, {
+        lastTested: {
+          ok: !!result?.success,
+          at: new Date().toISOString(),
+          message
+        }
+      })
       setProviderTest((state) => ({
         ...state,
-        [id]: {
-          type: result?.success ? "ok" : "err",
-          message:
-            result?.message ?? (result?.success ? "Connected." : "Failed.")
-        }
+        [id]: { type: result?.success ? "ok" : "err", message }
       }))
     } catch {
+      updateProvider(id, {
+        lastTested: {
+          ok: false,
+          at: new Date().toISOString(),
+          message: "Connection failed."
+        }
+      })
       setProviderTest((state) => ({
         ...state,
         [id]: { type: "err", message: "Connection failed." }
@@ -61,9 +73,17 @@ export function useProviderTesting({ providers, updateProvider }: Args) {
           baseUrl: providers[id]?.baseUrl
         }
       })
-      if (Array.isArray(result?.models)) {
-        updateProvider(id, { models: result.models })
-      }
+      const listed = Array.isArray(result?.models)
+      updateProvider(id, {
+        ...(listed ? { models: result.models } : {}),
+        lastTested: {
+          ok: !!result?.success,
+          at: new Date().toISOString(),
+          message: result?.success
+            ? `${result.models.length} models`
+            : result?.message ?? "Failed to list models"
+        }
+      })
       setProviderTest((state) => ({
         ...state,
         [id]: {
