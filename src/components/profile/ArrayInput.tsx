@@ -14,8 +14,8 @@ interface ArrayInputProps<T> {
   addButtonText: string
   /** Flush chrome: bare hairline rows, for a caller that supplies its own
    *  .aa-card-base surface, section title and add button (see .aa-list-row in
-   *  style.css). The Education and Experience screens use it; the other
-   *  profile lists still render the boxed rows below. */
+   *  style.css). The Education, Experience and Projects screens use it; the
+   *  other profile lists still render the boxed rows below. */
   flush?: boolean
 }
 
