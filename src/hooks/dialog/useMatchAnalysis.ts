@@ -7,6 +7,8 @@ import { QUOTES } from "~constants/dialog"
 import { useDocumentPreviewSync } from "~hooks/dialog/useDocumentPreviewSync"
 import { usePendingJobData } from "~hooks/dialog/usePendingJobData"
 import { useAnalysisSplashState } from "~hooks/dialog/useSimulatedProgress"
+import { findStoredDuplicateApplication } from "~lib/dialog/duplicateApplications"
+import { openApplicationsListAndClosePanel } from "~lib/dialog/navigation"
 import type {
   AddedGapSkills,
   DialogView,
@@ -14,7 +16,7 @@ import type {
   PendingJobData,
   TriageDecision
 } from "~types/dialog"
-import type { UserProfile } from "~types/userProfile"
+import type { SavedApplication, UserProfile } from "~types/userProfile"
 
 interface UseMatchAnalysisOptions {
   initialView: DialogView | null
@@ -45,6 +47,8 @@ export function useMatchAnalysis({
     null
   )
   const [addedGapSkills, setAddedGapSkills] = useState<AddedGapSkills>({})
+  const [duplicateApplication, setDuplicateApplication] =
+    useState<SavedApplication | null>(null)
   const analysisRequestIdRef = useRef(0)
   const { progress, setProgress, quoteIndex, quoteVisible } =
     useAnalysisSplashState(view, loading, QUOTES.length)
@@ -112,8 +116,21 @@ export function useMatchAnalysis({
   const runAnalysis = async (
     company: string,
     title: string,
-    description: string
+    description: string,
+    { skipDuplicateCheck = false }: { skipDuplicateCheck?: boolean } = {}
   ) => {
+    if (!skipDuplicateCheck) {
+      const duplicate = await findStoredDuplicateApplication(company, title)
+      if (duplicate) {
+        // Already tracked — show the existing entry over the (prefilled)
+        // form instead of spending an LLM call re-scoring the same opening.
+        setDuplicateApplication(duplicate)
+        setStatus("")
+        setView("form")
+        return
+      }
+    }
+
     const requestId = ++analysisRequestIdRef.current
 
     setLoading(true)
@@ -177,6 +194,20 @@ export function useMatchAnalysis({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoAnalyze])
 
+  const dismissDuplicate = () => setDuplicateApplication(null)
+
+  const goToDuplicateApplication = () => {
+    setDuplicateApplication(null)
+    void openApplicationsListAndClosePanel()
+  }
+
+  const analyzeDuplicateAnyway = () => {
+    setDuplicateApplication(null)
+    void runAnalysis(companyName, jobTitle, jobDescription, {
+      skipDuplicateCheck: true
+    })
+  }
+
   const addGapSkill = (index: number, name: string, years: number) => {
     setAddedGapSkills((current) => ({
       ...current,
@@ -217,10 +248,14 @@ export function useMatchAnalysis({
     triageDecision,
     setTriageDecision,
     addedGapSkills,
+    duplicateApplication,
     progress,
     quoteIndex,
     quoteVisible,
     submit,
-    addGapSkill
+    addGapSkill,
+    dismissDuplicate,
+    goToDuplicateApplication,
+    analyzeDuplicateAnyway
   }
 }
