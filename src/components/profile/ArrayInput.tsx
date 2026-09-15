@@ -45,11 +45,10 @@ export function ArrayInput<T>({
 
   if (items.length === 0) {
     return flush ? (
+      // No button here: a flush caller renders its own add button in the
+      // section header, which shows whether or not the list has entries.
       <div className="aa-list-empty">
         <p className="text-aa-13 text-aa-text-secondary">{emptyMessage}</p>
-        <button onClick={onAdd} className="aa-btn-accent mt-aa-4">
-          Add {addButtonText}
-        </button>
       </div>
     ) : (
       <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 py-8 text-center">
