@@ -248,7 +248,7 @@ body {
 
   /* src/components/options/ApplicationsOverview.tsx */
   .aa-card-heading {
-    @apply text-aa-13 font-semibold text-aa-text-primary;
+    @apply text-aa-15 font-semibold text-aa-text-primary;
   }
   .aa-card-sub {
     @apply text-aa-caption text-aa-text-secondary mt-0.5;

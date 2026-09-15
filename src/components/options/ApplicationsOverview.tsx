@@ -57,8 +57,8 @@ export function ApplicationsOverview({ applications, onNavigate }: Props) {
         <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary flex-1">
           Overview
         </h1>
-        <button type="button" onClick={exportCsv} className="aa-btn-outline">
-          <span className="flex items-center gap-1.5">
+        <button type="button" onClick={exportCsv} className="aa-btn-outline bg-aa-primary hover:bg-aa-primary-hover">
+          <span className="flex items-center gap-1.5 text-white">
             <Download className="h-3.5 w-3.5" />
             Export CSV
           </span>
