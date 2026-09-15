@@ -189,7 +189,10 @@ module.exports = {
         "aa-below-appbar": "calc(100vh - var(--aa-appbar-height))"
       },
       maxWidth: {
-        "aa-viewport-safe": "92vw"
+        "aa-viewport-safe": "92vw",
+        // Widest a single Overview activity bar may grow, so an 8-bucket and a
+        // 12-bucket chart keep the same bar weight.
+        "aa-bar": "44px"
       },
       maxHeight: {
         "aa-expanded": "3000px",

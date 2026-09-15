@@ -139,6 +139,14 @@ export interface SavedApplication {
   date: string // "YYYY-MM-DD"
   createdAt: string // ISO timestamp, set once on save
   statusUpdatedAt?: string // ISO timestamp, bumped whenever `status` changes; read as `?? createdAt`
+  /**
+   * ISO timestamp of the first time this application reached a status that
+   * means someone answered (`Interviewing` / `Offer` / `Reject`). Stamped
+   * once and never moved, because `statusUpdatedAt` keeps advancing and so
+   * cannot say when the *first* reply arrived. Absent on applications that
+   * were answered before this field existed.
+   */
+  firstReplyAt?: string
 
   jobUrl?: string // URL of the job posting
 

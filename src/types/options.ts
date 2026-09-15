@@ -2,12 +2,27 @@ import type { LucideIcon } from "lucide-react"
 
 import type { CustomPrompts, LLMProviderId } from "~types/config"
 import type {
+  ApplicationStatus,
   InterviewRound,
   RoundType,
   SavedApplication
 } from "~types/userProfile"
 
 export type AppSection = "applications" | "settings"
+
+/**
+ * Filters the applications list understands beyond a single status.
+ *
+ * Overview counts populations, not statuses — "interviewed" means every
+ * application that ever reached a round, which spans `Interviewing`, `Offer`
+ * and anything rejected afterwards. Linking those counts at a status filter
+ * would open a different set of rows than the number claimed.
+ */
+export const LIST_POPULATIONS = ["sent", "replied", "interviewed"] as const
+
+export type ListPopulation = (typeof LIST_POPULATIONS)[number]
+
+export type ListFilter = ApplicationStatus | ListPopulation | "All"
 
 export interface AddRoundEditRef {
   app: SavedApplication
