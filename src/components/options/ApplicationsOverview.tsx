@@ -1,103 +1,28 @@
-import { useMemo } from "react"
+import { Download, ShieldCheck } from "lucide-react"
 
+import { ActivityCard } from "~components/options/overview/ActivityCard"
+import { InterviewPerformanceCard } from "~components/options/overview/InterviewPerformanceCard"
+import { MatchBandsCard } from "~components/options/overview/MatchBandsCard"
+import { NeedsYouCard } from "~components/options/overview/NeedsYouCard"
+import { RecurringGapsCard } from "~components/options/overview/RecurringGapsCard"
+import { SourcesCard } from "~components/options/overview/SourcesCard"
+import { StagesReachedCard } from "~components/options/overview/StagesReachedCard"
+import { StatStrip } from "~components/options/overview/StatStrip"
+import { TimingCard } from "~components/options/overview/TimingCard"
 import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus,
-  type SavedApplication
-} from "~types/userProfile"
+  applicationsToCsv,
+  downloadCsv,
+  roundsToCsv
+} from "~lib/overview/exportCsv"
+import { MIN_APPS_FOR_RATES, stageCounts } from "~lib/overview/metrics"
+import type { SavedApplication } from "~types/userProfile"
 
 interface Props {
   applications: SavedApplication[]
+  onNavigate: (hash: string) => void
 }
 
-const RESPONDED: ApplicationStatus[] = ["Interviewing", "Offer", "Reject"]
-
-const INTERVIEW: ApplicationStatus[] = ["Interviewing"]
-
-function parseDay(raw?: string): Date | null {
-  if (!raw) return null
-  const s = raw.slice(0, 10).split("-")
-  const d = new Date(Number(s[0]), Number(s[1]) - 1, Number(s[2]))
-  return isNaN(d.getTime()) ? null : d
-}
-
-function mondayOf(d: Date): Date {
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  return new Date(d.getFullYear(), d.getMonth(), diff)
-}
-
-function shortDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-}
-
-export function ApplicationsOverview({ applications }: Props) {
-  const derived = useMemo(() => {
-    const counts = new Map<ApplicationStatus, number>()
-    APPLICATION_STATUSES.forEach((s) => counts.set(s, 0))
-    applications.forEach((a) =>
-      counts.set(a.status, (counts.get(a.status) ?? 0) + 1)
-    )
-
-    const total = applications.length
-    const saved = counts.get("Saved") ?? 0
-    const applied = total - saved
-    const responded = RESPONDED.reduce((n, s) => n + (counts.get(s) ?? 0), 0)
-    const interviews = INTERVIEW.reduce((n, s) => n + (counts.get(s) ?? 0), 0)
-    const offers = counts.get("Offer") ?? 0
-
-    const scores = applications
-      .map((a) => a.matchPercentage)
-      .filter((m): m is number => typeof m === "number")
-    const avgMatch = scores.length
-      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-      : null
-
-    // Weekly buckets over the last 8 weeks
-    const now = new Date()
-    const firstMonday = mondayOf(
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7 * 7)
-    )
-    const weeks: { label: string; count: number }[] = []
-    for (let i = 0; i < 8; i++) {
-      const start = new Date(firstMonday)
-      start.setDate(firstMonday.getDate() + i * 7)
-      weeks.push({ label: shortDate(start), count: 0 })
-    }
-    applications.forEach((a) => {
-      const d = parseDay(a.date) ?? parseDay(a.createdAt)
-      if (!d) return
-      const idx = Math.floor(
-        (mondayOf(d).getTime() - firstMonday.getTime()) / (7 * 86_400_000)
-      )
-      if (idx >= 0 && idx < 8) weeks[idx].count++
-    })
-
-    // Cumulative funnel (Saved → … → Offer), plus Reject as a side bar
-    const funnelStages = APPLICATION_STATUSES.filter((s) => s !== "Reject")
-    const cumulative = new Map<ApplicationStatus, number>()
-    let running = 0
-    for (let i = funnelStages.length - 1; i >= 0; i--) {
-      running += counts.get(funnelStages[i]) ?? 0
-      cumulative.set(funnelStages[i], running)
-    }
-    const rejects = counts.get("Reject") ?? 0
-
-    return {
-      counts,
-      total,
-      applied,
-      responded,
-      interviews,
-      offers,
-      avgMatch,
-      weeks,
-      funnelStages,
-      cumulative,
-      rejects
-    }
-  }, [applications])
-
+export function ApplicationsOverview({ applications, onNavigate }: Props) {
   if (applications.length === 0) {
     return (
       <div className="aa-card text-center py-16">
@@ -105,141 +30,80 @@ export function ApplicationsOverview({ applications }: Props) {
           Nothing to chart yet
         </p>
         <p className="text-aa-13 text-aa-text-secondary mt-1">
-          Track a few applications and this fills in — pipeline, response rate,
-          and weekly activity.
+          Track a few applications and this fills in — what needs you today,
+          then how the pipeline is actually converting.
         </p>
       </div>
     )
   }
 
-  const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0)
-  const stats = [
-    { label: "Tracked", value: derived.total },
-    { label: "Response rate", value: `${pct(derived.responded, derived.applied)}%` },
-    {
-      label: "Interview rate",
-      value: `${pct(derived.interviews, derived.applied)}%`
-    },
-    { label: "Offers", value: derived.offers },
-    {
-      label: "Avg match",
-      value: derived.avgMatch === null ? "—" : `${derived.avgMatch}%`
-    }
-  ]
+  const counts = stageCounts(applications)
+  const belowThreshold = counts.applied < MIN_APPS_FOR_RATES
 
-  const maxFunnel = Math.max(
-    derived.cumulative.get(derived.funnelStages[0]) ?? 0,
-    derived.rejects,
-    1
-  )
-  const maxWeek = Math.max(...derived.weeks.map((w) => w.count), 1)
+  const exportCsv = () => {
+    const stamp = new Date().toISOString().split("T")[0]
+    downloadCsv(
+      `bespoke-applications-${stamp}.csv`,
+      applicationsToCsv(applications)
+    )
+    if (applications.some((a) => (a.rounds ?? []).length > 0)) {
+      downloadCsv(`bespoke-rounds-${stamp}.csv`, roundsToCsv(applications))
+    }
+  }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary mb-4">
-        Overview
-      </h1>
-      {/* Stat strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {stats.map((s) => (
-          <div key={s.label} className="aa-card">
-            <span className="block text-aa-11 font-semibold uppercase tracking-wider text-aa-text-secondary">
-              {s.label}
-            </span>
-            <span className="block text-aa-28 font-bold text-aa-text-primary leading-none mt-2">
-              {s.value}
-            </span>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex items-center gap-4">
+        <h1 className="text-aa-28 font-bold tracking-aa-tighter-4 text-aa-text-primary flex-1">
+          Overview
+        </h1>
+        <button type="button" onClick={exportCsv} className="aa-btn-outline">
+          <span className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </span>
+        </button>
+      </div>
+
+      <NeedsYouCard apps={applications} onNavigate={onNavigate} />
+
+      <StatStrip apps={applications} onNavigate={onNavigate} />
+
+      {belowThreshold ? (
+        <div className="aa-card flex items-start gap-3">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-aa-text-secondary mt-0.5" />
+          <div>
+            <p className="text-aa-13 font-semibold text-aa-text-primary">
+              Some numbers stay hidden for now
+            </p>
+            <p className="text-aa-caption text-aa-text-secondary mt-1 leading-aa-1.45">
+              With {counts.applied}{" "}
+              {counts.applied === 1 ? "application" : "applications"} sent, a
+              single reply would read as a {replySwing(counts.applied)}%
+              response rate — a number that swings wildly and invites the wrong
+              conclusion. Counts, the pipeline and the activity chart are exact
+              from day one; rates unlock at {MIN_APPS_FOR_RATES} applications.
+            </p>
           </div>
-        ))}
+        </div>
+      ) : null}
+
+      <StagesReachedCard apps={applications} onNavigate={onNavigate} />
+
+      <ActivityCard apps={applications} />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <MatchBandsCard apps={applications} />
+        <TimingCard apps={applications} />
+        <InterviewPerformanceCard apps={applications} />
+        <RecurringGapsCard apps={applications} onNavigate={onNavigate} />
       </div>
 
-      {/* Pipeline funnel */}
-      <div className="aa-card">
-        <h3 className="aa-card-heading">Pipeline</h3>
-        <p className="aa-card-sub">Applications still live at each stage.</p>
-        <hr className="border-0 border-t border-aa-border my-4" />
-        <div>
-          {derived.funnelStages.map((stage, i) => {
-            const count = derived.cumulative.get(stage) ?? 0
-            const prev =
-              i > 0 ? derived.cumulative.get(derived.funnelStages[i - 1]) ?? 0 : null
-            const conv =
-              prev && prev > 0 ? Math.round((count / prev) * 100) : null
-            const on = count > 0
-            return (
-              <div
-                key={stage}
-                className="flex items-center gap-3 py-2.5 border-b border-aa-border last:border-0">
-                <span
-                  className={`text-aa-caption w-aa-px-168 shrink-0 ${
-                    on ? "text-aa-text-primary font-medium" : "text-aa-text-secondary"
-                  }`}>
-                  {stage}
-                </span>
-                <div className="flex-1 h-2 rounded-aa-pill bg-aa-primary-soft overflow-hidden">
-                  {on && (
-                    <div
-                      className="h-full bg-aa-primary"
-                      style={{ width: `${(count / maxFunnel) * 100}%` }}
-                    />
-                  )}
-                </div>
-                <span className="text-aa-11 text-aa-text-secondary w-10 text-right tabular-nums">
-                  {conv === null ? "" : `${conv}%`}
-                </span>
-                <span
-                  className={`text-aa-13 font-bold w-6 text-right tabular-nums ${
-                    on ? "text-aa-text-primary" : "text-aa-neutral-400"
-                  }`}>
-                  {count}
-                </span>
-              </div>
-            )
-          })}
-          {derived.rejects > 0 && (
-            <div className="flex items-center gap-3 py-2.5">
-              <span className="text-aa-caption w-aa-px-168 shrink-0 text-aa-error-strong font-medium">
-                Rejected
-              </span>
-              <div className="flex-1 h-2 rounded-aa-pill bg-aa-error-soft overflow-hidden">
-                <div
-                  className="h-full bg-aa-error-strong"
-                  style={{ width: `${(derived.rejects / maxFunnel) * 100}%` }}
-                />
-              </div>
-              <span className="w-10" />
-              <span className="text-aa-13 font-bold w-6 text-right tabular-nums text-aa-text-primary">
-                {derived.rejects}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Applications by week */}
-      <div className="aa-card">
-        <h3 className="aa-card-heading">Activity</h3>
-        <p className="aa-card-sub">Applications tracked per week, last 8 weeks.</p>
-        <hr className="border-0 border-t border-aa-border my-4" />
-        <div className="flex items-end gap-2 h-36">
-          {derived.weeks.map((w, i) => (
-            <div
-              key={i}
-              className="flex-1 flex flex-col items-center justify-end h-full group">
-              <span className="text-aa-11 font-semibold text-aa-text-secondary mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {w.count}
-              </span>
-              <div
-                className="w-full rounded-aa-sm bg-aa-primary group-hover:bg-aa-primary-hover transition-colors"
-                style={{ height: `${Math.max((w.count / maxWeek) * 100, 3)}%` }}
-              />
-              <span className="text-aa-10 text-aa-text-secondary mt-1.5">
-                {w.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <SourcesCard apps={applications} />
     </div>
   )
 }
+
+/** What one reply would look like as a percentage at the current sample. */
+const replySwing = (applied: number) =>
+  applied > 0 ? Math.round((1 / applied) * 100) : 100

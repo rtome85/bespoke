@@ -9,7 +9,7 @@ import { ApplicationsRail } from "~components/options/ApplicationsRail"
 import { RAIL_HASH } from "~constants/options"
 import type { Route } from "~lib/router"
 import type { AddRoundEditRef, AppSection } from "~types/options"
-import type { SavedApplication } from "~types/userProfile"
+import type { ApplicationStatus, SavedApplication } from "~types/userProfile"
 
 interface Props {
   route: Route
@@ -60,12 +60,23 @@ export function ApplicationsArea({
         {route.area === "applications" ? (
           <div>
             {route.view === "overview" ? (
-              <ApplicationsOverview applications={apps} />
+              <ApplicationsOverview
+                applications={apps}
+                onNavigate={onNavigate}
+              />
             ) : (
               <ApplicationsList
                 applications={apps}
                 onUpdate={onUpdateApplication}
                 onDelete={onDeleteApplication}
+                routeStatus={route.param as ApplicationStatus | undefined}
+                onStatusFilterChange={(status) =>
+                  onNavigate(
+                    status === "All"
+                      ? "#/applications"
+                      : `#/applications/all/${status}`
+                  )
+                }
               />
             )}
           </div>

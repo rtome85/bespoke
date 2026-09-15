@@ -38,6 +38,10 @@ interface Props {
   applications: SavedApplication[]
   onUpdate: (id: string, patch: Partial<SavedApplication>) => void
   onDelete: (id: string) => void
+  /** Status the route asked for — how Overview links into a filtered list. */
+  routeStatus?: ApplicationStatus
+  /** Keeps the hash honest when the user changes the filter by hand. */
+  onStatusFilterChange?: (status: ApplicationStatus | "All") => void
 }
 
 const STATUS_PILL: Record<ApplicationStatus, string> = {
@@ -65,12 +69,25 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 export function ApplicationsList({
   applications,
   onUpdate,
-  onDelete
+  onDelete,
+  routeStatus,
+  onStatusFilterChange
 }: Props) {
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "All">(
-    "All"
+    routeStatus ?? "All"
   )
+
+  // The route is the source of truth on arrival: landing here from an Overview
+  // row must show that status even if the list was left on another filter.
+  useEffect(() => {
+    setStatusFilter(routeStatus ?? "All")
+  }, [routeStatus])
+
+  const selectStatus = (next: ApplicationStatus | "All") => {
+    setStatusFilter(next)
+    onStatusFilterChange?.(next)
+  }
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
   const [openId, setOpenId] = useState<string | null>(null)
@@ -162,13 +179,17 @@ export function ApplicationsList({
     }, 300)
   }
 
-  const presentStatuses = useMemo(
-    () =>
-      APPLICATION_STATUSES.filter((s) =>
-        applications.some((a) => a.status === s)
-      ),
-    [applications]
-  )
+  // Every status gets a chip, whether or not anything currently sits in it:
+  // the set is the pipeline, so it must not change shape under the user, and
+  // Overview links straight to a status that may well be empty right now.
+  const statusCounts = useMemo(() => {
+    const counts = new Map<ApplicationStatus, number>()
+    for (const s of APPLICATION_STATUSES) counts.set(s, 0)
+    for (const a of applications) {
+      counts.set(a.status, (counts.get(a.status) ?? 0) + 1)
+    }
+    return counts
+  }, [applications])
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -348,17 +369,20 @@ export function ApplicationsList({
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(["All", ...presentStatuses] as const).map((s) => {
+              {(["All", ...APPLICATION_STATUSES] as const).map((s) => {
                 const on = statusFilter === s
+                const empty = s !== "All" && statusCounts.get(s) === 0
                 return (
                   <button
                     key={s}
                     type="button"
-                    onClick={() => setStatusFilter(s)}
+                    onClick={() => selectStatus(s)}
                     className={`px-3 py-1.5 rounded-aa-pill text-aa-11 font-semibold transition-colors ${
                       on
                         ? "bg-aa-primary text-aa-text-on-primary"
-                        : "bg-aa-surface border border-aa-border text-aa-text-secondary hover:text-aa-text-primary"
+                        : empty
+                          ? "bg-aa-surface border border-aa-border text-aa-text-disabled hover:text-aa-text-secondary"
+                          : "bg-aa-surface border border-aa-border text-aa-text-secondary hover:text-aa-text-primary"
                     }`}>
                     {s}
                   </button>
