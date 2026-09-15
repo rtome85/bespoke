@@ -74,8 +74,12 @@ export function useOptionsController() {
       }
     }))
 
-  const { providerTest, testProvider, refreshProviderModels } =
-    useProviderTesting({ providers, updateProvider })
+  const {
+    providerTest,
+    testProvider,
+    refreshProviderModels,
+    cancelProviderOperations
+  } = useProviderTesting({ providers, updateProvider })
   const {
     status: perplexityTestStatus,
     testConnection: testPerplexity,
@@ -94,6 +98,16 @@ export function useOptionsController() {
     }
     setPerplexityConfig({ ...next, lastTested: undefined })
     resetPerplexityStatus()
+  }
+
+  /**
+   * Abandons a provider's in-flight test or model refresh, so a completion
+   * that lands after the dialog was cancelled cannot write to the config
+   * that cancelling restored.
+   */
+  const cancelPendingProviderWork = (provider: string) => {
+    if (provider === "perplexity") resetPerplexityStatus()
+    else cancelProviderOperations(provider as LLMProviderId)
   }
   const { remindersOn, toggleReminders } = useInterviewReminders(apps)
   const syncConfig = useSyncConfig()
@@ -211,6 +225,7 @@ export function useOptionsController() {
       providerTest,
       testProvider,
       refreshProviderModels,
+      cancelPendingProviderWork,
       perplexityTestStatus,
       testPerplexity,
       remindersOn,

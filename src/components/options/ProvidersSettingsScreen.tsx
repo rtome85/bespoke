@@ -24,6 +24,8 @@ interface Props {
   ) => void
   onTestProvider: (provider: LLMProviderId) => void
   onRefreshProviderModels: (provider: LLMProviderId) => void
+  /** Abandons a provider's in-flight test or refresh; see the dialog's Cancel. */
+  onCancelPendingWork: (provider: string) => void
   onChangePerplexity: (config: PerplexityConfig) => void
   onTestPerplexity: () => void
   onOpenPrompts: () => void
@@ -39,6 +41,7 @@ export function ProvidersSettingsScreen({
   onUpdateProvider,
   onTestProvider,
   onRefreshProviderModels,
+  onCancelPendingWork,
   onChangePerplexity,
   onTestPerplexity,
   onOpenPrompts
@@ -88,6 +91,7 @@ export function ProvidersSettingsScreen({
           onUpdateProvider={onUpdateProvider}
           onTestProvider={onTestProvider}
           onRefreshProviderModels={onRefreshProviderModels}
+          onCancelPendingWork={() => onCancelPendingWork(open.id)}
           onChangePerplexity={onChangePerplexity}
           onTestPerplexity={onTestPerplexity}
           onOpenPrompts={onOpenPrompts}

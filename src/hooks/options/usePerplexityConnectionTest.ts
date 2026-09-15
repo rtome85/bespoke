@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from "react"
 import type { PerplexityConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
 
+type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
+
 const TEST_TIMEOUT_MS = 30_000
 const STATUS_RESET_MS = 5_000
 
 export function usePerplexityConnectionTest(
   config: PerplexityConfig,
-  setConfig: (next: PerplexityConfig) => void
+  setConfig: StorageSetter<PerplexityConfig>
 ) {
   const [status, setStatus] = useState<OperationStatus>({
     type: "idle",
@@ -71,23 +73,23 @@ export function usePerplexityConnectionTest(
         : `Connection failed: ${response.status} ${response.statusText}`
       // The banner self-clears after STATUS_RESET_MS; the stored verdict is
       // what keeps the roster's status honest across reloads.
-      setConfig({
-        ...config,
+      setConfig((previous) => ({
+        ...previous,
         lastTested: {
           ok: response.ok,
           at: new Date().toISOString(),
           message
         }
-      })
+      }))
       setStatus({ type: response.ok ? "success" : "error", message })
     } catch {
       if (!mountedRef.current || controllerRef.current !== controller) return
       const message =
         "Connection failed. Please check your internet connection and API key."
-      setConfig({
-        ...config,
+      setConfig((previous) => ({
+        ...previous,
         lastTested: { ok: false, at: new Date().toISOString(), message }
-      })
+      }))
       setStatus({ type: "error", message })
     } finally {
       clearTimeout(requestTimer)

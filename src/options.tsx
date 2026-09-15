@@ -48,6 +48,7 @@ function Options() {
     providerTest,
     testProvider,
     refreshProviderModels,
+    cancelPendingProviderWork,
     perplexityTestStatus,
     testPerplexity,
     remindersOn,
@@ -90,6 +91,7 @@ function Options() {
         onUpdateProvider={updateProvider}
         onTestProvider={testProvider}
         onRefreshProviderModels={refreshProviderModels}
+        onCancelPendingWork={cancelPendingProviderWork}
         onChangePerplexity={setPerplexityConfig}
         onTestPerplexity={testPerplexity}
         onOpenPrompts={() => navigate("#/settings/prompts")}

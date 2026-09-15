@@ -27,6 +27,7 @@ interface Props {
   ) => void
   onTestProvider: (provider: LLMProviderId) => void
   onRefreshProviderModels: (provider: LLMProviderId) => void
+  onCancelPendingWork: () => void
   onChangePerplexity: (config: PerplexityConfig) => void
   onTestPerplexity: () => void
   onOpenPrompts: () => void
@@ -37,7 +38,7 @@ interface Props {
  * One account's settings, over the roster. Edits apply live (so "Test
  * connection" always exercises what is on screen); Cancel puts back the
  * config as it stood when the dialog opened, including anything a test or a
- * model refresh wrote while it was open.
+ * model refresh wrote while it was open, and abandons any still in flight.
  *
  * Portalled to <body> — the settings area is a translated, overflow-hidden
  * panel that would otherwise clip a fixed overlay to its own box.
@@ -51,6 +52,7 @@ export function ProviderDetailModal({
   onUpdateProvider,
   onTestProvider,
   onRefreshProviderModels,
+  onCancelPendingWork,
   onChangePerplexity,
   onTestPerplexity,
   onOpenPrompts,
@@ -69,6 +71,10 @@ export function ProviderDetailModal({
   })
 
   const revert = () => {
+    // Drop anything still in flight first: a test or refresh started against
+    // the draft would otherwise complete after the restore below and write
+    // its verdict onto the config we are putting back.
+    onCancelPendingWork()
     if (isPerplexity) {
       onChangePerplexity(snapshot.current.perplexity)
     } else {
