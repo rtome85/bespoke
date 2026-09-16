@@ -1,5 +1,5 @@
 import { Briefcase, Settings as SettingsIcon } from "lucide-react"
-import { useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { StorageUsage } from "~components/options/StorageUsage"
 import type { AppSection, SettingsNavGroup } from "~types/options"
@@ -9,6 +9,11 @@ const SECTION_TABS: { id: AppSection; label: string; icon: typeof Briefcase }[] 
     { id: "applications", label: "Applications", icon: Briefcase },
     { id: "settings", label: "Settings", icon: SettingsIcon }
   ]
+
+// Settings and Applications each mount their own rail, so the switch remounts
+// this component. Remember the last section so the new instance can start the
+// indicator where the old one left it and slide it across.
+let lastSection: AppSection | null = null
 
 /**
  * Second-level nav for the Settings section — a dark grouped rail that
@@ -37,15 +42,32 @@ export function SettingsRail({
     null
   )
 
+  const [shown, setShown] = useState<AppSection>(lastSection ?? section)
+
   useLayoutEffect(() => {
     const measure = () => {
-      const btn = sectionButtonRefs.current[section]
+      const btn = sectionButtonRefs.current[shown]
       if (!btn) return
       setIndicator({ left: btn.offsetLeft, width: btn.offsetWidth })
     }
     measure()
     window.addEventListener("resize", measure)
     return () => window.removeEventListener("resize", measure)
+  }, [shown])
+
+  useEffect(() => {
+    lastSection = section
+    if (shown === section) return
+    // Two frames: let the indicator paint at the old position first, so the
+    // move to the new one is a real transition.
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setShown(section))
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
   }, [section])
 
   return (
@@ -56,12 +78,12 @@ export function SettingsRail({
         {indicator ? (
           <div
             aria-hidden="true"
-            className="absolute top-aa-px-3 bottom-aa-px-3 rounded-aa-pill bg-aa-primary transition-all duration-200 ease-out"
+            className="absolute top-aa-px-3 bottom-aa-px-3 rounded-aa-pill bg-aa-primary transition-all duration-200 ease-out motion-reduce:transition-none"
             style={{ left: indicator.left, width: indicator.width }}
           />
         ) : null}
         {SECTION_TABS.map((t) => {
-          const on = section === t.id
+          const on = shown === t.id
           const Icon = t.icon
           return (
             <button
@@ -71,15 +93,15 @@ export function SettingsRail({
               }}
               onClick={() => onSection(t.id)}
               title={t.label}
-              className={`relative z-10 flex items-center justify-center gap-2 px-3 py-aa-px-7 rounded-aa-pill border-0 cursor-pointer ${
+              className={`relative z-10 flex-1 flex items-center justify-center gap-2 px-3 py-aa-px-7 rounded-aa-pill border-0 cursor-pointer ${
                 on ? "" : "hover:bg-aa-neutral-700"
               }`}>
               <Icon
                 size={14}
-                className={`lg:hidden shrink-0 transition-colors ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
+                className={`lg:hidden shrink-0 transition-colors duration-200 ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
               />
               <span
-                className={`hidden lg:inline whitespace-nowrap text-aa-caption font-semibold transition-colors ${
+                className={`hidden lg:inline whitespace-nowrap text-aa-caption font-semibold transition-colors duration-200 ${
                   on ? "text-aa-text-on-primary" : "text-aa-neutral-400"
                 }`}>
                 {t.label}
