@@ -9,6 +9,8 @@ export interface SyncConfig {
   token: string
   lastSynced: string | null
   error?: string
+  /** Google account the token belongs to, shown in the options rail. */
+  email?: string
 }
 
 async function authorize(): Promise<string> {
@@ -28,6 +30,19 @@ async function authorize(): Promise<string> {
       }
     )
   })
+}
+
+/**
+ * Email of the Google account behind the token. Drive's about endpoint accepts
+ * the drive.appdata scope, so no extra OAuth scope or permission is needed.
+ */
+async function fetchAccountEmail(token: string): Promise<string | undefined> {
+  const res = await fetch(`${DRIVE_API}/about?fields=user(emailAddress)`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!res.ok) throw new Error(`Drive about failed: ${res.status}`)
+  const json = await res.json()
+  return json.user?.emailAddress || undefined
 }
 
 async function findFile(token: string): Promise<string | null> {
@@ -136,4 +151,4 @@ async function revoke(token: string): Promise<void> {
   chrome.identity.removeCachedAuthToken({ token }, () => {})
 }
 
-export { authorize, push, pull, revoke }
+export { authorize, fetchAccountEmail, push, pull, revoke }
