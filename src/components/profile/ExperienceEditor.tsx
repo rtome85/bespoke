@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
 import type { WorkExperience } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -28,6 +29,8 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
   const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null)
   // Index of the row being edited; null while the dialog adds a new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
 
   const addExperience = () => {
     setEditingIndex(null)
@@ -52,9 +55,14 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
     setEditingIndex(null)
   }
 
-  const removeExperience = (index: number) => {
-    onChange(experiences.filter((_, i) => i !== index))
+  const confirmRemoveExperience = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(experiences.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
   }
+
+  const pendingDeleteExperience =
+    pendingDeleteIndex === null ? null : experiences[pendingDeleteIndex]
 
   const saveEditingExperience = () => {
     if (editingExperience) {
@@ -216,13 +224,24 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
         </ProfileEntryModal>
       )}
 
+      {pendingDeleteExperience && (
+        <ConfirmDialog
+          title="Delete work experience?"
+          message={`${pendingDeleteExperience.jobTitle || "This role"}${pendingDeleteExperience.company ? ` at ${pendingDeleteExperience.company}` : ""} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveExperience}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
+
       <div className="aa-card-base">
         <ArrayInput
           items={experiences}
           getItemKey={(experience) => experience.id}
           onAdd={addExperience}
           onEdit={editExperience}
-          onRemove={removeExperience}
+          onRemove={setPendingDeleteIndex}
           renderSummary={(exp) => {
             const fmt = (iso: string | null) => {
               if (!iso) return "Present"

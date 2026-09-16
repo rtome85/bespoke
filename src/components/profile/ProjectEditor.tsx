@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react"
 import { useState } from "react"
 
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
 import type { PersonalProject } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -29,6 +30,8 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
   const [editingProject, setEditingProject] = useState<PersonalProject | null>(null)
   // Index of the row being edited; null while the dialog adds a new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
 
   const addProject = () => {
     setEditingIndex(null)
@@ -45,9 +48,14 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
     setEditingIndex(null)
   }
 
-  const removeProject = (index: number) => {
-    onChange(projects.filter((_, i) => i !== index))
+  const confirmRemoveProject = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(projects.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
   }
+
+  const pendingDeleteProject =
+    pendingDeleteIndex === null ? null : projects[pendingDeleteIndex]
 
   const saveEditingProject = () => {
     if (editingProject) {
@@ -167,13 +175,24 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
         </ProfileEntryModal>
       )}
 
+      {pendingDeleteProject && (
+        <ConfirmDialog
+          title="Delete project?"
+          message={`${pendingDeleteProject.title ? `"${pendingDeleteProject.title}"` : "This project"} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveProject}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
+
       <div className="aa-card-base">
         <ArrayInput
           items={projects}
           getItemKey={(project) => project.id}
           onAdd={addProject}
           onEdit={editProject}
-          onRemove={removeProject}
+          onRemove={setPendingDeleteIndex}
           renderSummary={(project) => (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-aa-text-primary truncate">

@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react"
 import { useState } from "react"
 
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
 import type { Certificate } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -32,6 +33,8 @@ const formatDate = (iso: string | null | undefined): string => {
 export function CertificateEditor({ certificates, onChange }: CertificateEditorProps) {
   const safeCerts = certificates || []
   const [editingCert, setEditingCert] = useState<Certificate | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
 
   const addCertificate = () => {
     if (editingCert) return
@@ -51,9 +54,14 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
     onChange(updated)
   }
 
-  const removeCertificate = (index: number) => {
-    onChange(safeCerts.filter((_, i) => i !== index))
+  const confirmRemoveCertificate = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(safeCerts.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
   }
+
+  const pendingDeleteCert =
+    pendingDeleteIndex === null ? null : safeCerts[pendingDeleteIndex]
 
   const saveEditingCert = () => {
     if (!editingCert) return
@@ -167,13 +175,24 @@ export function CertificateEditor({ certificates, onChange }: CertificateEditorP
         </ProfileEntryModal>
       )}
 
+      {pendingDeleteCert && (
+        <ConfirmDialog
+          title="Delete certificate?"
+          message={`${pendingDeleteCert.name || "This certificate"}${pendingDeleteCert.issuer ? ` from ${pendingDeleteCert.issuer}` : ""} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveCertificate}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
+
       <div className="aa-card-base">
         <ArrayInput
           items={safeCerts}
           getItemKey={(cert) => cert.id}
           onAdd={addCertificate}
           onUpdate={updateCertificate}
-          onRemove={removeCertificate}
+          onRemove={setPendingDeleteIndex}
           renderItem={renderCertificateItem}
           renderSummary={(cert) => (
             <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
