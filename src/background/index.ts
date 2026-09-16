@@ -7,7 +7,11 @@ import { parseReminderAlarm } from "~lib/interviews/reminders"
 import { formatLabel, roundLabel } from "~lib/interviews/selectors"
 import { STORAGE_KEYS, SYNC_KEYS } from "~storage/keys"
 import type { InterviewRound, SavedApplication } from "~types/userProfile"
-import { push } from "~utils/googleDriveSync"
+import {
+  getFreshToken,
+  isCurrentConnection,
+  push
+} from "~utils/googleDriveSync"
 
 // MV3: must be registered at top-level so it persists across service worker restarts
 chrome.contextMenus.onClicked.addListener(handleContextMenuClick)
@@ -71,9 +75,9 @@ chrome.notifications.onClicked.addListener((id) => {
 
 // Auto-sync: push to Google Drive after any change to syncable keys
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
-let pushChain = Promise.resolve()
+let pushChain: Promise<unknown> = Promise.resolve()
 
-function enqueuePush(fn: () => Promise<void>): Promise<void> {
+function enqueuePush<T>(fn: () => Promise<T>): Promise<T> {
   const next = pushChain.then(() => fn())
   pushChain = next.catch(() => {}) // keep chain alive even if fn throws
   return next
@@ -88,11 +92,23 @@ chrome.storage.onChanged.addListener((changes, area) => {
   debounceTimer = setTimeout(async () => {
     const { syncConfig } = await chrome.storage.local.get("syncConfig")
     if (!syncConfig?.token) return
+    const { connectionId } = syncConfig
     try {
-      await enqueuePush(() => push(syncConfig.token))
+      // Resolve the token inside the queue, and re-check the connection right
+      // before pushing: a disconnect may land while this push waits its turn.
+      const pushed = await enqueuePush(async () => {
+        const { syncConfig: latest } =
+          await chrome.storage.local.get("syncConfig")
+        if (!latest?.token || latest.connectionId !== connectionId) return false
+        const token = await getFreshToken(latest)
+        if (!(await isCurrentConnection(connectionId))) return false
+        await push(token)
+        return true
+      })
+      if (!pushed) return
       const { syncConfig: current } =
         await chrome.storage.local.get("syncConfig")
-      if (current?.token === syncConfig.token) {
+      if (current?.token && current.connectionId === connectionId) {
         await chrome.storage.local.set({
           syncConfig: {
             ...current,
@@ -105,7 +121,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
       // Mark sync error (token may be expired)
       const { syncConfig: current } =
         await chrome.storage.local.get("syncConfig")
-      if (current?.token === syncConfig.token) {
+      if (current?.token && current.connectionId === connectionId) {
         await chrome.storage.local.set({
           syncConfig: { ...current, error: (err as Error).message }
         })
