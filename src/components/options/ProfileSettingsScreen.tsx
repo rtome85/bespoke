@@ -89,13 +89,9 @@ export function ProfileSettingsScreen({ view, userProfile, onChange }: Props) {
   }
 
   return (
-    <div className="aa-card">
-      <h2 className="aa-section-heading">Languages</h2>
-      <hr className="aa-divider" />
-      <LanguageEditor
-        languages={userProfile.languages}
-        onChange={(languages) => onChange({ ...userProfile, languages })}
-      />
-    </div>
+    <LanguageEditor
+      languages={userProfile.languages}
+      onChange={(languages) => onChange({ ...userProfile, languages })}
+    />
   )
 }

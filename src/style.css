@@ -292,7 +292,8 @@ body {
   }
 
   /* src/components/profile/ArrayInput.tsx — flush list chrome, used by the
-     Education, Experience and Projects screens via <ArrayInput flush>. Rows
+     Education, Experience, Projects and Languages screens via
+     <ArrayInput flush>. Rows
      run edge to edge inside an
      .aa-card-base section and are separated by hairlines, instead of each row
      carrying its own border inside a padded .aa-card. When the remaining
