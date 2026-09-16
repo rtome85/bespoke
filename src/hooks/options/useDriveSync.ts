@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from "~storage/keys"
 import type { OperationStatus } from "~types/options"
 import {
   authorize,
+  fetchAccountEmail,
   pull,
   revoke,
   type SyncConfig
@@ -27,6 +28,27 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
     []
   )
 
+  // Connections made before the email was stored have none; look it up once
+  // per token. Best-effort: an expired token just leaves the rail blank.
+  const emailLookupTokenRef = useRef<string | null>(null)
+  useEffect(() => {
+    const token = syncConfig?.token
+    if (!token || syncConfig.email) return
+    if (emailLookupTokenRef.current === token) return
+    emailLookupTokenRef.current = token
+    fetchAccountEmail(token)
+      .then(async (email) => {
+        if (!email) return
+        const { [STORAGE_KEYS.SYNC_CONFIG]: current } =
+          await chrome.storage.local.get(STORAGE_KEYS.SYNC_CONFIG)
+        if (current?.token !== token) return
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.SYNC_CONFIG]: { ...current, email }
+        })
+      })
+      .catch(() => {})
+  }, [syncConfig?.token, syncConfig?.email])
+
   const scheduleReset = useCallback(() => {
     const timer = setTimeout(() => {
       setSyncStatus({ type: "idle", message: "" })
@@ -42,8 +64,9 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
     })
     try {
       const token = await authorize()
+      const email = await fetchAccountEmail(token).catch(() => undefined)
       await chrome.storage.local.set({
-        [STORAGE_KEYS.SYNC_CONFIG]: { token, lastSynced: null }
+        [STORAGE_KEYS.SYNC_CONFIG]: { token, lastSynced: null, email }
       })
       setSyncStatus({
         type: "success",

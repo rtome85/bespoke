@@ -198,7 +198,7 @@ function Options() {
             onSelect={(value) => navigate(`#/settings/${value}`)}
             section={section}
             onSection={changeSection}
-            email={userProfile.personalInfo?.email || undefined}>
+            email={syncConfig?.email}>
             {tabContent[activeTab]}
           </SettingsArea>
         ) : (
@@ -213,7 +213,7 @@ function Options() {
             onDeleteApplication={deleteApplication}
             section={section}
             onSection={changeSection}
-            email={userProfile.personalInfo?.email || undefined}
+            email={syncConfig?.email}
           />
         )}
       </div>
