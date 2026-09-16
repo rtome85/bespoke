@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react"
 import { useState } from "react"
 
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
 import type { Education } from "~types/userProfile"
 
 import { ArrayInput } from "./ArrayInput"
@@ -27,6 +28,8 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
   )
   // Index of the row being edited; null while the dialog adds a new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
   const safeEducation = education || []
 
   const addEducation = () => {
@@ -53,10 +56,14 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
     setEditingIndex(null)
   }
 
-  const removeEducation = (index: number) => {
-    const newEducation = safeEducation.filter((_, i) => i !== index)
-    onChange(newEducation)
+  const confirmRemoveEducation = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(safeEducation.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
   }
+
+  const pendingDeleteEducation =
+    pendingDeleteIndex === null ? null : safeEducation[pendingDeleteIndex]
 
   const saveEditingEducation = () => {
     if (editingEducation) {
@@ -208,13 +215,24 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
         </ProfileEntryModal>
       )}
 
+      {pendingDeleteEducation && (
+        <ConfirmDialog
+          title="Delete education?"
+          message={`${pendingDeleteEducation.degree || "This entry"}${pendingDeleteEducation.institution ? ` at ${pendingDeleteEducation.institution}` : ""} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveEducation}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
+
       <div className="aa-card-base">
         <ArrayInput
           items={safeEducation}
           getItemKey={(edu) => edu.id}
           onAdd={addEducation}
           onEdit={editEducation}
-          onRemove={removeEducation}
+          onRemove={setPendingDeleteIndex}
           renderSummary={(edu) => {
             const fmt = (iso: string | null) => {
               if (!iso) return "Present"

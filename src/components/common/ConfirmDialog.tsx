@@ -10,6 +10,9 @@ interface Props {
   cancelLabel?: string
   onConfirm: () => void
   onCancel: () => void
+  /** Irreversible action (e.g. a delete): start focus on Cancel so a stray
+   *  Enter or Space doesn't confirm it. */
+  destructive?: boolean
 }
 
 /**
@@ -23,14 +26,16 @@ export function ConfirmDialog({
   confirmLabel = "Continue",
   cancelLabel = "Cancel",
   onConfirm,
-  onCancel
+  onCancel,
+  destructive = false
 }: Props) {
   const titleId = useId()
   const messageId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const confirmRef = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
 
-  useModalFocusTrap(panelRef, onCancel, confirmRef)
+  useModalFocusTrap(panelRef, onCancel, destructive ? cancelRef : confirmRef)
 
   return createPortal(
     <div
@@ -55,7 +60,11 @@ export function ConfirmDialog({
           {message}
         </p>
         <div className="flex items-center justify-end gap-aa-2 pt-aa-1">
-          <button type="button" onClick={onCancel} className="aa-btn-secondary">
+          <button
+            ref={cancelRef}
+            type="button"
+            onClick={onCancel}
+            className="aa-btn-secondary">
             {cancelLabel}
           </button>
           <button
