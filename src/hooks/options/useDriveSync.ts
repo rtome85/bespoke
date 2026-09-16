@@ -96,12 +96,17 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
       if (Object.prototype.hasOwnProperty.call(restored, "savedApplications")) {
         await migrateRestoredApplications(restored.interviewsSchemaVersion)
       }
-      // Re-read: getFreshToken may have stored a new token since the snapshot.
+      // Re-read: getFreshToken may have stored a new token since the snapshot,
+      // and a disconnect/reconnect mid-restore must not be overwritten.
       const { [STORAGE_KEYS.SYNC_CONFIG]: current } =
         await chrome.storage.local.get(STORAGE_KEYS.SYNC_CONFIG)
+      if (!current || current.token !== token) {
+        setSyncStatus({ type: "idle", message: "" })
+        return
+      }
       await chrome.storage.local.set({
         [STORAGE_KEYS.SYNC_CONFIG]: {
-          ...(current ?? syncConfig),
+          ...current,
           lastSynced: new Date().toISOString()
         }
       })
