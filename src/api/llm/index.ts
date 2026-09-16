@@ -21,6 +21,11 @@ export function getLLMClient(
       return new AnthropicAdapter(apiKey, baseUrl)
     case "google":
       return new GoogleAdapter(apiKey, baseUrl)
+    case "openrouter":
+    case "deepseek":
+    case "mistral":
+    case "custom":
+      return new OpenAIAdapter(apiKey, baseUrl, provider)
     case "ollama":
     default:
       return new OllamaAdapter(apiKey, baseUrl)

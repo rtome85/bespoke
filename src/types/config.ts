@@ -319,7 +319,15 @@ export interface GenerateRequest {
 
 // ── Multi-provider ───────────────────────────────────────────────────────────
 
-export type LLMProviderId = "ollama" | "openai" | "anthropic" | "google"
+export type LLMProviderId =
+  | "ollama"
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "openrouter"
+  | "deepseek"
+  | "mistral"
+  | "custom"
 
 /** Per-provider account: credentials, endpoint override, cached model list. */
 export interface ProviderConfig {
@@ -333,6 +341,32 @@ export interface ProviderConfig {
 }
 
 export type ProvidersConfig = Partial<Record<LLMProviderId, ProviderConfig>>
+
+/**
+ * Whether an account has what `PROVIDER_META[id].credential` asks for. The
+ * single gate for "can this provider be routed to / tested", shared by the
+ * settings UI and the background handlers.
+ */
+export function hasProviderCredential(
+  id: LLMProviderId,
+  config: Pick<ProviderConfig, "apiKey" | "baseUrl"> | undefined
+): boolean {
+  switch (PROVIDER_META[id].credential) {
+    case "apiKey":
+      return !!config?.apiKey
+    case "baseUrl":
+      return !!config?.baseUrl?.trim()
+    default:
+      return true
+  }
+}
+
+/** The prompt shown when `hasProviderCredential` fails. */
+export function missingCredentialMessage(id: LLMProviderId): string {
+  return PROVIDER_META[id].credential === "baseUrl"
+    ? "Please enter a base URL first"
+    : "Please enter an API key first"
+}
 
 /** An AI job routed to a specific provider + model. */
 export type RoutableJob = "scoring" | "drafting"
@@ -353,8 +387,15 @@ export interface ProviderMeta {
   name: string
   /** true = runs locally and free; false = usage-based paid API. */
   local: boolean
+  /**
+   * What an account needs before it can be routed to: an API key, a base URL
+   * (a self-hosted or proxy endpoint, where the key is optional), or nothing.
+   */
+  credential: "apiKey" | "baseUrl" | "none"
   /** Where the user gets an API key. */
   keyUrl?: string
+  /** Hint in the empty API key field, usually the key's vendor prefix. */
+  keyPlaceholder: string
   /** Default endpoint. Empty for providers with a fixed URL. */
   defaultBaseUrl?: string
   /** Fallback model list when the provider has no list endpoint / it fails. */
@@ -366,6 +407,8 @@ export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
     id: "ollama",
     name: "Ollama",
     local: true,
+    credential: "none",
+    keyPlaceholder: "oll-…",
     keyUrl: "https://ollama.com/settings/keys",
     defaultBaseUrl: "https://ollama.com/api",
     fallbackModels: AVAILABLE_MODELS.map((m) => m.id)
@@ -374,6 +417,8 @@ export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
     id: "openai",
     name: "OpenAI",
     local: false,
+    credential: "apiKey",
+    keyPlaceholder: "sk-…",
     keyUrl: "https://platform.openai.com/api-keys",
     defaultBaseUrl: "https://api.openai.com/v1",
     fallbackModels: ["gpt-4o-mini", "gpt-4o", "o4-mini"]
@@ -382,6 +427,8 @@ export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
     id: "anthropic",
     name: "Anthropic",
     local: false,
+    credential: "apiKey",
+    keyPlaceholder: "sk-ant-…",
     keyUrl: "https://console.anthropic.com/settings/keys",
     defaultBaseUrl: "https://api.anthropic.com/v1",
     fallbackModels: [
@@ -394,9 +441,59 @@ export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
     id: "google",
     name: "Google Gemini",
     local: false,
+    credential: "apiKey",
+    keyPlaceholder: "AIza…",
     keyUrl: "https://aistudio.google.com/apikey",
     defaultBaseUrl: "https://generativelanguage.googleapis.com/v1beta",
     fallbackModels: ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-flash"]
+  },
+  openrouter: {
+    id: "openrouter",
+    name: "OpenRouter",
+    local: false,
+    credential: "apiKey",
+    keyPlaceholder: "sk-or-…",
+    keyUrl: "https://openrouter.ai/settings/keys",
+    defaultBaseUrl: "https://openrouter.ai/api/v1",
+    fallbackModels: [
+      "openrouter/auto",
+      "anthropic/claude-sonnet-5",
+      "deepseek/deepseek-chat"
+    ]
+  },
+  deepseek: {
+    id: "deepseek",
+    name: "DeepSeek",
+    local: false,
+    credential: "apiKey",
+    keyPlaceholder: "sk-…",
+    keyUrl: "https://platform.deepseek.com/api_keys",
+    defaultBaseUrl: "https://api.deepseek.com/v1",
+    fallbackModels: ["deepseek-chat", "deepseek-reasoner"]
+  },
+  mistral: {
+    id: "mistral",
+    name: "Mistral",
+    local: false,
+    credential: "apiKey",
+    keyPlaceholder: "Mistral API key",
+    keyUrl: "https://console.mistral.ai/api-keys",
+    defaultBaseUrl: "https://api.mistral.ai/v1",
+    fallbackModels: [
+      "mistral-medium-latest",
+      "mistral-small-latest",
+      "mistral-large-latest"
+    ]
+  },
+  custom: {
+    id: "custom",
+    name: "Custom endpoint",
+    local: false,
+    credential: "baseUrl",
+    keyPlaceholder: "Leave blank if the server needs no key",
+    // No default: the user supplies an OpenAI-compatible URL (vLLM, LM
+    // Studio, LiteLLM, Together, …) and its catalogue comes from a refresh.
+    fallbackModels: []
   }
 }
 

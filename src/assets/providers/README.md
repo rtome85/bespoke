@@ -14,7 +14,10 @@ They are imported through Plasmo's `react:` scheme (see
 | File             | Upstream slug  |
 | ---------------- | -------------- |
 | `anthropic.svg`  | `anthropic`    |
+| `deepseek.svg`   | `deepseek`     |
 | `google.svg`     | `googlegemini` |
+| `mistral.svg`    | `mistralai`    |
 | `ollama.svg`     | `ollama`       |
 | `openai.svg`     | `openai`       |
+| `openrouter.svg` | `openrouter`   |
 | `perplexity.svg` | `perplexity`   |

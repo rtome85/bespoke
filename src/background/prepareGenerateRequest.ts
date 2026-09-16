@@ -12,6 +12,7 @@ import {
   DEFAULT_LLM_TUNING,
   DEFAULT_MODEL_ROUTING,
   DEFAULT_PROMPTS,
+  hasProviderCredential,
   PROVIDER_META
 } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
@@ -72,8 +73,13 @@ function resolve(
   if (!cfg || cfg.enabled === false) {
     return { error: `${meta.name} is not connected. Connect it in Settings.` }
   }
-  if (!meta.local && !cfg.apiKey) {
-    return { error: `${meta.name} needs an API key. Add it in Settings.` }
+  if (!hasProviderCredential(target.provider, cfg)) {
+    return {
+      error:
+        meta.credential === "baseUrl"
+          ? `${meta.name} needs a base URL. Add it in Settings.`
+          : `${meta.name} needs an API key. Add it in Settings.`
+    }
   }
   if (target.provider === "ollama" && !cfg.apiKey) {
     return {
