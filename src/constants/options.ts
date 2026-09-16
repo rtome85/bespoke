@@ -1,4 +1,5 @@
 import {
+  Bell,
   Boxes,
   Briefcase,
   CloudCog,
@@ -94,6 +95,12 @@ export const NAV_GROUPS: SettingsNavGroup[] = [
   {
     label: "System",
     items: [
+      {
+        label: "Notifications",
+        value: "notifications",
+        subtitle: "Interview reminders and debrief nudges",
+        icon: Bell
+      },
       {
         label: "Backup & sync",
         value: "backup-sync",

@@ -109,7 +109,14 @@ export function useOptionsController() {
     if (provider === "perplexity") resetPerplexityStatus()
     else cancelProviderOperations(provider as LLMProviderId)
   }
-  const { remindersOn, toggleReminders } = useInterviewReminders(apps)
+  const {
+    remindersOn,
+    toggleReminders,
+    reminderSettings,
+    changeReminderSettings,
+    testReminderStatus,
+    testReminder
+  } = useInterviewReminders(apps)
   const syncConfig = useSyncConfig()
   const { syncStatus, connectDrive, forcePull, disconnectDrive } =
     useDriveSync(syncConfig)
@@ -230,6 +237,10 @@ export function useOptionsController() {
       testPerplexity,
       remindersOn,
       toggleReminders,
+      reminderSettings,
+      changeReminderSettings,
+      testReminderStatus,
+      testReminder,
       syncConfig,
       syncStatus,
       connectDrive,

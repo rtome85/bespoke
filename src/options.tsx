@@ -4,6 +4,7 @@ import { AppBar } from "~components/options/AppBar"
 import { ApplicationsArea } from "~components/options/ApplicationsArea"
 import { BackupSyncSettingsScreen } from "~components/options/BackupSyncSettingsScreen"
 import { ModelRoutingSettingsScreen } from "~components/options/ModelRoutingSettingsScreen"
+import { NotificationsSettingsScreen } from "~components/options/NotificationsSettingsScreen"
 import { OptionsOverlays } from "~components/options/OptionsOverlays"
 import { OutputStyleSettingsScreen } from "~components/options/OutputStyleSettingsScreen"
 import { ProfileSettingsScreen } from "~components/options/ProfileSettingsScreen"
@@ -53,6 +54,10 @@ function Options() {
     testPerplexity,
     remindersOn,
     toggleReminders,
+    reminderSettings,
+    changeReminderSettings,
+    testReminderStatus,
+    testReminder,
     syncConfig,
     syncStatus,
     connectDrive,
@@ -168,12 +173,20 @@ function Options() {
         onChange={setUserProfile}
       />
     ),
+    "notifications": (
+      <NotificationsSettingsScreen
+        remindersOn={remindersOn}
+        settings={reminderSettings}
+        testStatus={testReminderStatus}
+        onToggleReminders={toggleReminders}
+        onChangeSettings={changeReminderSettings}
+        onTestReminder={testReminder}
+      />
+    ),
     "backup-sync": (
       <BackupSyncSettingsScreen
-        remindersOn={remindersOn}
         syncConfig={syncConfig}
         syncStatus={syncStatus}
-        onToggleReminders={toggleReminders}
         onConnectDrive={connectDrive}
         onForcePull={forcePull}
         onDisconnectDrive={disconnectDrive}

@@ -2,10 +2,8 @@ import type { OperationStatus } from "~types/options"
 import type { SyncConfig } from "~utils/googleDriveSync"
 
 interface Props {
-  remindersOn: boolean
   syncConfig: SyncConfig | null
   syncStatus: OperationStatus
-  onToggleReminders: (enabled: boolean) => void
   onConnectDrive: () => void
   onForcePull: () => void
   onDisconnectDrive: () => void
@@ -14,10 +12,8 @@ interface Props {
 }
 
 export function BackupSyncSettingsScreen({
-  remindersOn,
   syncConfig,
   syncStatus,
-  onToggleReminders,
   onConnectDrive,
   onForcePull,
   onDisconnectDrive,
@@ -26,25 +22,6 @@ export function BackupSyncSettingsScreen({
 }: Props) {
   return (
     <div className="space-y-6">
-      <div className="aa-card">
-        <h2 className="aa-section-heading">Interview reminders</h2>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={remindersOn}
-            onChange={(event) => onToggleReminders(event.target.checked)}
-            className="w-4 h-4 accent-aa-primary"
-          />
-          <span className="text-sm text-aa-text-primary">
-            Notify me before a scheduled interview — 1 day and 1 hour ahead
-          </span>
-        </label>
-        <p className="aa-hint">
-          Uses your browser's notifications for rounds that have a date and
-          time. Turn off to clear all pending reminders.
-        </p>
-      </div>
-
       <div className="aa-card">
         <h2 className="aa-section-heading">Google Drive Sync</h2>
         <p className="text-sm text-aa-text-secondary mb-6">

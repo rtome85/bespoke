@@ -3,7 +3,15 @@ import {
   handleContextMenuClick
 } from "~background/context-menu"
 import { migrateInterviewsSchema } from "~lib/interviews/migrate"
-import { parseReminderAlarm } from "~lib/interviews/reminders"
+import {
+  DEBRIEF_NUDGE_KEY,
+  LEAD_TIMES,
+  parseReminderAlarm,
+  readReminderSettings,
+  remindersEnabled,
+  showReminderNotification,
+  TEST_NOTIFICATION_ID
+} from "~lib/interviews/reminders"
 import { formatLabel, roundLabel } from "~lib/interviews/selectors"
 import { STORAGE_KEYS, SYNC_KEYS } from "~storage/keys"
 import type { InterviewRound, SavedApplication } from "~types/userProfile"
@@ -53,23 +61,43 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   // a manual status change, etc.).
   if (hit.app.status === "Reject") return
 
-  const lead = parsed.key === "24h" ? "Tomorrow" : "In 1 hour"
+  // Settings may also have changed since scheduling; honour the current ones.
+  if (!(await remindersEnabled())) return
+  const settings = await readReminderSettings()
+  const title = `${hit.app.company} · ${roundLabel(hit.round)}`
+
+  if (parsed.key === DEBRIEF_NUDGE_KEY) {
+    if (!settings.debriefNudge || hit.round.debrief?.loggedAt) return
+    await showReminderNotification(
+      alarm.name,
+      title,
+      "How did it go? Log your debrief while it's fresh."
+    )
+    return
+  }
+
+  const lead = LEAD_TIMES.find((t) => t.key === parsed.key)
+  if (!lead || !settings.leadTimes.includes(lead.key)) return
   const fmt = formatLabel(hit.round.format)
-  const icons = chrome.runtime.getManifest().icons
-  chrome.notifications.create(alarm.name, {
-    type: "basic",
-    iconUrl: chrome.runtime.getURL(
-      icons?.["128"] ?? icons?.["48"] ?? "icon.png"
-    ),
-    title: `${hit.app.company} · ${roundLabel(hit.round)}`,
-    message: `${lead} at ${hit.round.time}${fmt ? ` · ${fmt}` : ""}`,
-    priority: 1
-  })
+  await showReminderNotification(
+    alarm.name,
+    title,
+    `${lead.notice} at ${hit.round.time}${fmt ? ` · ${fmt}` : ""}`
+  )
 })
 
 chrome.notifications.onClicked.addListener((id) => {
-  if (!parseReminderAlarm(id)) return
-  chrome.tabs.create({ url: chrome.runtime.getURL(SCHEDULE_URL) })
+  if (id === TEST_NOTIFICATION_ID) {
+    chrome.notifications.clear(id)
+    return
+  }
+  const parsed = parseReminderAlarm(id)
+  if (!parsed) return
+  const url =
+    parsed.key === DEBRIEF_NUDGE_KEY
+      ? `options.html#/interviews/debriefs/${encodeURIComponent(parsed.roundId)}`
+      : SCHEDULE_URL
+  chrome.tabs.create({ url: chrome.runtime.getURL(url) })
   chrome.notifications.clear(id)
 })
 
