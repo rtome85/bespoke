@@ -36,7 +36,7 @@ export function PromptEditorField({
           type="button"
           onClick={onExpand}
           className="px-3 py-1 text-aa-10 font-bold uppercase tracking-widest bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-sm hover:opacity-90 transition-opacity">
-          Expand
+          Edit
         </button>
       </div>
     </div>

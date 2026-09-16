@@ -159,7 +159,7 @@ body {
     @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-sm focus:outline-none focus:border-aa-primary transition-colors;
   }
   .aa-textarea {
-    @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-secondary text-xs font-mono leading-relaxed focus:outline-none focus:border-aa-primary transition-colors;
+    @apply w-full px-3 py-2.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary text-xs font-mono leading-relaxed focus:outline-none focus:border-aa-primary transition-colors;
   }
   .aa-label {
     @apply block text-aa-caption font-semibold text-aa-text-secondary mb-2;
