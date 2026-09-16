@@ -1,6 +1,7 @@
 import { Briefcase, Settings as SettingsIcon } from "lucide-react"
 import { useLayoutEffect, useRef, useState } from "react"
 
+import { StorageUsage } from "~components/options/StorageUsage"
 import type { AppSection, SettingsNavGroup } from "~types/options"
 
 const SECTION_TABS: { id: AppSection; label: string; icon: typeof Briefcase }[] =
@@ -132,16 +133,19 @@ export function SettingsRail({
         </div>
       ))}
 
-      {email ? (
-        <div className="mt-auto flex items-center justify-center lg:justify-start gap-2 px-2 lg:px-2.5 pt-4 border-t border-aa-neutral-800 min-w-0">
-          <div className="w-aa-px-26 h-aa-px-26 shrink-0 rounded-aa-pill bg-aa-neutral-700 flex items-center justify-center text-aa-11 font-bold text-aa-surface">
-            {email[0]?.toUpperCase() ?? "?"}
+      <div className="mt-auto flex flex-col gap-4 pt-4 border-t border-aa-neutral-800 min-w-0">
+        {email ? (
+          <div className="flex items-center justify-center lg:justify-start gap-2 px-2 lg:px-2.5 min-w-0">
+            <div className="w-aa-px-26 h-aa-px-26 shrink-0 rounded-aa-pill bg-aa-neutral-700 flex items-center justify-center text-aa-11 font-bold text-aa-surface">
+              {email[0]?.toUpperCase() ?? "?"}
+            </div>
+            <span className="hidden lg:inline text-aa-caption text-aa-neutral-400 truncate">
+              {email}
+            </span>
           </div>
-          <span className="hidden lg:inline text-aa-caption text-aa-neutral-400 truncate">
-            {email}
-          </span>
-        </div>
-      ) : null}
+        ) : null}
+        <StorageUsage />
+      </div>
     </aside>
   )
 }
