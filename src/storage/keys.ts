@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   INTERVIEWS_SCHEMA_VERSION: "interviewsSchemaVersion",
   COMPANY_RESEARCH_CACHE: "companyResearchCache",
   INTERVIEW_REMINDERS_ENABLED: "interviewRemindersEnabled",
+  INTERVIEW_REMINDER_SETTINGS: "interviewReminderSettings",
   LAST_ROUTE: "lastRoute",
   DOCUMENT_PREVIEW_DRAFT: "documentPreviewDraft",
 } as const
