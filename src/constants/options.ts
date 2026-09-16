@@ -115,7 +115,11 @@ export const PROVIDER_IDS: LLMProviderId[] = [
   "ollama",
   "openai",
   "anthropic",
-  "google"
+  "google",
+  "openrouter",
+  "deepseek",
+  "mistral",
+  "custom"
 ]
 
 export const STRICTNESS = ["strict", "balanced", "generous"] as const

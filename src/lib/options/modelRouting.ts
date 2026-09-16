@@ -1,6 +1,7 @@
 import { PROVIDER_IDS } from "~constants/options"
 import {
   AVAILABLE_MODELS,
+  hasProviderCredential,
   MODEL_COST_PER_MTOK,
   PROVIDER_META,
   RUN_TOKENS,
@@ -38,7 +39,7 @@ export function connectedProviders(
   return PROVIDER_IDS.filter((provider) => {
     const config = providers[provider]
     if (!config || config.enabled === false) return false
-    return PROVIDER_META[provider].local || !!config.apiKey
+    return hasProviderCredential(provider, config)
   })
 }
 

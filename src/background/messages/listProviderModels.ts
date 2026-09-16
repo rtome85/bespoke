@@ -1,7 +1,12 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 import { getLLMClient } from "~api/llm"
-import { PROVIDER_META, type LLMProviderId } from "~types/config"
+import {
+  hasProviderCredential,
+  missingCredentialMessage,
+  PROVIDER_META,
+  type LLMProviderId
+} from "~types/config"
 
 /** Fetches the selectable model ids for a provider account. */
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
@@ -20,10 +25,10 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   // Same gate as testOllamaConnection: adapters swallow an auth failure and
   // return the built-in list, so without this a keyless account reports a
   // successful refresh.
-  if (!meta.local && !apiKey) {
+  if (!hasProviderCredential(provider, { apiKey: apiKey ?? "", baseUrl })) {
     res.send({
       success: false,
-      message: "Please enter an API key first",
+      message: missingCredentialMessage(provider),
       models: meta.fallbackModels
     })
     return

@@ -27,6 +27,7 @@ export function ProviderConfigurationFields({
   onRefreshModels
 }: Props) {
   const meta = PROVIDER_META[id]
+  const isEndpoint = meta.credential === "baseUrl"
   const apiKeyId = `provider-${id}-api-key`
   const baseUrlId = `provider-${id}-base-url`
 
@@ -68,22 +69,15 @@ export function ProviderConfigurationFields({
 
       <div>
         <label htmlFor={apiKeyId} className="aa-label">
-          API key{meta.local ? " (cloud only)" : " *"}
+          API key
+          {meta.local ? " (cloud only)" : isEndpoint ? " (optional)" : " *"}
         </label>
         <input
           id={apiKeyId}
           type="password"
           value={config?.apiKey ?? ""}
           onChange={(event) => onUpdate({ apiKey: event.target.value })}
-          placeholder={
-            id === "ollama"
-              ? "oll-…"
-              : id === "openai"
-                ? "sk-…"
-                : id === "anthropic"
-                  ? "sk-ant-…"
-                  : "AIza…"
-          }
+          placeholder={meta.keyPlaceholder}
           className="aa-input"
         />
         {meta.keyUrl && (
@@ -102,20 +96,24 @@ export function ProviderConfigurationFields({
 
       <div>
         <label htmlFor={baseUrlId} className="aa-label">
-          Base URL
+          Base URL{isEndpoint ? " *" : ""}
         </label>
         <input
           id={baseUrlId}
           type="text"
           value={config?.baseUrl ?? ""}
           onChange={(event) => onUpdate({ baseUrl: event.target.value })}
-          placeholder={meta.defaultBaseUrl}
+          placeholder={
+            isEndpoint ? "http://localhost:1234/v1" : meta.defaultBaseUrl
+          }
           className="aa-input"
         />
         <p className="aa-hint">
           {meta.local
             ? "Edit to use a remote host, container name, or custom port."
-            : "Leave blank unless you use a proxy or gateway."}
+            : isEndpoint
+              ? "An OpenAI-compatible API root — the URL that /chat/completions and /models hang off."
+              : "Leave blank unless you use a proxy or gateway."}
         </p>
       </div>
 
@@ -160,8 +158,9 @@ export function ProviderConfigurationFields({
         </div>
         {!config?.models?.length && (
           <p className="aa-hint">
-            Built-in list. Test the connection, then refresh to pull the live
-            catalogue.
+            {isEndpoint
+              ? "No models yet. Test the connection, then refresh to pull the server's catalogue."
+              : "Built-in list. Test the connection, then refresh to pull the live catalogue."}
           </p>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { PROVIDER_IDS } from "~constants/options"
 import {
+  hasProviderCredential,
   PROVIDER_META,
   type LLMProviderId,
   type PerplexityConfig,
@@ -8,7 +9,7 @@ import {
 import type { OperationStatus, ProviderTestState } from "~types/options"
 
 /**
- * Roster identity: the four routable LLM providers plus Perplexity, which
+ * Roster identity: the routable LLM providers plus Perplexity, which
  * has its own config shape and only ever powers company research.
  */
 export type RosterProviderId = LLMProviderId | "perplexity"
@@ -38,6 +39,12 @@ const BLURBS: Record<RosterProviderId, string> = {
   openai: "Usage-based API — billed by OpenAI per token.",
   anthropic: "Usage-based API — billed by Anthropic per token.",
   google: "Usage-based API — billed by Google per token.",
+  openrouter:
+    "One key for hundreds of models — billed by OpenRouter per token.",
+  deepseek: "Usage-based API — billed by DeepSeek per token.",
+  mistral: "EU-hosted, usage-based API — billed by Mistral per token.",
+  custom:
+    "Any OpenAI-compatible server — vLLM, LM Studio, LiteLLM, or a hosted gateway.",
   perplexity:
     "Company research only — never scoring, drafting, or interview prep."
 }
@@ -46,6 +53,7 @@ const CONNECTED: ProviderStatus = { label: "Connected", tone: "ok" }
 const NOT_CONNECTED: ProviderStatus = { label: "Not connected", tone: "idle" }
 const DISABLED: ProviderStatus = { label: "Disabled", tone: "idle" }
 const UNTESTED: ProviderStatus = { label: "Key untested", tone: "warn" }
+const URL_UNTESTED: ProviderStatus = { label: "URL untested", tone: "warn" }
 const FAILED: ProviderStatus = { label: "Test failed", tone: "bad" }
 const TESTING: ProviderStatus = { label: "Testing…", tone: "idle" }
 
@@ -61,7 +69,7 @@ export function maskKey(key: string): string {
   return `${prefix}…${key.slice(-4)}`
 }
 
-/** Host of a base URL, for the Ollama row's "localhost:11434" line. */
+/** Host of a base URL, for the "localhost:11434" line on endpoint rows. */
 function hostOf(baseUrl: string): string {
   try {
     return new URL(baseUrl).host
@@ -91,7 +99,7 @@ export function providerStatus(
 ): ProviderStatus {
   const config = providers[id]
   const local = PROVIDER_META[id].local
-  if (!config || (!local && !config.apiKey)) return NOT_CONNECTED
+  if (!config || !hasProviderCredential(id, config)) return NOT_CONNECTED
   if (config.enabled === false) return DISABLED
 
   const live = test[id]
@@ -102,7 +110,8 @@ export function providerStatus(
   }
 
   if (config.lastTested) return config.lastTested.ok ? CONNECTED : FAILED
-  return local ? CONNECTED : UNTESTED
+  if (local) return CONNECTED
+  return PROVIDER_META[id].credential === "baseUrl" ? URL_UNTESTED : UNTESTED
 }
 
 /**
@@ -137,12 +146,18 @@ export function providerRoster(
     return {
       id,
       name: meta.name,
-      access: meta.local ? "Local · Free" : "Usage-based",
-      meta: meta.local
-        ? hostOf(config?.baseUrl || meta.defaultBaseUrl)
-        : config?.apiKey
-          ? maskKey(config.apiKey)
-          : "No key saved",
+      access: meta.local
+        ? "Local · Free"
+        : meta.credential === "baseUrl"
+          ? "Self-hosted"
+          : "Usage-based",
+      meta:
+        meta.local || meta.credential === "baseUrl"
+          ? hostOf(config?.baseUrl || meta.defaultBaseUrl || "") ||
+            "No URL saved"
+          : config?.apiKey
+            ? maskKey(config.apiKey)
+            : "No key saved",
       blurb: BLURBS[id],
       status: providerStatus(id, providers, test)
     }
