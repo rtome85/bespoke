@@ -25,6 +25,8 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
   const [editingEducation, setEditingEducation] = useState<Education | null>(
     null
   )
+  // Index of the row being edited; null while the dialog adds a new entry.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const safeEducation = education || []
 
   const addEducation = () => {
@@ -37,13 +39,18 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
       endDate: null,
       description: ""
     }
+    setEditingIndex(null)
     setEditingEducation(newEducation)
   }
 
-  const updateEducation = (index: number, edu: Education) => {
-    const newEducation = [...safeEducation]
-    newEducation[index] = edu
-    onChange(newEducation)
+  const editEducation = (index: number) => {
+    setEditingIndex(index)
+    setEditingEducation({ ...safeEducation[index] })
+  }
+
+  const closeEditingEducation = () => {
+    setEditingEducation(null)
+    setEditingIndex(null)
   }
 
   const removeEducation = (index: number) => {
@@ -55,8 +62,14 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
     if (editingEducation) {
       const errors = validateEducation(editingEducation)
       if (errors.length === 0) {
-        onChange([...safeEducation, editingEducation])
-        setEditingEducation(null)
+        onChange(
+          editingIndex === null
+            ? [...safeEducation, editingEducation]
+            : safeEducation.map((edu, i) =>
+                i === editingIndex ? editingEducation : edu
+              )
+        )
+        closeEditingEducation()
       } else {
         alert(errors.join("\n"))
       }
@@ -187,10 +200,10 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
 
       {editingEducation && (
         <ProfileEntryModal
-          title="Add new education"
+          title={editingIndex === null ? "Add new education" : "Edit education"}
           saveLabel="Save education"
           onSave={saveEditingEducation}
-          onCancel={() => setEditingEducation(null)}>
+          onCancel={closeEditingEducation}>
           {renderEducationItem(editingEducation, 0, setEditingEducation)}
         </ProfileEntryModal>
       )}
@@ -200,9 +213,8 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
           items={safeEducation}
           getItemKey={(edu) => edu.id}
           onAdd={addEducation}
-          onUpdate={updateEducation}
+          onEdit={editEducation}
           onRemove={removeEducation}
-          renderItem={renderEducationItem}
           renderSummary={(edu) => {
             const fmt = (iso: string | null) => {
               if (!iso) return "Present"

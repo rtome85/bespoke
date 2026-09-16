@@ -6,9 +6,12 @@ interface ArrayInputProps<T> {
   items: T[]
   getItemKey: (item: T) => string
   onAdd: () => void
-  onUpdate: (index: number, item: T) => void
+  onUpdate?: (index: number, item: T) => void
   onRemove: (index: number) => void
-  renderItem: (item: T, index: number, onUpdate: (item: T) => void) => ReactNode
+  renderItem?: (item: T, index: number, onUpdate: (item: T) => void) => ReactNode
+  /** When set, the pencil hands the row to the caller (e.g. to open it in a
+   *  dialog) instead of expanding renderItem inline below the row. */
+  onEdit?: (index: number) => void
   renderSummary?: (item: T, index: number) => ReactNode
   emptyMessage: string
   addButtonText: string
@@ -27,6 +30,7 @@ export function ArrayInput<T>({
   onRemove,
   renderItem,
   renderSummary,
+  onEdit,
   emptyMessage,
   addButtonText,
   flush = false
@@ -79,7 +83,9 @@ export function ArrayInput<T>({
 
                 <div className="flex items-center gap-0.5">
                   <button
-                    onClick={() => toggleExpanded(key)}
+                    onClick={() =>
+                      onEdit ? onEdit(index) : toggleExpanded(key)
+                    }
                     className="aa-list-row-action"
                     title={isExpanded ? "Close" : "Edit item"}>
                     <Pencil className="w-aa-px-15 h-aa-px-15" />
@@ -94,10 +100,10 @@ export function ArrayInput<T>({
                 </div>
               </div>
 
-              {isExpanded && (
+              {isExpanded && renderItem && (
                 <div className="aa-list-panel">
                   {renderItem(item, index, (updatedItem) =>
-                    onUpdate(index, updatedItem)
+                    onUpdate?.(index, updatedItem)
                   )}
                 </div>
               )}
@@ -127,7 +133,9 @@ export function ArrayInput<T>({
               )}
 
               <button
-                onClick={() => toggleExpanded(key)}
+                onClick={() =>
+                  onEdit ? onEdit(index) : toggleExpanded(key)
+                }
                 className="shrink-0 text-aa-neutral-500 hover:text-aa-text-primary transition-colors"
                 title={isExpanded ? "Close" : "Edit item"}>
                 <Pencil className="w-aa-px-15 h-aa-px-15" />
@@ -141,10 +149,10 @@ export function ArrayInput<T>({
               </button>
             </div>
 
-            {isExpanded && (
+            {isExpanded && renderItem && (
               <div className="px-3.5 pb-4 border-t border-aa-border pt-4">
                 {renderItem(item, index, (updatedItem) =>
-                  onUpdate(index, updatedItem)
+                  onUpdate?.(index, updatedItem)
                 )}
               </div>
             )}
