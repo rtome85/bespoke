@@ -70,6 +70,7 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
         [STORAGE_KEYS.SYNC_CONFIG]: {
           token,
           expiresAt,
+          connectionId: crypto.randomUUID(),
           lastSynced: null,
           email
         }
@@ -100,7 +101,7 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
       // and a disconnect/reconnect mid-restore must not be overwritten.
       const { [STORAGE_KEYS.SYNC_CONFIG]: current } =
         await chrome.storage.local.get(STORAGE_KEYS.SYNC_CONFIG)
-      if (!current || current.token !== token) {
+      if (!current?.token || current.connectionId !== syncConfig.connectionId) {
         setSyncStatus({ type: "idle", message: "" })
         return
       }

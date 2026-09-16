@@ -17,6 +17,11 @@ const TOKEN_EXPIRY_MARGIN_MS = 60_000
 
 export interface SyncConfig {
   token: string
+  /**
+   * Set once per Connect and kept across token refreshes, so a disconnect or
+   * reconnect is detectable even though the token itself rotates.
+   */
+  connectionId?: string
   /** Epoch ms the access token expires; absent on pre-launchWebAuthFlow configs. */
   expiresAt?: number
   lastSynced: string | null
@@ -83,11 +88,19 @@ async function authorize({
   return { token, expiresAt: Date.now() + expiresIn * 1_000 }
 }
 
+/** Whether `connectionId` is still the stored Drive connection. */
+async function isCurrentConnection(
+  connectionId: string | undefined
+): Promise<boolean> {
+  const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+  return !!current?.token && current.connectionId === connectionId
+}
+
 /**
  * A usable access token for `config`. Implicit-grant tokens can't be
  * refreshed, so an expired one is replaced by a silent re-authorization and
- * written back — unless the stored config changed meanwhile (disconnect or
- * reconnect), in which case the fresh token is only returned.
+ * written back. Throws if the connection was disconnected or replaced while
+ * re-authorizing, so a token is never handed out for a stale connection.
  */
 async function getFreshToken(config: SyncConfig): Promise<string> {
   if (
@@ -105,7 +118,10 @@ async function getFreshToken(config: SyncConfig): Promise<string> {
   }
 
   const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
-  if (current?.token === config.token) {
+  if (!current?.token || current.connectionId !== config.connectionId) {
+    throw new Error("Google Drive connection changed")
+  }
+  if (current.token === config.token) {
     await chrome.storage.local.set({
       syncConfig: { ...current, token: auth.token, expiresAt: auth.expiresAt }
     })
@@ -231,4 +247,12 @@ async function revoke(token: string): Promise<void> {
   }
 }
 
-export { authorize, fetchAccountEmail, getFreshToken, push, pull, revoke }
+export {
+  authorize,
+  fetchAccountEmail,
+  getFreshToken,
+  isCurrentConnection,
+  push,
+  pull,
+  revoke
+}
