@@ -27,15 +27,22 @@ const validateProject = (project: PersonalProject): string[] => {
 
 export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
   const [editingProject, setEditingProject] = useState<PersonalProject | null>(null)
+  // Index of the row being edited; null while the dialog adds a new entry.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const addProject = () => {
+    setEditingIndex(null)
     setEditingProject({ id: crypto.randomUUID(), title: "", description: "", liveDemoUrl: "", githubRepoUrl: "" })
   }
 
-  const updateProject = (index: number, project: PersonalProject) => {
-    const newProjects = [...projects]
-    newProjects[index] = project
-    onChange(newProjects)
+  const editProject = (index: number) => {
+    setEditingIndex(index)
+    setEditingProject({ ...projects[index] })
+  }
+
+  const closeEditingProject = () => {
+    setEditingProject(null)
+    setEditingIndex(null)
   }
 
   const removeProject = (index: number) => {
@@ -46,8 +53,12 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
     if (editingProject) {
       const errors = validateProject(editingProject)
       if (errors.length === 0) {
-        onChange([...projects, editingProject])
-        setEditingProject(null)
+        onChange(
+          editingIndex === null
+            ? [...projects, editingProject]
+            : projects.map((project, i) => (i === editingIndex ? editingProject : project))
+        )
+        closeEditingProject()
       } else {
         alert(errors.join("\n"))
       }
@@ -148,10 +159,10 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
 
       {editingProject && (
         <ProfileEntryModal
-          title="Add new personal project"
+          title={editingIndex === null ? "Add new personal project" : "Edit personal project"}
           saveLabel="Save project"
           onSave={saveEditingProject}
-          onCancel={() => setEditingProject(null)}>
+          onCancel={closeEditingProject}>
           {renderProjectItem(editingProject, 0, setEditingProject)}
         </ProfileEntryModal>
       )}
@@ -161,9 +172,8 @@ export function ProjectEditor({ projects, onChange }: ProjectEditorProps) {
           items={projects}
           getItemKey={(project) => project.id}
           onAdd={addProject}
-          onUpdate={updateProject}
+          onEdit={editProject}
           onRemove={removeProject}
-          renderItem={renderProjectItem}
           renderSummary={(project) => (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-aa-text-primary truncate">

@@ -26,8 +26,11 @@ const validateExperience = (exp: WorkExperience): string[] => {
 
 export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProps) {
   const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null)
+  // Index of the row being edited; null while the dialog adds a new entry.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const addExperience = () => {
+    setEditingIndex(null)
     setEditingExperience({
       id: crypto.randomUUID(),
       jobTitle: "",
@@ -38,10 +41,15 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
     })
   }
 
-  const updateExperience = (index: number, experience: WorkExperience) => {
-    const newExperiences = [...experiences]
-    newExperiences[index] = experience
-    onChange(newExperiences)
+  const editExperience = (index: number) => {
+    const experience = experiences[index]
+    setEditingIndex(index)
+    setEditingExperience({ ...experience, achievements: [...experience.achievements] })
+  }
+
+  const closeEditingExperience = () => {
+    setEditingExperience(null)
+    setEditingIndex(null)
   }
 
   const removeExperience = (index: number) => {
@@ -52,8 +60,12 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
     if (editingExperience) {
       const errors = validateExperience(editingExperience)
       if (errors.length === 0) {
-        onChange([...experiences, editingExperience])
-        setEditingExperience(null)
+        onChange(
+          editingIndex === null
+            ? [...experiences, editingExperience]
+            : experiences.map((exp, i) => (i === editingIndex ? editingExperience : exp))
+        )
+        closeEditingExperience()
       } else {
         alert(errors.join("\n"))
       }
@@ -196,10 +208,10 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
 
       {editingExperience && (
         <ProfileEntryModal
-          title="Add new work experience"
+          title={editingIndex === null ? "Add new work experience" : "Edit work experience"}
           saveLabel="Save experience"
           onSave={saveEditingExperience}
-          onCancel={() => setEditingExperience(null)}>
+          onCancel={closeEditingExperience}>
           {renderExperienceItem(editingExperience, 0, setEditingExperience)}
         </ProfileEntryModal>
       )}
@@ -209,9 +221,8 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
           items={experiences}
           getItemKey={(experience) => experience.id}
           onAdd={addExperience}
-          onUpdate={updateExperience}
+          onEdit={editExperience}
           onRemove={removeExperience}
-          renderItem={renderExperienceItem}
           renderSummary={(exp) => {
             const fmt = (iso: string | null) => {
               if (!iso) return "Present"

@@ -14,7 +14,8 @@ interface Props {
 }
 
 /**
- * Shell for the profile lists' add forms (education, certificates), matching
+ * Shell for the profile lists' add/edit forms (education, experience,
+ * projects, certificates), matching
  * ProviderDetailModal: same panel, header, footer and focus handling.
  *
  * Portalled to <body> — the settings area is a translated, overflow-hidden
