@@ -1,7 +1,11 @@
-import { ChevronDown, Plus, Trash2 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { ChevronDown, Plus } from "lucide-react"
+import { useState } from "react"
 
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
 import type { Language } from "~types/userProfile"
+
+import { ArrayInput } from "./ArrayInput"
+import { ProfileEntryModal } from "./ProfileEntryModal"
 
 interface LanguageEditorProps {
   languages: Language[]
@@ -12,109 +16,154 @@ const LEVELS = ["Native", "A1", "A2", "B1", "B2", "C1", "C2"]
 
 export function LanguageEditor({ languages, onChange }: LanguageEditorProps) {
   const safeLanguages = languages || []
-  const [draft, setDraft] = useState<Language | null>(null)
-  const nameRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [editingLanguage, setEditingLanguage] = useState<Language | null>(null)
+  // Index of the row being edited; null while the dialog adds a new entry.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
+    null
+  )
 
-  useEffect(() => {
-    if (draft) {
-      nameRefs.current[draft.id]?.focus()
-    }
-  }, [draft?.id])
+  const addLanguage = () => {
+    setEditingIndex(null)
+    setEditingLanguage({ id: crypto.randomUUID(), name: "", level: "B1" })
+  }
 
-  const displayLanguages = draft ? [...safeLanguages, draft] : safeLanguages
+  const editLanguage = (index: number) => {
+    setEditingIndex(index)
+    setEditingLanguage({ ...safeLanguages[index] })
+  }
 
-  const updateLanguage = (id: string, updates: Partial<Language>) => {
-    if (draft && draft.id === id) {
-      const updated = { ...draft, ...updates }
-      if (updated.name.trim()) {
-        onChange([...safeLanguages, updated])
-        setDraft(null)
-      } else {
-        setDraft(updated)
-      }
+  const closeEditingLanguage = () => {
+    setEditingLanguage(null)
+    setEditingIndex(null)
+  }
+
+  const saveEditingLanguage = () => {
+    if (!editingLanguage) return
+    if (!editingLanguage.name.trim()) {
+      alert("Language name is required")
       return
     }
-    onChange(safeLanguages.map((l) => (l.id === id ? { ...l, ...updates } : l)))
+    onChange(
+      editingIndex === null
+        ? [...safeLanguages, editingLanguage]
+        : safeLanguages.map((lang, i) =>
+            i === editingIndex ? editingLanguage : lang
+          )
+    )
+    closeEditingLanguage()
   }
 
-  const handleAdd = () => {
-    setDraft({ id: crypto.randomUUID(), name: "", level: "B1" })
+  const confirmRemoveLanguage = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(safeLanguages.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
   }
 
-  const handleRemove = (id: string) => {
-    if (draft && draft.id === id) {
-      setDraft(null)
-      return
-    }
-    onChange(safeLanguages.filter((l) => l.id !== id))
-  }
+  const pendingDeleteLanguage =
+    pendingDeleteIndex === null ? null : safeLanguages[pendingDeleteIndex]
 
   return (
-    <div className="space-y-4">
-      {displayLanguages.length === 0 ? (
-        <div className="rounded-aa-md border border-aa-border bg-aa-neutral-50 p-8 text-center">
-          <p className="text-sm text-aa-text-secondary">
-            No languages added yet. Add the languages you speak to strengthen
-            your profile!
-          </p>
-        </div>
-      ) : (
-        displayLanguages.map((lang, index) => (
-          <div
-            key={lang.id}
-            className="flex items-center gap-3 rounded-aa-md border border-aa-border bg-aa-surface px-3.5 py-3">
-            <input
-              ref={(el) => {
-                nameRefs.current[lang.id] = el
-              }}
-              type="text"
-              value={lang.name}
-              onChange={(e) =>
-                updateLanguage(lang.id, { name: e.target.value })
-              }
-              placeholder="Language (e.g. English, French)"
-              aria-label={`Language name, row ${index + 1}`}
-              className="flex-1 min-w-0 bg-transparent border-0 p-0 text-sm font-semibold text-aa-text-primary placeholder:font-normal placeholder:text-aa-text-secondary focus:outline-none"
-            />
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">Languages</h2>
+        <button
+          onClick={addLanguage}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add language
+        </button>
+      </div>
 
-            <div className="relative shrink-0">
-              <select
-                value={lang.level}
+      {editingLanguage && (
+        <ProfileEntryModal
+          title={editingIndex === null ? "Add new language" : "Edit language"}
+          saveLabel="Save language"
+          onSave={saveEditingLanguage}
+          onCancel={closeEditingLanguage}>
+          <div className="space-y-4">
+            <div>
+              <label className="aa-label">Language *</label>
+              <input
+                type="text"
+                value={editingLanguage.name}
                 onChange={(e) =>
-                  updateLanguage(lang.id, { level: e.target.value })
+                  setEditingLanguage({
+                    ...editingLanguage,
+                    name: e.target.value
+                  })
                 }
-                aria-label={`Proficiency level, row ${index + 1}`}
-                className="appearance-none w-aa-px-130 bg-aa-surface border border-aa-border rounded-aa-md pl-3 pr-8 py-aa-px-7 text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary cursor-pointer">
-                {LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-aa-neutral-500" />
+                placeholder="e.g. English, French"
+                className="aa-input"
+              />
             </div>
 
-            <button
-              onClick={() => handleRemove(lang.id)}
-              className="shrink-0 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
-              title="Remove language">
-              <Trash2 className="w-aa-px-15 h-aa-px-15" />
-            </button>
+            <div>
+              <label className="aa-label">Proficiency level</label>
+              <div className="relative">
+                <select
+                  value={editingLanguage.level}
+                  onChange={(e) =>
+                    setEditingLanguage({
+                      ...editingLanguage,
+                      level: e.target.value
+                    })
+                  }
+                  className="aa-input appearance-none pr-8 cursor-pointer">
+                  {LEVELS.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-aa-neutral-500" />
+              </div>
+              <p className="aa-hint">
+                Native · A1–A2 Beginner · B1–B2 Intermediate · C1–C2 Advanced
+              </p>
+            </div>
           </div>
-        ))
+        </ProfileEntryModal>
       )}
 
-      <button
-        onClick={handleAdd}
-        className={`w-full flex items-center justify-center gap-2 aa-btn-outline`}>
-        <Plus className="w-aa-px-15 h-aa-px-15" />
-        Add language
-      </button>
+      {pendingDeleteLanguage && (
+        <ConfirmDialog
+          title="Delete language?"
+          message={`${pendingDeleteLanguage.name ? `"${pendingDeleteLanguage.name}"` : "This language"} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveLanguage}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
 
-      <p className="text-xs text-aa-text-secondary pt-1">
-        <span className="font-medium text-aa-text-primary">Levels:</span> Native
-        · A1–A2 Beginner · B1–B2 Intermediate · C1–C2 Advanced
-      </p>
-    </div>
+      <div className="aa-card-base">
+        <ArrayInput
+          items={safeLanguages}
+          getItemKey={(lang) => lang.id}
+          onAdd={addLanguage}
+          onEdit={editLanguage}
+          onRemove={setPendingDeleteIndex}
+          renderSummary={(lang) => (
+            <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
+              <p className="text-sm font-semibold text-aa-text-primary truncate">
+                {lang.name || (
+                  <span className="italic text-aa-text-secondary">
+                    Untitled language
+                  </span>
+                )}
+              </p>
+              <span className="shrink-0 text-aa-caption font-medium text-aa-neutral-500">
+                {lang.level}
+              </span>
+            </div>
+          )}
+          emptyMessage="No languages added yet. Add the languages you speak to strengthen your profile!"
+          addButtonText="Language"
+          flush
+        />
+      </div>
+    </section>
   )
 }
