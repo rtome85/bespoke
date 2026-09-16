@@ -6,6 +6,7 @@ import type { OperationStatus } from "~types/options"
 import {
   authorize,
   fetchAccountEmail,
+  getFreshToken,
   pull,
   revoke,
   type SyncConfig
@@ -63,10 +64,15 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
       message: "Connecting to Google Drive..."
     })
     try {
-      const token = await authorize()
+      const { token, expiresAt } = await authorize()
       const email = await fetchAccountEmail(token).catch(() => undefined)
       await chrome.storage.local.set({
-        [STORAGE_KEYS.SYNC_CONFIG]: { token, lastSynced: null, email }
+        [STORAGE_KEYS.SYNC_CONFIG]: {
+          token,
+          expiresAt,
+          lastSynced: null,
+          email
+        }
       })
       setSyncStatus({
         type: "success",
@@ -85,13 +91,17 @@ export function useDriveSync(syncConfig: SyncConfig | null) {
       message: "Restoring from Google Drive..."
     })
     try {
-      const restored = await pull(syncConfig.token)
+      const token = await getFreshToken(syncConfig)
+      const restored = await pull(token)
       if (Object.prototype.hasOwnProperty.call(restored, "savedApplications")) {
         await migrateRestoredApplications(restored.interviewsSchemaVersion)
       }
+      // Re-read: getFreshToken may have stored a new token since the snapshot.
+      const { [STORAGE_KEYS.SYNC_CONFIG]: current } =
+        await chrome.storage.local.get(STORAGE_KEYS.SYNC_CONFIG)
       await chrome.storage.local.set({
         [STORAGE_KEYS.SYNC_CONFIG]: {
-          ...syncConfig,
+          ...(current ?? syncConfig),
           lastSynced: new Date().toISOString()
         }
       })

@@ -1,35 +1,116 @@
 import { SYNC_KEYS, type SyncKey } from "~storage/keys"
 
+/**
+ * OAuth client of type "Web application". Its authorized redirect URIs must
+ * include `chrome.identity.getRedirectURL()` for every build that signs in
+ * (`https://<extension-id>.chromiumapp.org/` on Chrome).
+ */
+const CLIENT_ID =
+  "110025309401-unmk3hvf8ijv8ht2p74as08v9tnhifns.apps.googleusercontent.com"
+const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 const SCOPES = ["https://www.googleapis.com/auth/drive.appdata"]
 const FILE_NAME = "bespoke-data.json"
 const DRIVE_API = "https://www.googleapis.com/drive/v3"
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3"
+/** Refresh a little before Google's expiry so a push never races it. */
+const TOKEN_EXPIRY_MARGIN_MS = 60_000
 
 export interface SyncConfig {
   token: string
+  /** Epoch ms the access token expires; absent on pre-launchWebAuthFlow configs. */
+  expiresAt?: number
   lastSynced: string | null
   error?: string
   /** Google account the token belongs to, shown in the options rail. */
   email?: string
 }
 
-async function authorize(): Promise<string> {
+export interface AuthResult {
+  token: string
+  expiresAt: number
+}
+
+function launchWebAuthFlow(url: string, interactive: boolean): Promise<string> {
   return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken(
-      { interactive: true, scopes: SCOPES },
-      (token) => {
-        if (chrome.runtime.lastError || !token) {
-          reject(
-            new Error(
-              chrome.runtime.lastError?.message ?? "Authorization failed"
-            )
-          )
-          return
-        }
-        resolve(token)
+    chrome.identity.launchWebAuthFlow({ url, interactive }, (responseUrl) => {
+      if (chrome.runtime.lastError || !responseUrl) {
+        reject(
+          new Error(chrome.runtime.lastError?.message ?? "Authorization failed")
+        )
+        return
       }
-    )
+      resolve(responseUrl)
+    })
   })
+}
+
+/**
+ * Implicit-grant OAuth through `chrome.identity.launchWebAuthFlow`. With
+ * `interactive: false` it uses `prompt=none`, so it only succeeds while the
+ * user still has a Google session that already granted the scope.
+ */
+async function authorize({
+  interactive = true,
+  loginHint
+}: { interactive?: boolean; loginHint?: string } = {}): Promise<AuthResult> {
+  const state = crypto.randomUUID()
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: "token",
+    redirect_uri: chrome.identity.getRedirectURL(),
+    scope: SCOPES.join(" "),
+    state,
+    include_granted_scopes: "true",
+    prompt: interactive ? "select_account" : "none"
+  })
+  if (loginHint) params.set("login_hint", loginHint)
+
+  const responseUrl = await launchWebAuthFlow(
+    `${AUTH_ENDPOINT}?${params}`,
+    interactive
+  )
+  const result = new URLSearchParams(new URL(responseUrl).hash.slice(1))
+
+  const error = result.get("error")
+  if (error) throw new Error(`Google authorization failed: ${error}`)
+  if (result.get("state") !== state) {
+    throw new Error("Google authorization failed: state mismatch")
+  }
+  const token = result.get("access_token")
+  if (!token) throw new Error("Google authorization returned no token")
+
+  const expiresIn = Number(result.get("expires_in")) || 3_600
+  return { token, expiresAt: Date.now() + expiresIn * 1_000 }
+}
+
+/**
+ * A usable access token for `config`. Implicit-grant tokens can't be
+ * refreshed, so an expired one is replaced by a silent re-authorization and
+ * written back — unless the stored config changed meanwhile (disconnect or
+ * reconnect), in which case the fresh token is only returned.
+ */
+async function getFreshToken(config: SyncConfig): Promise<string> {
+  if (
+    config.expiresAt &&
+    config.expiresAt - TOKEN_EXPIRY_MARGIN_MS > Date.now()
+  ) {
+    return config.token
+  }
+
+  let auth: AuthResult
+  try {
+    auth = await authorize({ interactive: false, loginHint: config.email })
+  } catch {
+    throw new Error("Google session expired — reconnect Google Drive")
+  }
+
+  const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+  if (current?.token === config.token) {
+    await chrome.storage.local.set({
+      syncConfig: { ...current, token: auth.token, expiresAt: auth.expiresAt }
+    })
+  }
+  return auth.token
 }
 
 /**
@@ -148,7 +229,6 @@ async function revoke(token: string): Promise<void> {
   } catch {
     // Ignore network errors during revoke
   }
-  chrome.identity.removeCachedAuthToken({ token }, () => {})
 }
 
-export { authorize, fetchAccountEmail, push, pull, revoke }
+export { authorize, fetchAccountEmail, getFreshToken, push, pull, revoke }

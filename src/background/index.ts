@@ -7,7 +7,7 @@ import { parseReminderAlarm } from "~lib/interviews/reminders"
 import { formatLabel, roundLabel } from "~lib/interviews/selectors"
 import { STORAGE_KEYS, SYNC_KEYS } from "~storage/keys"
 import type { InterviewRound, SavedApplication } from "~types/userProfile"
-import { push } from "~utils/googleDriveSync"
+import { getFreshToken, push } from "~utils/googleDriveSync"
 
 // MV3: must be registered at top-level so it persists across service worker restarts
 chrome.contextMenus.onClicked.addListener(handleContextMenuClick)
@@ -88,11 +88,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
   debounceTimer = setTimeout(async () => {
     const { syncConfig } = await chrome.storage.local.get("syncConfig")
     if (!syncConfig?.token) return
+    let token: string = syncConfig.token
     try {
-      await enqueuePush(() => push(syncConfig.token))
+      token = await getFreshToken(syncConfig)
+      await enqueuePush(() => push(token))
       const { syncConfig: current } =
         await chrome.storage.local.get("syncConfig")
-      if (current?.token === syncConfig.token) {
+      if (current?.token === token) {
         await chrome.storage.local.set({
           syncConfig: {
             ...current,
@@ -105,7 +107,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
       // Mark sync error (token may be expired)
       const { syncConfig: current } =
         await chrome.storage.local.get("syncConfig")
-      if (current?.token === syncConfig.token) {
+      if (current?.token === token) {
         await chrome.storage.local.set({
           syncConfig: { ...current, error: (err as Error).message }
         })
