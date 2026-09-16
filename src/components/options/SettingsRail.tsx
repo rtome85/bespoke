@@ -98,10 +98,10 @@ export function SettingsRail({
               }`}>
               <Icon
                 size={14}
-                className={`lg:hidden shrink-0 transition-colors duration-200 ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
+                className={`lg:hidden shrink-0 transition-colors duration-200 motion-reduce:transition-none ${on ? "text-aa-text-on-primary" : "text-aa-neutral-400"}`}
               />
               <span
-                className={`hidden lg:inline whitespace-nowrap text-aa-caption font-semibold transition-colors duration-200 ${
+                className={`hidden lg:inline whitespace-nowrap text-aa-caption font-semibold transition-colors duration-200 motion-reduce:transition-none ${
                   on ? "text-aa-text-on-primary" : "text-aa-neutral-400"
                 }`}>
                 {t.label}
