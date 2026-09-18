@@ -98,13 +98,21 @@ export function SearchConfigurationFields({
           className="aa-btn-outline">
           {testStatus.type === "loading" ? "Testing…" : "Test connection"}
         </button>
+        {/* The verdict is the only feedback this button gives, and it appears
+            without moving focus. `status` is polite enough for a pass;
+            `alert` (assertive, atomic) interrupts for a failure, which is the
+            one the user has to act on. */}
         {testStatus.type === "success" && (
-          <span className="text-aa-caption font-semibold text-aa-success-strong">
+          <span
+            role="status"
+            className="text-aa-caption font-semibold text-aa-success-strong">
             {testStatus.message}
           </span>
         )}
         {testStatus.type === "error" && (
-          <span className="text-aa-caption font-semibold text-aa-error-strong">
+          <span
+            role="alert"
+            className="text-aa-caption font-semibold text-aa-error-strong">
             {testStatus.message}
           </span>
         )}
