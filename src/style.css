@@ -505,8 +505,11 @@ body {
   .aa-runsheet-count {
     @apply shrink-0 text-aa-11 font-semibold tabular-nums;
   }
+  /* The app bar is `sticky top-0`, so a rail jump that aligns a target with
+     the top of the viewport parks it underneath. Every rail destination
+     reserves the bar's height plus the same gap the rail itself sits at. */
   .aa-runsheet-section {
-    @apply scroll-mt-aa-4 pt-aa-5;
+    @apply scroll-mt-aa-appbar-offset pt-aa-5;
   }
   .aa-runsheet-title {
     @apply text-aa-17 font-semibold tracking-aa-tighter-2 text-aa-text-primary;
@@ -526,7 +529,7 @@ body {
      subsection — so the rule hangs off the adjacent-sibling pair instead and
      never doubles up with the head's own bottom border. */
   .aa-runsheet-sub {
-    @apply scroll-mt-aa-4 space-y-aa-3;
+    @apply scroll-mt-aa-appbar-offset space-y-aa-3;
   }
   .aa-runsheet-sub + .aa-runsheet-sub {
     @apply border-t border-aa-border-subtle pt-aa-px-18;
@@ -534,8 +537,10 @@ body {
   .aa-runsheet-sub-title {
     @apply text-aa-15 font-semibold tracking-aa-tighter-2 text-aa-text-primary;
   }
+  /* Backs the company research and notes sections, both of which the rail
+     jumps to, so it needs the same clearance. */
   .aa-runsheet-panel {
-    @apply space-y-aa-3 rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5;
+    @apply scroll-mt-aa-appbar-offset space-y-aa-3 rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5;
   }
 }
 
