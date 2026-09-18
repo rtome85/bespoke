@@ -32,6 +32,7 @@ interface Props {
   documentsLoading: boolean
   documentsProgress: number
   documentsError: string
+  documentsSaveError: string
   previewError: string
   onToggleMatchSection: (section: MatchAccordionSection) => void
   onToggleProjects: () => void
@@ -61,6 +62,7 @@ export function MatchReportScreen({
   documentsLoading,
   documentsProgress,
   documentsError,
+  documentsSaveError,
   previewError,
   onToggleMatchSection,
   onToggleProjects,
@@ -165,11 +167,20 @@ export function MatchReportScreen({
                 onAddGapSkill={onAddGapSkill}
               />
               {documents && !documentsLoading && (
-                <GeneratedDocumentsCard
-                  documents={documents}
-                  previewError={previewError}
-                  onPreview={onPreviewDocuments}
-                />
+                <div className="flex flex-col gap-aa-2">
+                  <GeneratedDocumentsCard
+                    documents={documents}
+                    previewError={previewError}
+                    onPreview={onPreviewDocuments}
+                  />
+                  {documentsSaveError && (
+                    <p
+                      role="alert"
+                      className="px-2 text-aa-13 text-aa-error-strong">
+                      {documentsSaveError}
+                    </p>
+                  )}
+                </div>
               )}
               <DocumentGenerationControls
                 isLoading={documentsLoading}

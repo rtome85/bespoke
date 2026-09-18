@@ -1,5 +1,6 @@
 import { useRef, useState } from "react"
 
+import { Toast } from "~components/common/Toast"
 import { AnalysisSplash } from "~components/dialog/AnalysisSplash"
 import { DuplicateApplicationDialog } from "~components/dialog/DuplicateApplicationDialog"
 import { MatchFormScreen } from "~components/dialog/MatchFormScreen"
@@ -92,6 +93,9 @@ function IndexDialog() {
     documentsLoading: docsLoading,
     documentsProgress: docsProgress,
     documentsError: docsError,
+    savedNoticeId: docsSavedNoticeId,
+    dismissSavedNotice: dismissDocsSavedNotice,
+    documentsSaveError: docsSaveError,
     generatingDocumentsForApplication: generatingDocsForApp,
     applicationDocumentsError: docsGenError,
     previewError,
@@ -102,13 +106,26 @@ function IndexDialog() {
     companyName,
     jobTitle,
     jobDescription,
+    pendingJobUrl,
     userProfile,
     analysisLoading: loading,
+    result,
     setResult,
     editingApplication,
     setEditingApplication,
     setSavedApplications
   })
+
+  // Portalled, so one node covers both screens that can auto-save. Keyed on
+  // the notice id so a regeneration restarts the toast rather than inheriting
+  // the previous one's remaining time.
+  const savedToast = docsSavedNoticeId ? (
+    <Toast
+      key={docsSavedNoticeId}
+      message="Application automatically saved"
+      onDismiss={dismissDocsSavedNotice}
+    />
+  ) : null
 
   if (view === "extracting") {
     return (
@@ -137,54 +154,63 @@ function IndexDialog() {
   // Success screen
   if (view === "success" && result) {
     return (
-      <MatchReportScreen
-        fullName={userProfile.personalInfo?.fullName ?? ""}
-        companyName={companyName}
-        jobTitle={jobTitle}
-        result={result}
-        triageDecision={triageDecision}
-        openMatchSection={matchAccordionOpen}
-        companyInfo={companyInfo}
-        companyInfoLoading={companyInfoLoading}
-        projectsExpanded={projectsExpanded}
-        addedGapSkills={addedGapSkills}
-        documentsLoading={docsLoading}
-        documentsProgress={docsProgress}
-        documentsError={docsError}
-        previewError={previewError}
-        onToggleMatchSection={(section) =>
-          setMatchAccordionOpen((current) =>
-            current === section ? null : section
-          )
-        }
-        onToggleProjects={() => setProjectsExpanded((current) => !current)}
-        onApply={() => setTriageDecision("apply")}
-        onSaveForLater={() => openSaveForm()}
-        onDiscard={closeSidePanel}
-        onBackToReport={() => setTriageDecision(null)}
-        onAddGapSkill={handleAddGapSkill}
-        onGenerateDocuments={handleGenerateDocuments}
-        onPreviewDocuments={handleOpenDocumentPreview}
-      />
+      <>
+        <MatchReportScreen
+          fullName={userProfile.personalInfo?.fullName ?? ""}
+          companyName={companyName}
+          jobTitle={jobTitle}
+          result={result}
+          triageDecision={triageDecision}
+          openMatchSection={matchAccordionOpen}
+          companyInfo={companyInfo}
+          companyInfoLoading={companyInfoLoading}
+          projectsExpanded={projectsExpanded}
+          addedGapSkills={addedGapSkills}
+          documentsLoading={docsLoading}
+          documentsProgress={docsProgress}
+          documentsError={docsError}
+          documentsSaveError={docsSaveError}
+          previewError={previewError}
+          onToggleMatchSection={(section) =>
+            setMatchAccordionOpen((current) =>
+              current === section ? null : section
+            )
+          }
+          onToggleProjects={() => setProjectsExpanded((current) => !current)}
+          onApply={() => setTriageDecision("apply")}
+          onSaveForLater={() => openSaveForm(editingApplication)}
+          onDiscard={closeSidePanel}
+          onBackToReport={() => setTriageDecision(null)}
+          onAddGapSkill={handleAddGapSkill}
+          onGenerateDocuments={handleGenerateDocuments}
+          onPreviewDocuments={handleOpenDocumentPreview}
+        />
+        {savedToast}
+      </>
     )
   }
   // Save form screen
   if (view === "saveForm") {
     return (
-      <SaveApplicationScreen
-        editingApplication={editingApplication}
-        formData={saveFormData}
-        setFormData={setSaveFormData}
-        saveDocuments={saveDocs}
-        showSaveDocuments={Boolean(result?.resumeContent)}
-        error={saveFormError}
-        generatingDocuments={generatingDocsForApp}
-        documentGenerationError={docsGenError}
-        onSaveDocumentsChange={setSaveDocs}
-        onGenerateDocuments={generateDocumentsForApplication}
-        onSave={handleSaveApplication}
-        onClose={() => setView("success")}
-      />
+      <>
+        <SaveApplicationScreen
+          editingApplication={editingApplication}
+          formData={saveFormData}
+          setFormData={setSaveFormData}
+          saveDocuments={saveDocs}
+          showSaveDocuments={
+            Boolean(result?.resumeContent) && !editingApplication
+          }
+          error={saveFormError}
+          generatingDocuments={generatingDocsForApp}
+          documentGenerationError={docsGenError || docsSaveError}
+          onSaveDocumentsChange={setSaveDocs}
+          onGenerateDocuments={generateDocumentsForApplication}
+          onSave={handleSaveApplication}
+          onClose={() => setView("success")}
+        />
+        {savedToast}
+      </>
     )
   }
 

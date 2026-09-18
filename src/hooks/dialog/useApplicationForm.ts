@@ -116,6 +116,10 @@ export function useApplicationForm({
         : {}
 
     const editedApplicationId = editingApplication?.id
+    // Claimed up front so the created entry can become the one being edited —
+    // a later document generation then updates it instead of tracking the same
+    // opening twice.
+    const createdApplicationId = editingApplication ? null : crypto.randomUUID()
     const statusChanged =
       !!editingApplication && editingApplication.status !== formData.status
     const now = new Date().toISOString()
@@ -142,13 +146,21 @@ export function useApplicationForm({
               jobUrl: formData.jobUrl || undefined,
               ...documents,
               ...matchData,
-              id: crypto.randomUUID(),
+              id: createdApplicationId ?? crypto.randomUUID(),
               createdAt: now,
               statusUpdatedAt: now
             }
           ]
     )
       .then(async (applications) => {
+        if (createdApplicationId) {
+          setEditingApplication(
+            applications.find(
+              (application) => application.id === createdApplicationId
+            ) ?? null
+          )
+        }
+
         if (statusChanged && editedApplicationId) {
           await setApplicationStatus(editedApplicationId, formData.status)
           const stored = await chrome.storage.local.get("savedApplications")

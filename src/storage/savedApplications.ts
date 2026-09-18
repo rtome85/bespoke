@@ -2,8 +2,10 @@ import { clearRoundAlarms, syncRoundAlarms } from "~lib/interviews/reminders"
 import {
   hasOpenRound,
   isPristineRound,
-  openRound
+  openRound,
+  todayISO
 } from "~lib/interviews/selectors"
+import type { GeneratedDocuments } from "~types/dialog"
 import type {
   ApplicationStatus,
   Debrief,
@@ -267,4 +269,68 @@ export function setRoundDebrief(
       return withFirstReply(next, now)
     })
   )
+}
+
+// ── Generated document helpers ───────────────────────────────────────────────
+
+/**
+ * What a not-yet-tracked opening carries over when its generated documents
+ * create the application entry. Ignored when `applicationId` already names a
+ * stored entry — that record keeps the details it has.
+ */
+export interface GeneratedDocumentsDetails {
+  applicationId?: string
+  company: string
+  jobTitle: string
+  jobUrl?: string
+  jobDescription?: string
+  matchPercentage?: number
+  matchSummary?: string
+  matchStrengths?: string[]
+  matchWeaknesses?: string[]
+  matchImprovements?: string[]
+}
+
+/**
+ * Store a generated CV + cover letter on the tracked application, creating the
+ * entry when this opening isn't tracked yet.
+ *
+ * Call this **only after a generation succeeded**. That ordering is the
+ * safeguard behind regeneration: the documents already stored stay readable
+ * until replacements exist, so a failed or aborted run leaves the previous
+ * assets intact. An `applicationId` whose entry was deleted elsewhere
+ * meanwhile is re-created rather than dropping the documents on the floor.
+ */
+export async function saveGeneratedDocuments(
+  details: GeneratedDocumentsDetails,
+  documents: GeneratedDocuments
+): Promise<{
+  applications: SavedApplication[]
+  application: SavedApplication | null
+}> {
+  const { applicationId, ...fields } = details
+  const id = applicationId ?? crypto.randomUUID()
+  const now = new Date().toISOString()
+
+  const applications = await mutateSavedApplications((current) =>
+    current.some((a) => a.id === id)
+      ? mapApp(current, id, (a) => ({ ...a, ...documents }))
+      : [
+          ...current,
+          {
+            ...fields,
+            ...documents,
+            id,
+            status: "Saved",
+            date: todayISO(),
+            createdAt: now,
+            statusUpdatedAt: now
+          }
+        ]
+  )
+
+  return {
+    applications,
+    application: applications.find((a) => a.id === id) ?? null
+  }
 }
