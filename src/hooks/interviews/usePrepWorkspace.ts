@@ -163,6 +163,21 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   const notesTimer = useRef<ReturnType<typeof setTimeout>>()
   const [notes, setNotes] = useState(() => found?.round.prep?.notes ?? "")
 
+  // `useSavedApplications` starts empty and fills asynchronously, so on a
+  // direct load of a prep URL the initializer above runs while `found` is
+  // still undefined and seeds "". Without this the field would then sit empty
+  // over saved notes — and the first keystroke would debounce that empty value
+  // straight over them.
+  //
+  // Keyed on the round id rather than on `found`, which is a fresh object
+  // after every storage write: re-seeding on those would overwrite whatever
+  // the user is in the middle of typing, including our own debounced save.
+  const notesRoundId = useRef(found?.round.id)
+  if (found && notesRoundId.current !== found.round.id) {
+    notesRoundId.current = found.round.id
+    setNotes(found.round.prep?.notes ?? "")
+  }
+
   // A pending debounce would otherwise be dropped when the user navigates
   // away mid-sentence — flush it instead of losing the last few seconds.
   const pendingNotes = useRef<{
