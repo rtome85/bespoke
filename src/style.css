@@ -393,6 +393,14 @@ body {
     grid-template-columns: minmax(0, 1fr) 112px 148px 18px;
   }
 
+  /* src/components/common/Toast.tsx — transient confirmation, portalled to
+     <body> so the translated / overflow-hidden panels can't clip it. The
+     opacity + translate transition lives on the element so it can be driven
+     from state. */
+  .aa-toast {
+    @apply fixed inset-x-aa-4 bottom-aa-6 z-50 mx-auto flex w-fit max-w-aa-px-400 items-center gap-aa-2 rounded-aa-lg border border-aa-border bg-aa-surface px-aa-4 py-aa-3 text-aa-13 font-semibold text-aa-text-primary shadow-xl transition-all duration-300 ease-out motion-reduce:transition-none;
+  }
+
   /* src/components/documentPreview/DocumentPreviewPanel.tsx */
   .aa-toolbar-btn {
     @apply w-7 h-7 grid place-items-center rounded-aa-sm text-aa-neutral-500 hover:bg-aa-neutral-200 transition-colors;

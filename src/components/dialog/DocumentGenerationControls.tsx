@@ -49,9 +49,10 @@ export function DocumentGenerationControls({
       {error && <p className="text-aa-13 text-aa-error-strong">{error}</p>}
       {confirmingRegenerate && (
         <ConfirmDialog
-          title="Regenerate documents?"
-          message="Continuing replaces the CV and cover letter generated earlier — the previous versions will be lost and can't be recovered."
+          title="Replace the saved documents?"
+          message="The CV and cover letter saved for this application will be replaced by the new ones, and the current versions can't be recovered. They stay in place if the regeneration fails."
           confirmLabel="Regenerate"
+          destructive
           onConfirm={() => {
             setConfirmingRegenerate(false)
             onGenerate()
