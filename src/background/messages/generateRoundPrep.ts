@@ -48,10 +48,17 @@ interface Body {
 
 const NOT_PROVIDED = "(not provided)"
 
+/**
+ * Strings only. A non-string entry is dropped rather than stringified:
+ * `String({})` is "[object Object]", which is truthy and non-empty, so a model
+ * answering with objects instead of strings would put that literal text on the
+ * checklist, into storage, and into the copied sheet.
+ */
 const asStringList = (v: unknown, max: number): string[] =>
   Array.isArray(v)
     ? v
-        .map((x) => String(x).trim())
+        .filter((x): x is string => typeof x === "string")
+        .map((x) => x.trim())
         .filter(Boolean)
         .slice(0, max)
     : []
