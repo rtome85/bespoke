@@ -1,3 +1,4 @@
+import { useInterviewPrepPromptMigration } from "~hooks/options/useInterviewPrepPromptMigration"
 import { useLegacyProviderMigration } from "~hooks/options/useLegacyProviderMigration"
 import { usePromptVersionMigration } from "~hooks/options/usePromptVersionMigration"
 import { useDebouncedStorage } from "~lib/useDebouncedStorage"
@@ -8,12 +9,14 @@ import {
   DEFAULT_MODEL_ROUTING,
   DEFAULT_PERPLEXITY_PROMPT,
   DEFAULT_PROMPTS,
+  DEFAULT_SEARCH_CONFIG,
   type CustomPrompts,
   type LLMTuningConfig,
   type ModelRouting,
   type OllamaConfig,
   type PerplexityConfig,
-  type ProvidersConfig
+  type ProvidersConfig,
+  type SearchConfig
 } from "~types/config"
 import { DEFAULT_USER_PROFILE, type UserProfile } from "~types/userProfile"
 
@@ -37,6 +40,10 @@ export function useOptionsStoredState() {
       customPrompt: DEFAULT_PERPLEXITY_PROMPT,
       interviewPrepPrompt: DEFAULT_INTERVIEW_PREP_PROMPT
     })
+  const [searchConfig, setSearchConfig] = useDebouncedStorage<SearchConfig>(
+    STORAGE_KEYS.SEARCH_CONFIG,
+    DEFAULT_SEARCH_CONFIG
+  )
   const [customPrompts, setCustomPrompts] = useDebouncedStorage<CustomPrompts>(
     STORAGE_KEYS.CUSTOM_PROMPTS,
     DEFAULT_PROMPTS
@@ -60,6 +67,7 @@ export function useOptionsStoredState() {
 
   useLegacyProviderMigration(setProviders, setModelRouting)
   usePromptVersionMigration(setCustomPrompts)
+  useInterviewPrepPromptMigration(setPerplexityConfig)
 
   return {
     userProfile,
@@ -68,6 +76,8 @@ export function useOptionsStoredState() {
     setOllamaConfig,
     perplexityConfig,
     setPerplexityConfig,
+    searchConfig,
+    setSearchConfig,
     customPrompts,
     setCustomPrompts,
     llmTuning,

@@ -1,21 +1,24 @@
 import { GenerationParametersCard } from "~components/options/GenerationParametersCard"
-import {
-  LockedModelRouteRow,
-  ModelRouteRow
-} from "~components/options/ModelRouteRow"
+import { ModelRouteRow } from "~components/options/ModelRouteRow"
 import { ModelRouteSelect } from "~components/options/ModelRouteSelect"
+import { ResearchRouteRow } from "~components/options/ResearchRouteRow"
 import { connectedProviders, decodeRoute } from "~lib/options/modelRouting"
 import type {
   LLMTuningConfig,
   ModelRouting,
+  PerplexityConfig,
   ProvidersConfig,
-  RoutableJob
+  ResearchPreference,
+  RoutableJob,
+  SearchConfig
 } from "~types/config"
 
 interface Props {
   providers: ProvidersConfig
   modelRouting: ModelRouting
   tuning: LLMTuningConfig
+  perplexityConfig: PerplexityConfig
+  searchConfig: SearchConfig
   onChangeModelRouting: (routing: ModelRouting) => void
   onChangeTuning: (tuning: LLMTuningConfig) => void
   onOpenProviders: () => void
@@ -25,6 +28,8 @@ export function ModelRoutingSettingsScreen({
   providers,
   modelRouting,
   tuning,
+  perplexityConfig,
+  searchConfig,
   onChangeModelRouting,
   onChangeTuning,
   onOpenProviders
@@ -52,7 +57,7 @@ export function ModelRoutingSettingsScreen({
             className="font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-aa-neutral-700">
             Providers
           </button>{" "}
-          page to route scoring and drafting.
+          page to route scoring, drafting and prep.
         </div>
       )}
 
@@ -75,7 +80,7 @@ export function ModelRoutingSettingsScreen({
           />
           <ModelRouteRow
             label="Document drafting"
-            description="Writes the tailored CV and cover letter, and the per-round interview prep (Interviews → Prep)."
+            description="Writes the tailored CV and cover letter."
             job="drafting"
             target={modelRouting.drafting}
             connectedProviders={connected}
@@ -83,9 +88,23 @@ export function ModelRoutingSettingsScreen({
             disabled={noProviders}
             onChange={(value) => setRoute("drafting", value)}
           />
-          <LockedModelRouteRow
-            label="Company research"
-            description="Pulls the company facts shown in the report and the Prep workspace."
+          <ModelRouteRow
+            label="Interview prep"
+            description="Writes the per-round prep sheet (Interviews → Prep), and summarises company research gathered from the web."
+            job="prep"
+            target={modelRouting.prep ?? modelRouting.drafting}
+            connectedProviders={connected}
+            providers={providers}
+            disabled={noProviders}
+            onChange={(value) => setRoute("prep", value)}
+          />
+          <ResearchRouteRow
+            value={modelRouting.research ?? "auto"}
+            perplexityConfig={perplexityConfig}
+            searchConfig={searchConfig}
+            onChange={(research: ResearchPreference) =>
+              onChangeModelRouting({ ...modelRouting, research })
+            }
           />
         </div>
       </div>

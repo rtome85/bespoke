@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { PerplexityConfigurationFields } from "~components/options/PerplexityConfigurationFields"
 import { ProviderConfigurationFields } from "~components/options/ProviderConfigurationFields"
 import { ProviderIcon } from "~components/options/ProviderIcon"
+import { SearchConfigurationFields } from "~components/options/SearchConfigurationFields"
 import { useModalFocusTrap } from "~hooks/useModalFocusTrap"
 import { providerModels } from "~lib/options/modelRouting"
 import type { ProviderRosterEntry } from "~lib/options/providerStatus"
@@ -12,7 +13,8 @@ import type {
   LLMProviderId,
   PerplexityConfig,
   ProviderConfig,
-  ProvidersConfig
+  ProvidersConfig,
+  SearchConfig
 } from "~types/config"
 import type { OperationStatus, ProviderTestState } from "~types/options"
 
@@ -22,6 +24,8 @@ interface Props {
   perplexityConfig: PerplexityConfig
   providerTest: ProviderTestState
   perplexityTestStatus: OperationStatus
+  searchConfig: SearchConfig
+  searchTestStatus: OperationStatus
   onUpdateProvider: (
     provider: LLMProviderId,
     patch: Partial<ProviderConfig>
@@ -31,6 +35,8 @@ interface Props {
   onCancelPendingWork: () => void
   onChangePerplexity: (config: PerplexityConfig) => void
   onTestPerplexity: () => void
+  onChangeSearch: (config: SearchConfig) => void
+  onTestSearch: () => void
   onOpenPrompts: () => void
   onClose: () => void
 }
@@ -50,12 +56,16 @@ export function ProviderDetailModal({
   perplexityConfig,
   providerTest,
   perplexityTestStatus,
+  searchConfig,
+  searchTestStatus,
   onUpdateProvider,
   onTestProvider,
   onRefreshProviderModels,
   onCancelPendingWork,
   onChangePerplexity,
   onTestPerplexity,
+  onChangeSearch,
+  onTestSearch,
   onOpenPrompts,
   onClose
 }: Props) {
@@ -63,12 +73,15 @@ export function ProviderDetailModal({
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const isPerplexity = entry.id === "perplexity"
+  const isSearch = entry.id === "websearch"
+  const isLLM = !isPerplexity && !isSearch
 
   // Snapshot for Cancel. Mount-only: re-reading would capture the edits we
   // are meant to be able to throw away.
   const snapshot = useRef({
-    provider: isPerplexity ? undefined : providers[entry.id as LLMProviderId],
-    perplexity: perplexityConfig
+    provider: isLLM ? providers[entry.id as LLMProviderId] : undefined,
+    perplexity: perplexityConfig,
+    search: searchConfig
   })
 
   const revert = () => {
@@ -78,6 +91,8 @@ export function ProviderDetailModal({
     onCancelPendingWork()
     if (isPerplexity) {
       onChangePerplexity(snapshot.current.perplexity)
+    } else if (isSearch) {
+      onChangeSearch(snapshot.current.search)
     } else {
       const before = snapshot.current.provider
       // Spread every optional field explicitly: updateProvider merges a
@@ -156,6 +171,13 @@ export function ProviderDetailModal({
               onChange={onChangePerplexity}
               onTest={onTestPerplexity}
               onOpenPrompts={onOpenPrompts}
+            />
+          ) : isSearch ? (
+            <SearchConfigurationFields
+              config={searchConfig}
+              testStatus={searchTestStatus}
+              onChange={onChangeSearch}
+              onTest={onTestSearch}
             />
           ) : (
             <ProviderConfigurationFields

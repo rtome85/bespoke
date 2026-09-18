@@ -96,12 +96,48 @@ export interface PrepItem {
   userAdded?: boolean // typed by the user, not model-seeded
 }
 
+/**
+ * A weakness the interviewer is likely to press on, with a prepared answer.
+ * Seeded from the application's `matchWeaknesses` where they exist.
+ */
+export interface GapDefense {
+  gap: string
+  response: string
+  checked?: boolean // "I have an answer ready"
+  pinned?: boolean
+  userAdded?: boolean
+}
+
+/** A rehearsable story, built from a real achievement in the profile. */
+export interface StarStory {
+  title: string
+  situation: string
+  task: string
+  action: string
+  result: string
+  /** `likelyTopics` entries this story answers. */
+  covers?: string[]
+  checked?: boolean // "rehearsed"
+  pinned?: boolean
+  userAdded?: boolean
+}
+
 export interface RoundPrep {
   companyResearch?: string // markdown; copied from companyResearchCache at generate time
   companyResearchAt?: string // ISO
+  /** Which research strategy produced `companyResearch` (see ResearchSource). */
+  companyResearchSource?: string
   likelyTopics?: PrepItem[]
   talkingPoints?: PrepItem[]
-  topicsPointsAt?: string // ISO — last LLM generation of the two checklists
+  /** Questions for the candidate to ask this interviewer. */
+  questionsToAsk?: PrepItem[]
+  /** Prepared answers for the weak spots in this candidate's fit. */
+  gapDefenses?: GapDefense[]
+  /** Rehearsable STAR stories drawn from the profile. */
+  starStories?: StarStory[]
+  /** What to expect from this round — 2-3 sentences of prose. */
+  logistics?: string
+  topicsPointsAt?: string // ISO — last LLM generation of the model-written sections
   notes?: string // user free text; never overwritten by regeneration
 }
 

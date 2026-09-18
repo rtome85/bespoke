@@ -1,3 +1,4 @@
+import { parseCompanyInfo } from "~lib/companyResearchParser"
 import type { PerplexityConfig } from "~types/config"
 
 export interface CompanyInfo {
@@ -50,116 +51,57 @@ export class PerplexityClient {
     }
   }
 
-  async fetchCompanyInfo(companyName: string): Promise<CompanyInfo> {
+  /**
+   * Research one company. Throws on a transport, credential or empty-response
+   * failure rather than returning a blank `CompanyInfo` — the research chain
+   * needs to tell "Perplexity rejected the key" from "Perplexity found
+   * nothing" so it can fall through to the next source.
+   */
+  async fetchCompanyInfo(
+    companyName: string,
+    signal?: AbortSignal
+  ): Promise<CompanyInfo> {
     const prompt = this.config.customPrompt.replace(
       /\{\{companyName\}\}/g,
       companyName
     )
 
-    try {
-      const response = await fetch(
-        "https://api.perplexity.ai/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
-            "Content-Type": "application/json"
+    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.config.apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a company research assistant. Provide accurate, concise information about companies based on your web search capabilities."
           },
-          body: JSON.stringify({
-            model: "sonar",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a company research assistant. Provide accurate, concise information about companies based on your web search capabilities."
-              },
-              { role: "user", content: prompt }
-            ],
-            max_tokens: 800,
-            temperature: 0.2
-          })
-        }
-      )
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 800,
+        temperature: 0.2
+      }),
+      signal
+    })
 
-      if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content || ""
-      const citations = data.choices?.[0]?.citation_tokens || []
-
-      return this.parseCompanyInfo(content)
-    } catch (error) {
-      console.error("Failed to fetch company info:", error)
-      return this.getEmptyCompanyInfo()
-    }
-  }
-
-  private parseCompanyInfo(content: string): CompanyInfo {
-    const lines = content.split("\n").filter((l) => l.trim())
-
-    const industry =
-      this.extractField(content, /industry[:\s]*(.+?)(?:\n|$)/i) ||
-      "Not available"
-    const size =
-      this.extractField(content, /(?:company )?size[:\s]*(.+?)(?:\n|$)/i) ||
-      "Not available"
-    const description =
-      this.extractField(content, /description[:\s]*(.+?)(?:\n\n|$)/i) || ""
-
-    const projects: string[] = []
-    const projectsMatch = content.match(
-      /(?:notable projects|projects|products)[:\s]*(.+?)(?=\n\n|\n[A-Z]|$)/is
-    )
-    if (projectsMatch) {
-      const projectLines = projectsMatch[1].split(/[-•*]/).filter(Boolean)
-      projects.push(
-        ...projectLines
-          .slice(0, 5)
-          .map((p) => p.trim())
-          .filter(Boolean)
+    if (!response.ok) {
+      const body = await response.text().catch(() => "")
+      throw new Error(
+        `Perplexity API error: ${response.status} ${response.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
 
-    const ratings = {
-      glassdoor: this.extractRating(content, /glassdoor[:\s]*(\d+\.?\d*)/i),
-      indeed: this.extractRating(content, /indeed[:\s]*(\d+\.?\d*)/i),
-      teamlyzer: this.extractRating(content, /teamlyzer[:\s]*(\d+\.?\d*)/i)
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content || ""
+    if (!content.trim()) {
+      throw new Error("Perplexity returned an empty response.")
     }
-
-    return {
-      industry,
-      size,
-      description,
-      notableProjects: projects,
-      ratings,
-      sources: []
-    }
-  }
-
-  private extractField(content: string, regex: RegExp): string | undefined {
-    const match = content.match(regex)
-    return match?.[1]?.trim()
-  }
-
-  private extractRating(content: string, regex: RegExp): number | undefined {
-    const match = content.match(regex)
-    if (match) {
-      const rating = parseFloat(match[1])
-      return rating >= 0 && rating <= 5 ? rating : undefined
-    }
-    return undefined
-  }
-
-  private getEmptyCompanyInfo(): CompanyInfo {
-    return {
-      industry: "Not available",
-      size: "Not available",
-      description: "",
-      notableProjects: [],
-      ratings: {},
-      sources: []
-    }
+    // Shared with the side panel's own research call, so both paths read the
+    // same loosely-keyed JSON the model actually returns.
+    return parseCompanyInfo(content)
   }
 }

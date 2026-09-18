@@ -1,13 +1,18 @@
+import { PROVIDER_IDS } from "~constants/options"
 import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import { STORAGE_KEYS } from "~storage/keys"
 import { mutateSavedApplications } from "~storage/savedApplications"
+import { RESEARCH_PREFERENCES, SEARCH_ENGINE_IDS } from "~types/config"
 import type {
   CustomPrompts,
+  LLMProviderId,
   LLMTuningConfig,
   ModelRouting,
   OllamaConfig,
   PerplexityConfig,
-  ProvidersConfig
+  ProvidersConfig,
+  ResearchPreference,
+  SearchConfig
 } from "~types/config"
 import type { SavedApplication, UserProfile } from "~types/userProfile"
 
@@ -16,6 +21,7 @@ type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
 interface Args {
   ollamaConfig: OllamaConfig
   perplexityConfig: PerplexityConfig
+  searchConfig: SearchConfig
   providers: ProvidersConfig
   modelRouting: ModelRouting
   customPrompts: CustomPrompts
@@ -24,6 +30,7 @@ interface Args {
   matchModel: string
   setOllamaConfig: StorageSetter<OllamaConfig>
   setPerplexityConfig: StorageSetter<PerplexityConfig>
+  setSearchConfig: StorageSetter<SearchConfig>
   setProviders: StorageSetter<ProvidersConfig>
   setModelRouting: StorageSetter<ModelRouting>
   setCustomPrompts: StorageSetter<CustomPrompts>
@@ -37,6 +44,7 @@ interface ImportData {
   exportDate?: string
   ollamaConfig?: OllamaConfig
   perplexityConfig?: PerplexityConfig
+  searchConfig?: SearchConfig
   providers?: ProvidersConfig
   modelRouting?: ModelRouting
   customPrompts?: CustomPrompts
@@ -76,6 +84,15 @@ function isValidPerplexityConfig(value: unknown): value is PerplexityConfig {
   )
 }
 
+function isValidSearchConfig(value: unknown): value is SearchConfig {
+  return (
+    isRecord(value) &&
+    typeof value.apiKey === "string" &&
+    typeof value.enabled === "boolean" &&
+    SEARCH_ENGINE_IDS.includes(value.engine as SearchConfig["engine"])
+  )
+}
+
 function isValidProviderConfig(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -95,11 +112,17 @@ function isValidProvidersConfig(value: unknown): value is ProvidersConfig {
   )
 }
 
+/**
+ * Shared by every route in the table. `provider` has to be a known id, not
+ * merely a string: `resolve` looks the target up in `PROVIDER_META` and reads
+ * the result, so an unrecognised name from a hand-edited backup would arrive
+ * as `undefined` there.
+ */
 function isValidRouteTarget(value: unknown): boolean {
   return (
     isRecord(value) &&
-    typeof value.provider === "string" &&
-    typeof value.model === "string"
+    typeof value.model === "string" &&
+    PROVIDER_IDS.includes(value.provider as LLMProviderId)
   )
 }
 
@@ -108,6 +131,11 @@ function isValidModelRouting(value: unknown): value is ModelRouting {
     isRecord(value) &&
     isValidRouteTarget(value.scoring) &&
     isValidRouteTarget(value.drafting) &&
+    // Both were added after the backup format shipped, so a valid older file
+    // simply omits them and `normalizeModelRouting` fills them in on read.
+    (value.prep === undefined || isValidRouteTarget(value.prep)) &&
+    (value.research === undefined ||
+      RESEARCH_PREFERENCES.includes(value.research as ResearchPreference)) &&
     isRecord(value.fallback) &&
     typeof value.fallback.enabled === "boolean" &&
     isValidRouteTarget(value.fallback.target)
@@ -190,6 +218,11 @@ function validateImportData(value: unknown): ImportData | null {
     !isValidPerplexityConfig(value.perplexityConfig)
   )
     return null
+  if (
+    value.searchConfig !== undefined &&
+    !isValidSearchConfig(value.searchConfig)
+  )
+    return null
   if (value.providers !== undefined && !isValidProvidersConfig(value.providers))
     return null
   if (value.modelRouting !== undefined && !isValidModelRouting(value.modelRouting))
@@ -233,6 +266,7 @@ function validateImportData(value: unknown): ImportData | null {
 export function useDataTransfer({
   ollamaConfig,
   perplexityConfig,
+  searchConfig,
   providers,
   modelRouting,
   customPrompts,
@@ -241,6 +275,7 @@ export function useDataTransfer({
   matchModel,
   setOllamaConfig,
   setPerplexityConfig,
+  setSearchConfig,
   setProviders,
   setModelRouting,
   setCustomPrompts,
@@ -261,6 +296,7 @@ export function useDataTransfer({
         exportDate: new Date().toISOString(),
         ollamaConfig,
         perplexityConfig,
+        searchConfig,
         providers,
         modelRouting,
         customPrompts,
@@ -322,6 +358,7 @@ export function useDataTransfer({
 
         if (data.ollamaConfig) setOllamaConfig(data.ollamaConfig)
         if (data.perplexityConfig) setPerplexityConfig(data.perplexityConfig)
+        if (data.searchConfig) setSearchConfig(data.searchConfig)
         if (data.providers) setProviders(data.providers)
         if (data.modelRouting) setModelRouting(data.modelRouting)
         if (data.customPrompts) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 import type { CompanyInfo } from "~api/perplexityClient"
-import { parseCompanyInfo } from "~lib/dialog/companyResearchParser"
+import { parseCompanyInfo } from "~lib/companyResearchParser"
 import { seedCompanyResearch } from "~lib/interviews/companyResearch"
 import type { PerplexityConfig } from "~types/config"
 

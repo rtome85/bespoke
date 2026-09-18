@@ -7,7 +7,8 @@ import type {
   LLMProviderId,
   PerplexityConfig,
   ProviderConfig,
-  ProvidersConfig
+  ProvidersConfig,
+  SearchConfig
 } from "~types/config"
 import type { OperationStatus, ProviderTestState } from "~types/options"
 
@@ -17,6 +18,8 @@ interface Props {
   openProvider: string | null
   providerTest: ProviderTestState
   perplexityTestStatus: OperationStatus
+  searchConfig: SearchConfig
+  searchTestStatus: OperationStatus
   onOpenProvider: (provider: string | null) => void
   onUpdateProvider: (
     provider: LLMProviderId,
@@ -28,6 +31,8 @@ interface Props {
   onCancelPendingWork: (provider: string) => void
   onChangePerplexity: (config: PerplexityConfig) => void
   onTestPerplexity: () => void
+  onChangeSearch: (config: SearchConfig) => void
+  onTestSearch: () => void
   onOpenPrompts: () => void
 }
 
@@ -37,6 +42,8 @@ export function ProvidersSettingsScreen({
   openProvider,
   providerTest,
   perplexityTestStatus,
+  searchConfig,
+  searchTestStatus,
   onOpenProvider,
   onUpdateProvider,
   onTestProvider,
@@ -44,13 +51,17 @@ export function ProvidersSettingsScreen({
   onCancelPendingWork,
   onChangePerplexity,
   onTestPerplexity,
+  onChangeSearch,
+  onTestSearch,
   onOpenPrompts
 }: Props) {
   const roster = providerRoster(
     providers,
     perplexityConfig,
     providerTest,
-    perplexityTestStatus
+    perplexityTestStatus,
+    searchConfig,
+    searchTestStatus
   )
   const open = roster.find((entry) => entry.id === openProvider)
 
@@ -88,12 +99,16 @@ export function ProvidersSettingsScreen({
           perplexityConfig={perplexityConfig}
           providerTest={providerTest}
           perplexityTestStatus={perplexityTestStatus}
+          searchConfig={searchConfig}
+          searchTestStatus={searchTestStatus}
           onUpdateProvider={onUpdateProvider}
           onTestProvider={onTestProvider}
           onRefreshProviderModels={onRefreshProviderModels}
           onCancelPendingWork={() => onCancelPendingWork(open.id)}
           onChangePerplexity={onChangePerplexity}
           onTestPerplexity={onTestPerplexity}
+          onChangeSearch={onChangeSearch}
+          onTestSearch={onTestSearch}
           onOpenPrompts={onOpenPrompts}
           onClose={() => onOpenProvider(null)}
         />

@@ -1,4 +1,4 @@
-import { Server } from "lucide-react"
+import { Globe, Server } from "lucide-react"
 import AnthropicIcon from "react:~assets/providers/anthropic.svg"
 import DeepSeekIcon from "react:~assets/providers/deepseek.svg"
 import GoogleIcon from "react:~assets/providers/google.svg"
@@ -27,7 +27,9 @@ const ICONS: Record<
   deepseek: DeepSeekIcon,
   mistral: MistralIcon,
   custom: Server,
-  perplexity: PerplexityIcon
+  perplexity: PerplexityIcon,
+  // The search engine is user-selectable, so no single brand mark fits.
+  websearch: Globe
 }
 
 interface Props {

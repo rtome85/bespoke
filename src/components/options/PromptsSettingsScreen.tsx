@@ -134,15 +134,20 @@ export function PromptsSettingsScreen({
         <h2 className="aa-section-heading">Interview prep</h2>
         <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
           Feeds the per-round Prep workspace (Interviews → Prep). Runs on your
-          Document&nbsp;drafting model and must return JSON with{" "}
-          <code className="text-aa-caption">likelyTopics</code> and{" "}
-          <code className="text-aa-caption">talkingPoints</code> arrays.
+          Interview&nbsp;prep model and must return JSON with{" "}
+          <code className="text-aa-caption">likelyTopics</code>,{" "}
+          <code className="text-aa-caption">talkingPoints</code>,{" "}
+          <code className="text-aa-caption">questionsToAsk</code>,{" "}
+          <code className="text-aa-caption">gapDefenses</code>,{" "}
+          <code className="text-aa-caption">starStories</code> and{" "}
+          <code className="text-aa-caption">logistics</code>. A section the
+          prompt drops simply won't appear in the workspace.
         </p>
         <hr className="aa-divider" />
         <PromptEditorField
           id="interview-prep-prompt"
           label="Prep prompt"
-          hint="Use {{roundType}}, {{companyName}}, {{jobTitle}}, {{jobDescription}}, and {{userProfile}} as placeholders."
+          hint="Placeholders: {{roundType}}, {{companyName}}, {{jobTitle}}, {{jobDescription}}, {{userProfile}}, {{roundContext}}, {{companyResearch}}, {{matchAnalysis}}, {{priorRounds}}, {{userNotes}}."
           value={
             perplexityConfig.interviewPrepPrompt ??
             DEFAULT_INTERVIEW_PREP_PROMPT
