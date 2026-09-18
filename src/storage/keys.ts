@@ -3,6 +3,7 @@ export const STORAGE_KEYS = {
   USER_PROFILE: "userProfile",
   OLLAMA_CONFIG: "ollamaConfig",
   PERPLEXITY_CONFIG: "perplexityConfig",
+  SEARCH_CONFIG: "searchConfig",
   WEBHOOK_URL: "webhookUrl",
   CUSTOM_PROMPTS: "customPrompts",
   PROMPTS_VERSION: "promptsVersion",
@@ -31,6 +32,7 @@ export const SYNC_KEYS = [
   "userProfile",
   "ollamaConfig",
   STORAGE_KEYS.PERPLEXITY_CONFIG,
+  STORAGE_KEYS.SEARCH_CONFIG,
   "customPrompts",
   // Travels with `customPrompts`: it describes that value's schema, so a
   // restore can tell whether the synced prompts predate the current

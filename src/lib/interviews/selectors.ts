@@ -126,13 +126,60 @@ export function hasOpenRound(app: SavedApplication): boolean {
   return openRound(app) !== undefined
 }
 
-/** Does this round have any generated prep content yet? */
+/**
+ * Does this round have generated prep yet? Company research alone doesn't
+ * count: it is cached per *company*, so a second round at the same employer
+ * would inherit it and report itself prepped without a single topic on it.
+ */
 export function prepReady(round: InterviewRound): boolean {
   const p = round.prep
   return !!(
     p &&
-    (p.companyResearch || p.likelyTopics?.length || p.talkingPoints?.length)
+    (p.likelyTopics?.length ||
+      p.talkingPoints?.length ||
+      p.questionsToAsk?.length ||
+      p.gapDefenses?.length ||
+      p.starStories?.length)
   )
+}
+
+/**
+ * The facts about a round, as a line for the prep prompt. A 30-minute phone
+ * screen with a recruiter and a four-hour on-site panel need different prep,
+ * and this is the only place the model learns which one it is writing for.
+ */
+export function roundContextLine(round: InterviewRound): string {
+  const parts = [`Round type: ${roundLabel(round)}`]
+  if (round.format) parts.push(`Format: ${formatLabel(round.format)}`)
+  if (round.date) {
+    parts.push(
+      `Scheduled: ${round.date}${round.time ? ` at ${round.time}` : ""} (${relativeDayLabel(round.date)})`
+    )
+  } else {
+    parts.push("Not scheduled yet")
+  }
+  const interviewers = round.interviewers?.trim()
+  if (interviewers) {
+    parts.push(`Interviewers:\n${interviewers}`)
+  }
+  return parts.join("\n")
+}
+
+/**
+ * Debriefed rounds that came before this one in the same application, oldest
+ * first. Prep for a later round should build on what those interviewers
+ * actually asked rather than guessing from the job ad again.
+ */
+export function priorRounds(
+  app: SavedApplication,
+  roundId: string
+): InterviewRound[] {
+  const rounds = [...(app.rounds ?? [])].sort(
+    (a, b) => (roundStartMs(a) ?? 0) - (roundStartMs(b) ?? 0)
+  )
+  const index = rounds.findIndex((r) => r.id === roundId)
+  const earlier = index === -1 ? rounds : rounds.slice(0, index)
+  return earlier.filter((r) => r.id !== roundId && r.debrief?.loggedAt)
 }
 
 /**

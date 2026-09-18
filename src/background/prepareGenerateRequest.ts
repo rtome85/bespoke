@@ -13,6 +13,7 @@ import {
   DEFAULT_MODEL_ROUTING,
   DEFAULT_PROMPTS,
   hasProviderCredential,
+  normalizeModelRouting,
   PROVIDER_META
 } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
@@ -59,6 +60,7 @@ function migrate(
     routing: {
       scoring: { provider: "ollama", model },
       drafting: { provider: "ollama", model },
+      prep: { provider: "ollama", model },
       fallback: { enabled: false, target: { provider: "ollama", model } }
     }
   }
@@ -115,7 +117,10 @@ async function loadProvidersAndRouting(): Promise<{
   const storedProviders = s[STORAGE_KEYS.PROVIDERS] as ProvidersConfig | undefined
   const storedRouting = s[STORAGE_KEYS.MODEL_ROUTING] as ModelRouting | undefined
   if (storedProviders && storedRouting) {
-    return { providers: storedProviders, routing: storedRouting }
+    return {
+      providers: storedProviders,
+      routing: normalizeModelRouting(storedRouting)
+    }
   }
   const m = migrate(
     s[STORAGE_KEYS.OLLAMA_CONFIG],
@@ -123,7 +128,7 @@ async function loadProvidersAndRouting(): Promise<{
   )
   return {
     providers: { ...m.providers, ...(storedProviders ?? {}) },
-    routing: storedRouting ?? m.routing
+    routing: normalizeModelRouting(storedRouting ?? m.routing)
   }
 }
 
@@ -140,7 +145,8 @@ export async function resolveJobRoute(
   { primary: ResolvedRoute; fallback?: ResolvedRoute } | { error: string }
 > {
   const { providers, routing } = await loadProvidersAndRouting()
-  const primary = resolve(routing[job], providers)
+  // Normalized above, so every job has a target.
+  const primary = resolve(routing[job] as RouteTarget, providers)
   if ("error" in primary) return { error: primary.error }
 
   let fallback: ResolvedRoute | undefined
@@ -178,7 +184,7 @@ export async function prepareGenerateRequest(
 
   // The Model routing page is the single source of truth for which
   // provider + model runs each job. Callers no longer pass a model.
-  const primary = resolve(routing[job], providers)
+  const primary = resolve(routing[job] as RouteTarget, providers)
   if ("error" in primary) {
     return { ok: false, message: primary.error }
   }

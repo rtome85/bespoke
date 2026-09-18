@@ -2,17 +2,20 @@ import { PROVIDER_IDS } from "~constants/options"
 import {
   hasProviderCredential,
   PROVIDER_META,
+  SEARCH_ENGINE_META,
   type LLMProviderId,
   type PerplexityConfig,
-  type ProvidersConfig
+  type ProvidersConfig,
+  type SearchConfig
 } from "~types/config"
 import type { OperationStatus, ProviderTestState } from "~types/options"
 
 /**
- * Roster identity: the routable LLM providers plus Perplexity, which
- * has its own config shape and only ever powers company research.
+ * Roster identity: the routable LLM providers plus the two research accounts —
+ * Perplexity and a web-search engine — which have their own config shapes and
+ * never run scoring, drafting or prep themselves.
  */
-export type RosterProviderId = LLMProviderId | "perplexity"
+export type RosterProviderId = LLMProviderId | "perplexity" | "websearch"
 
 export type ProviderStatusTone = "ok" | "warn" | "bad" | "idle"
 
@@ -46,7 +49,9 @@ const BLURBS: Record<RosterProviderId, string> = {
   custom:
     "Any OpenAI-compatible server — vLLM, LM Studio, LiteLLM, or a hosted gateway.",
   perplexity:
-    "Company research only — never scoring, drafting, or interview prep."
+    "Company research only — never scoring, drafting, or interview prep.",
+  websearch:
+    "Fetches sources for company research; the Interview prep model summarises them."
 }
 
 const CONNECTED: ProviderStatus = { label: "Connected", tone: "ok" }
@@ -133,12 +138,31 @@ export function perplexityStatus(
   return UNTESTED
 }
 
+/**
+ * Status of the web-search account. Same rule as the others: a saved key is
+ * not a connected one until something has exercised it.
+ */
+export function searchStatus(
+  config: SearchConfig,
+  test: OperationStatus
+): ProviderStatus {
+  if (!config.apiKey) return NOT_CONNECTED
+  if (!config.enabled) return DISABLED
+  if (test.type === "loading") return TESTING
+  if (test.type === "success") return CONNECTED
+  if (test.type === "error") return FAILED
+  if (config.lastTested) return config.lastTested.ok ? CONNECTED : FAILED
+  return UNTESTED
+}
+
 /** Every row of the providers roster, in display order. */
 export function providerRoster(
   providers: ProvidersConfig,
   perplexityConfig: PerplexityConfig,
   test: ProviderTestState,
-  perplexityTest: OperationStatus
+  perplexityTest: OperationStatus,
+  searchConfig: SearchConfig,
+  searchTest: OperationStatus
 ): ProviderRosterEntry[] {
   const rows: ProviderRosterEntry[] = PROVIDER_IDS.map((id) => {
     const meta = PROVIDER_META[id]
@@ -172,6 +196,15 @@ export function providerRoster(
       : "No key saved",
     blurb: BLURBS.perplexity,
     status: perplexityStatus(perplexityConfig, perplexityTest)
+  })
+
+  rows.push({
+    id: "websearch",
+    name: SEARCH_ENGINE_META[searchConfig.engine].name,
+    access: "Research only",
+    meta: searchConfig.apiKey ? maskKey(searchConfig.apiKey) : "No key saved",
+    blurb: BLURBS.websearch,
+    status: searchStatus(searchConfig, searchTest)
   })
 
   return rows

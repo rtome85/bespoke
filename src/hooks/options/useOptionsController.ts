@@ -9,6 +9,7 @@ import { useOptionsStoredState } from "~hooks/options/useOptionsStoredState"
 import { usePerplexityConnectionTest } from "~hooks/options/usePerplexityConnectionTest"
 import { usePromptConfiguration } from "~hooks/options/usePromptConfiguration"
 import { useProviderTesting } from "~hooks/options/useProviderTesting"
+import { useSearchConnectionTest } from "~hooks/options/useSearchConnectionTest"
 import { useSettingsPersistence } from "~hooks/options/useSettingsPersistence"
 import { useSyncConfig } from "~hooks/options/useSyncConfig"
 import { useHashRoute } from "~lib/router"
@@ -17,7 +18,8 @@ import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   type LLMProviderId,
   type PerplexityConfig,
-  type ProviderConfig
+  type ProviderConfig,
+  type SearchConfig
 } from "~types/config"
 import type {
   AddRoundEditRef,
@@ -40,6 +42,8 @@ export function useOptionsController() {
     setOllamaConfig,
     perplexityConfig,
     setPerplexityConfig,
+    searchConfig,
+    setSearchConfig,
     customPrompts,
     setCustomPrompts,
     llmTuning,
@@ -85,6 +89,11 @@ export function useOptionsController() {
     testConnection: testPerplexity,
     resetStatus: resetPerplexityStatus
   } = usePerplexityConnectionTest(perplexityConfig, setPerplexityConfig)
+  const {
+    status: searchTestStatus,
+    testConnection: testSearch,
+    resetStatus: resetSearchStatus
+  } = useSearchConnectionTest(searchConfig, setSearchConfig)
 
   /**
    * A verdict belongs to the key that earned it: editing the key voids both
@@ -101,12 +110,30 @@ export function useOptionsController() {
   }
 
   /**
+   * A verdict belongs to the key that earned it — and, for search, to the
+   * engine too: pointing the same key at a different back end says nothing
+   * about whether that one accepts it.
+   */
+  const changeSearchConfig = (next: SearchConfig) => {
+    if (
+      next.apiKey === searchConfig.apiKey &&
+      next.engine === searchConfig.engine
+    ) {
+      setSearchConfig(next)
+      return
+    }
+    setSearchConfig({ ...next, lastTested: undefined })
+    resetSearchStatus()
+  }
+
+  /**
    * Abandons a provider's in-flight test or model refresh, so a completion
    * that lands after the dialog was cancelled cannot write to the config
    * that cancelling restored.
    */
   const cancelPendingProviderWork = (provider: string) => {
     if (provider === "perplexity") resetPerplexityStatus()
+    else if (provider === "websearch") resetSearchStatus()
     else cancelProviderOperations(provider as LLMProviderId)
   }
   const {
@@ -124,6 +151,7 @@ export function useOptionsController() {
     useSettingsPersistence({
       ollamaConfig,
       perplexityConfig,
+      searchConfig,
       customPrompts,
       userProfile,
       llmTuning,
@@ -141,6 +169,7 @@ export function useOptionsController() {
   const { exportData, importData } = useDataTransfer({
     ollamaConfig,
     perplexityConfig,
+    searchConfig,
     providers,
     modelRouting,
     customPrompts,
@@ -149,6 +178,7 @@ export function useOptionsController() {
     matchModel,
     setOllamaConfig,
     setPerplexityConfig,
+    setSearchConfig,
     setProviders,
     setModelRouting,
     setCustomPrompts,
@@ -220,6 +250,8 @@ export function useOptionsController() {
       setUserProfile,
       perplexityConfig,
       setPerplexityConfig: changePerplexityConfig,
+      searchConfig,
+      setSearchConfig: changeSearchConfig,
       customPrompts,
       llmTuning,
       setLlmTuning,
@@ -235,6 +267,8 @@ export function useOptionsController() {
       cancelPendingProviderWork,
       perplexityTestStatus,
       testPerplexity,
+      searchTestStatus,
+      testSearch,
       remindersOn,
       toggleReminders,
       reminderSettings,

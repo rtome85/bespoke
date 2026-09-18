@@ -52,6 +52,10 @@ function Options() {
     cancelPendingProviderWork,
     perplexityTestStatus,
     testPerplexity,
+    searchConfig,
+    setSearchConfig,
+    searchTestStatus,
+    testSearch,
     remindersOn,
     toggleReminders,
     reminderSettings,
@@ -92,6 +96,8 @@ function Options() {
         openProvider={openProvider}
         providerTest={providerTest}
         perplexityTestStatus={perplexityTestStatus}
+        searchConfig={searchConfig}
+        searchTestStatus={searchTestStatus}
         onOpenProvider={setOpenProvider}
         onUpdateProvider={updateProvider}
         onTestProvider={testProvider}
@@ -99,6 +105,8 @@ function Options() {
         onCancelPendingWork={cancelPendingProviderWork}
         onChangePerplexity={setPerplexityConfig}
         onTestPerplexity={testPerplexity}
+        onChangeSearch={setSearchConfig}
+        onTestSearch={testSearch}
         onOpenPrompts={() => navigate("#/settings/prompts")}
       />
     ),
@@ -107,6 +115,8 @@ function Options() {
         providers={providers}
         modelRouting={modelRouting}
         tuning={llmTuning ?? DEFAULT_LLM_TUNING}
+        perplexityConfig={perplexityConfig}
+        searchConfig={searchConfig}
         onChangeModelRouting={setModelRouting}
         onChangeTuning={setLlmTuning}
         onOpenProviders={() => navigate("#/settings/providers")}

@@ -8,7 +8,8 @@ import {
   type ModelRouting,
   type OllamaConfig,
   type PerplexityConfig,
-  type ProvidersConfig
+  type ProvidersConfig,
+  type SearchConfig
 } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
 
@@ -19,6 +20,7 @@ type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
 interface Args {
   ollamaConfig: OllamaConfig
   perplexityConfig: PerplexityConfig
+  searchConfig: SearchConfig
   customPrompts: CustomPrompts
   userProfile: UserProfile
   llmTuning: LLMTuningConfig
@@ -31,6 +33,7 @@ interface Args {
 export function useSettingsPersistence({
   ollamaConfig,
   perplexityConfig,
+  searchConfig,
   customPrompts,
   userProfile,
   llmTuning,
@@ -63,6 +66,7 @@ export function useSettingsPersistence({
     chrome.storage.local.set({
       [STORAGE_KEYS.OLLAMA_CONFIG]: ollamaConfig,
       [STORAGE_KEYS.PERPLEXITY_CONFIG]: perplexityConfig,
+      [STORAGE_KEYS.SEARCH_CONFIG]: searchConfig,
       [STORAGE_KEYS.CUSTOM_PROMPTS]: customPrompts,
       [STORAGE_KEYS.USER_PROFILE]: userProfile,
       [STORAGE_KEYS.LLM_TUNING]: llmTuning,

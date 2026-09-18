@@ -23,6 +23,103 @@ export interface PerplexityConfig {
   lastTested?: { ok: boolean; at: string; message: string }
 }
 
+/** Web-search back ends that can feed company research. */
+export type SearchEngineId = "tavily" | "brave" | "exa"
+
+export interface SearchEngineMeta {
+  id: SearchEngineId
+  name: string
+  keyPlaceholder: string
+  keyUrl: string
+  /** Free-tier line shown on the settings card. */
+  access: string
+}
+
+export const SEARCH_ENGINE_META: Record<SearchEngineId, SearchEngineMeta> = {
+  tavily: {
+    id: "tavily",
+    name: "Tavily",
+    keyPlaceholder: "tvly-…",
+    keyUrl: "https://app.tavily.com/home",
+    access: "Free tier, then usage-based"
+  },
+  brave: {
+    id: "brave",
+    name: "Brave Search",
+    keyPlaceholder: "Brave subscription token",
+    keyUrl: "https://api-dashboard.search.brave.com/app/keys",
+    access: "Free tier, then usage-based"
+  },
+  exa: {
+    id: "exa",
+    name: "Exa",
+    keyPlaceholder: "Exa API key",
+    keyUrl: "https://dashboard.exa.ai/api-keys",
+    access: "Free tier, then usage-based"
+  }
+}
+
+export const SEARCH_ENGINE_IDS: SearchEngineId[] = ["tavily", "brave", "exa"]
+
+/**
+ * A web-search account for company research. One engine at a time — research
+ * needs a handful of snippets, not a federated search, and a second key would
+ * only add a setting nobody tunes.
+ */
+export interface SearchConfig {
+  engine: SearchEngineId
+  apiKey: string
+  enabled: boolean
+  /** Mirrors `ProviderConfig`; voided whenever `apiKey` or `engine` changes. */
+  lastTested?: { ok: boolean; at: string; message: string }
+}
+
+export const DEFAULT_SEARCH_CONFIG: SearchConfig = {
+  engine: "tavily",
+  apiKey: "",
+  enabled: false
+}
+
+/** Where a company-research entry came from, for the provenance line. */
+export type ResearchSource = "perplexity" | "search" | "site" | "model"
+
+/**
+ * Which source runs company research. `auto` tries every configured source in
+ * descending order of how well-grounded it is; naming one pins research to it
+ * and reports a clear error instead of quietly answering from a weaker source.
+ */
+export type ResearchPreference = ResearchSource | "auto"
+
+export const RESEARCH_PREFERENCES: ResearchPreference[] = [
+  "auto",
+  "perplexity",
+  "search",
+  "site",
+  "model"
+]
+
+export const RESEARCH_PREFERENCE_LABELS: Record<ResearchPreference, string> = {
+  auto: "Automatic — best available source",
+  perplexity: "Perplexity only",
+  search: "Web search only",
+  site: "The company's own site only",
+  model: "Model knowledge only — not verified against the web"
+}
+
+export const RESEARCH_SOURCE_LABELS: Record<ResearchSource, string> = {
+  perplexity: "Perplexity",
+  search: "Web search",
+  site: "The company's own site",
+  model: "Model knowledge — not verified against the web"
+}
+
+/**
+ * How long a cached company-research entry is treated as current. Company
+ * facts drift slowly, but a stale entry behind an interview is worse than a
+ * second call, so the Prep card offers a refresh past this age.
+ */
+export const RESEARCH_STALE_MS = 30 * 86_400_000
+
 export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}} and return ONLY a raw JSON object. No markdown, no code fences, no explanation — just the JSON.
 
 Use EXACTLY these field names (no variations):
@@ -37,6 +134,55 @@ Field rules:
 - No citation brackets like [1] anywhere`
 
 export const DEFAULT_INTERVIEW_PREP_PROMPT = `You are preparing a candidate for a {{roundType}} at {{companyName}} for the {{jobTitle}} role.
+
+Round details:
+{{roundContext}}
+
+Job description:
+{{jobDescription}}
+
+Candidate profile:
+{{userProfile}}
+
+What we know about the company:
+{{companyResearch}}
+
+How this candidate scored against this job:
+{{matchAnalysis}}
+
+Earlier rounds in this process:
+{{priorRounds}}
+
+The candidate's own notes:
+{{userNotes}}
+
+Return ONLY a JSON object — no markdown fences, no prose:
+{
+  "logistics": "<2-3 sentences on what to expect from THIS round: who usually runs it, roughly how long, what they are screening for>",
+  "likelyTopics": ["<something the interviewer is likely to probe in a {{roundType}}, specific to this role's stack and domain>", ...],
+  "talkingPoints": ["<a concrete, evidence-backed point the candidate should make, drawn from their real experience against this job's needs>", ...],
+  "questionsToAsk": ["<a specific question for the candidate to ask THIS interviewer, informed by the company research and round type>", ...],
+  "gapDefenses": [{"gap": "<a real weakness in this candidate's fit>", "response": "<an honest, non-defensive answer that acknowledges it and redirects to adjacent evidence>"}, ...],
+  "starStories": [{"title": "<short handle>", "situation": "...", "task": "...", "action": "...", "result": "<include a number when the profile gives one>", "covers": ["<a likelyTopics entry this story answers>", ...]}, ...]
+}
+
+Rules:
+- likelyTopics: 4-7 items, specific to a {{roundType}} — not generic interview advice.
+- talkingPoints: 3-6 items, each tied to something real in the candidate profile and relevant to this job. No filler.
+- questionsToAsk: 3-5 items. Nothing answerable from the job ad. Nothing about salary.
+- gapDefenses: 2-4 items. Prefer the weaknesses named in the match analysis. Never invent experience the candidate does not have — a good answer admits the gap.
+- starStories: 2-3 items, built ONLY from real achievements in the candidate profile. If the profile is too thin for a story, return fewer rather than inventing one.
+- Prefer the earlier rounds' notes over guesswork: if a previous interviewer already asked something, assume it will be built on rather than repeated.
+- If the job description is missing, infer from the role title and company.`
+
+/**
+ * Earlier shipped defaults for {@link DEFAULT_INTERVIEW_PREP_PROMPT}. A stored
+ * prompt matching one of these was never edited by the user, so it can be
+ * silently upgraded to the current default instead of stranding them on a
+ * template that cannot produce the newer sections.
+ */
+export const LEGACY_INTERVIEW_PREP_PROMPTS: string[] = [
+  `You are preparing a candidate for a {{roundType}} at {{companyName}} for the {{jobTitle}} role.
 
 Job description:
 {{jobDescription}}
@@ -54,6 +200,31 @@ Rules:
 - likelyTopics: 4-7 items, specific to a {{roundType}} — not generic interview advice.
 - talkingPoints: 3-6 items, each tied to something real in the candidate profile and relevant to this job. No filler.
 - If the job description is missing, infer from the role title and company.`
+]
+
+/**
+ * Turns raw web text — search snippets or fetched company pages — into the
+ * same `CompanyInfo` JSON the Perplexity path returns, so every research
+ * source lands on one shape. Runs on the `prep` route.
+ */
+export const DEFAULT_COMPANY_SYNTHESIS_PROMPT = `Summarise what the following sources say about the company {{companyName}}.
+
+Sources:
+{{sources}}
+
+Return ONLY a raw JSON object. No markdown, no code fences, no explanation.
+
+Use EXACTLY these field names:
+{"industry":"...","size":"...","description":"...","notableProjects":["..."],"ratings":{"glassdoor":null,"indeed":null,"teamlyzer":null}}
+
+Field rules:
+- industry: the sector/industry as a short string. "Not available" if the sources do not say.
+- size: employee count or range as a string. "Not available" if the sources do not say.
+- description: 2-3 sentences on what the company actually does, drawn from the sources.
+- notableProjects: up to 6 strings, each naming a distinct product, project, or service named in the sources.
+- ratings: a number 0.0-5.0 only when a source states it, otherwise null.
+- Use ONLY what the sources say. Do not fill gaps from memory — "Not available" is the correct answer for anything they do not cover.
+- No citation brackets like [1] anywhere.`
 
 export interface ModelConfig {
   id: string
@@ -369,7 +540,7 @@ export function missingCredentialMessage(id: LLMProviderId): string {
 }
 
 /** An AI job routed to a specific provider + model. */
-export type RoutableJob = "scoring" | "drafting"
+export type RoutableJob = "scoring" | "drafting" | "prep"
 
 export interface RouteTarget {
   provider: LLMProviderId
@@ -379,6 +550,18 @@ export interface RouteTarget {
 export interface ModelRouting {
   scoring: RouteTarget
   drafting: RouteTarget
+  /**
+   * Interview prep and company-research synthesis. Optional in storage —
+   * routing tables written before this job existed have no `prep` key, so
+   * readers normalize through `normalizeModelRouting` and inherit
+   * `drafting`, which is where prep used to run.
+   */
+  prep?: RouteTarget
+  /**
+   * Which source answers company research. Optional in storage — tables
+   * written before it existed normalize to `auto`.
+   */
+  research?: ResearchPreference
   fallback: { enabled: boolean; target: RouteTarget }
 }
 
@@ -500,6 +683,8 @@ export const PROVIDER_META: Record<LLMProviderId, ProviderMeta> = {
 export const DEFAULT_MODEL_ROUTING: ModelRouting = {
   scoring: { provider: "ollama", model: "gpt-oss:20b-cloud" },
   drafting: { provider: "ollama", model: "gpt-oss:20b-cloud" },
+  prep: { provider: "ollama", model: "gpt-oss:20b-cloud" },
+  research: "auto",
   fallback: {
     enabled: false,
     target: { provider: "ollama", model: "gpt-oss:20b-cloud" }
@@ -525,8 +710,23 @@ export const MODEL_COST_PER_MTOK: Record<string, number> = {
   "gemini-2.0-pro": 5
 }
 
-/** Approx. tokens a scoring or drafting run spends, for the cost hint. */
+/** Approx. tokens a scoring, drafting or prep run spends, for the cost hint. */
 export const RUN_TOKENS: Record<RoutableJob, number> = {
   scoring: 4000,
-  drafting: 9000
+  drafting: 9000,
+  prep: 7000
+}
+
+/**
+ * Fill in a routing table read from storage. `prep` was added after the table
+ * shipped, so an older stored value has no entry for it — inherit `drafting`,
+ * which is the route prep ran on before it had its own.
+ */
+export function normalizeModelRouting(routing: ModelRouting): ModelRouting {
+  if (routing.prep && routing.research) return routing
+  return {
+    ...routing,
+    prep: routing.prep ?? routing.drafting,
+    research: routing.research ?? "auto"
+  }
 }
