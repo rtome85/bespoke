@@ -168,7 +168,11 @@ module.exports = {
 
         // Shared header height — also consumed via extend.height below for
         // the calc() case.
-        "aa-appbar": "var(--aa-appbar-height)"
+        "aa-appbar": "var(--aa-appbar-height)",
+
+        // Sticky offset for content that parks under the app bar rather than
+        // flush against it, like SettingsRail does.
+        "aa-appbar-offset": "calc(var(--aa-appbar-height) + var(--aa-space-4))"
       },
       borderRadius: {
         sm: "var(--radius-sm)",
@@ -198,7 +202,11 @@ module.exports = {
       },
       maxHeight: {
         "aa-expanded": "3000px",
-        "aa-vh-90": "90vh"
+        "aa-vh-90": "90vh",
+        // Tallest the sticky Prep section rail may grow: the options content
+        // column scrolls under the app bar, so the rail gets the viewport
+        // minus that bar and its own top/bottom breathing room.
+        "aa-rail": "calc(100vh - var(--aa-appbar-height) - var(--aa-space-8))"
       },
       fontSize: {
         "aa-h1": ["32px", { lineHeight: "40px", fontWeight: "700" }],

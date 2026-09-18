@@ -1,37 +1,41 @@
-import { Check, Copy, Loader2, RefreshCw, Sparkles } from "lucide-react"
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-
-import { sendToBackground } from "@plasmohq/messaging"
+import {
+  Check,
+  ChevronRight,
+  Copy,
+  Loader2,
+  Printer,
+  Sparkles
+} from "lucide-react"
+import type { ReactNode } from "react"
 
 import { BackLink } from "~components/common/BackLink"
 import { Checklist } from "~components/interviews/Checklist"
 import { GapDefenseList } from "~components/interviews/GapDefenseList"
-import { RoundStrip } from "~components/interviews/RoundStrip"
+import {
+  CountdownChip,
+  GenerateProgress,
+  GrantSiteBanner,
+  NotesPanel,
+  PrepSkeleton,
+  ReadinessMeter,
+  RegenerateDialog,
+  ResearchProvenance,
+  SectionError,
+  ThinHint
+} from "~components/interviews/prep/PrepAtoms"
+import {
+  PrepSectionRail,
+  type RailEntry
+} from "~components/interviews/prep/PrepSectionRail"
 import { StarStoryList } from "~components/interviews/StarStoryList"
-import { requestHostPermission } from "~lib/hostPermissions"
-import { researchIsStale } from "~lib/interviews/companyResearch"
-import { companyOriginFrom } from "~lib/interviews/companySite"
-import { prepCheatSheet } from "~lib/interviews/prepCheatSheet"
+import { usePrepWorkspace } from "~hooks/interviews/usePrepWorkspace"
 import {
-  hasKeptWork,
-  mergeGapDefenses,
-  mergePrepItems,
-  mergeStarStories
-} from "~lib/interviews/prepMerge"
-import {
-  prepReady,
-  priorRounds,
+  formatLabel,
   relativeDayLabel,
-  roundContextLine,
+  relativeTimeLabel,
   roundLabel
 } from "~lib/interviews/selectors"
-import { setRoundPrep } from "~storage/savedApplications"
-import { RESEARCH_SOURCE_LABELS, type ResearchSource } from "~types/config"
-import type {
-  RoundPrep,
-  SavedApplication,
-  UserProfile
-} from "~types/userProfile"
+import type { SavedApplication } from "~types/userProfile"
 
 interface Props {
   apps: SavedApplication[]
@@ -40,61 +44,87 @@ interface Props {
   onViewInSchedule: () => void
 }
 
-function SectionCard({
+/**
+ * The prep run sheet.
+ *
+ * Laid out as one continuous document rather than as six equal cards. The six
+ * sections were never peers — they are a sequence, and five of them come out
+ * of a single model call, which is why exactly one "Regenerate prep" sits on
+ * the boundary that encloses those five instead of four identical buttons that
+ * each quietly rewrote all of them.
+ *
+ * Company research and notes keep a surface of their own because they are the
+ * only two things here with an independent lifecycle.
+ */
+
+const SECTION = {
+  expect: "prep-expect",
+  research: "prep-research",
+  topics: "prep-topics",
+  points: "prep-points",
+  questions: "prep-questions",
+  gaps: "prep-gaps",
+  stories: "prep-stories",
+  notes: "prep-notes"
+}
+
+/** A section of the sheet: a rule, a heading, and its content. */
+function Section({
+  id,
   title,
-  subtitle,
-  generatedAt,
-  onCopy,
-  onRegenerate,
-  busy,
+  meta,
   children
 }: {
+  id: string
   title: string
-  subtitle?: ReactNode
-  generatedAt?: string
-  onCopy?: () => void
-  onRegenerate?: () => void
-  busy?: boolean
+  meta?: ReactNode
   children: ReactNode
 }) {
   return (
-    <div className="aa-card">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0">
-          <h3 className="text-aa-13 font-semibold text-aa-text-primary">
-            {title}
-          </h3>
-          {generatedAt && (
-            <p className="text-aa-11 text-aa-text-secondary mt-0.5">
-              generated {relativeDayLabel(generatedAt.slice(0, 10))}
-            </p>
-          )}
-          {subtitle}
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {onCopy && (
-            <button type="button" onClick={onCopy} className="aa-btn-link">
-              Copy
-            </button>
-          )}
-          {onRegenerate && (
-            <button
-              type="button"
-              onClick={onRegenerate}
-              disabled={busy}
-              className="aa-btn-link inline-flex items-center gap-1">
-              {busy ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <RefreshCw className="w-3 h-3" />
-              )}
-              Regenerate
-            </button>
-          )}
-        </div>
+    <section
+      id={id}
+      tabIndex={-1}
+      className="aa-runsheet-section focus:outline-none">
+      <div className="flex items-center justify-between gap-aa-3 mb-aa-3">
+        <h2 className="aa-runsheet-title">{title}</h2>
+        {meta}
       </div>
       {children}
-    </div>
+    </section>
+  )
+}
+
+/** One of the five sections that share a single generation. */
+function Subsection({
+  id,
+  title,
+  count,
+  children
+}: {
+  id: string
+  title: string
+  count: { done: number; total: number }
+  children: ReactNode
+}) {
+  const complete = count.total > 0 && count.done === count.total
+  return (
+    <section
+      id={id}
+      tabIndex={-1}
+      className="aa-runsheet-sub focus:outline-none">
+      <div className="flex items-center justify-between gap-aa-3">
+        <h3 className="aa-runsheet-sub-title">{title}</h3>
+        {count.total > 0 && (
+          <span
+            className={`text-aa-11 font-semibold tabular-nums ${
+              complete ? "text-aa-success-strong" : "text-aa-text-secondary"
+            }`}>
+            {count.done} of {count.total} ready
+          </span>
+        )}
+      </div>
+      {children}
+    </section>
   )
 }
 
@@ -104,476 +134,419 @@ export function PrepWorkspace({
   onBack,
   onViewInSchedule
 }: Props) {
-  const found = useMemo(() => {
-    for (const app of apps) {
-      const round = (app.rounds ?? []).find((r) => r.id === roundId)
-      if (round) return { app, round }
-    }
-    return undefined
-  }, [apps, roundId])
+  const w = usePrepWorkspace({ apps, roundId, onBack })
 
-  useEffect(() => {
-    if (apps.length && !found) onBack()
-  }, [apps.length, found, onBack])
+  if (!w.found || !w.app || !w.round) return null
+  const { app, round, prep, readiness } = w
+  const name = roundLabel(round)
 
-  const [profile, setProfile] = useState<UserProfile | undefined>()
-  useEffect(() => {
-    chrome.storage.local.get("userProfile", (r) => setProfile(r.userProfile))
-  }, [])
+  const facts = [
+    round.date && `${round.date} (${relativeDayLabel(round.date)})`,
+    round.time,
+    formatLabel(round.format),
+    round.interviewers?.split("\n")[0]
+  ]
+    .filter(Boolean)
+    .join(" · ")
 
-  const [busy, setBusy] = useState<{ research?: boolean; topics?: boolean }>({})
-  const [errors, setErrors] = useState<string[]>([])
-  const [hint, setHint] = useState("")
-  const [copied, setCopied] = useState(false)
-  /** Origin the user can grant to unlock reading the company's own site. */
-  const [grantOrigin, setGrantOrigin] = useState("")
+  const generatedLabel = prep.topicsPointsAt
+    ? `generated ${relativeTimeLabel(prep.topicsPointsAt)}`
+    : undefined
 
-  // Debounced notes.
-  const notesTimer = useRef<ReturnType<typeof setTimeout>>()
-  const [notes, setNotes] = useState(() => found?.round.prep?.notes ?? "")
-
-  // A pending debounce would otherwise be dropped when the user navigates
-  // away mid-sentence — flush it instead of losing the last few seconds.
-  const pendingNotes = useRef<{
-    appId: string
-    roundId: string
-    text: string
-  }>()
-  const copyTimer = useRef<ReturnType<typeof setTimeout>>()
-  useEffect(
-    () => () => {
-      if (copyTimer.current) clearTimeout(copyTimer.current)
-      if (!notesTimer.current) return
-      clearTimeout(notesTimer.current)
-      const p = pendingNotes.current
-      if (p) void setRoundPrep(p.appId, p.roundId, { notes: p.text })
+  const rail: RailEntry[] = [
+    prep.logistics && { id: SECTION.expect, label: "What to expect" },
+    { id: SECTION.research, label: "Company research" },
+    w.ready && {
+      id: SECTION.topics,
+      label: "Likely topics",
+      count: readiness.topics
     },
-    []
+    w.ready && {
+      id: SECTION.points,
+      label: "Talking points",
+      count: readiness.points
+    },
+    w.ready && {
+      id: SECTION.questions,
+      label: "Questions to ask",
+      count: readiness.questions
+    },
+    w.ready && {
+      id: SECTION.gaps,
+      label: "If they press on…",
+      count: readiness.gaps
+    },
+    w.ready && {
+      id: SECTION.stories,
+      label: "Stories",
+      count: readiness.stories
+    },
+    { id: SECTION.notes, label: "My notes" }
+  ].filter(Boolean) as RailEntry[]
+
+  const notesPanel = (
+    <NotesPanel
+      id={SECTION.notes}
+      value={w.notes}
+      onChange={w.onNotesChange}
+      saved={w.notesSaved}
+    />
   )
 
-  if (!found) return null
-  const { app, round } = found
-  const prep: RoundPrep = round.prep ?? {}
-  const ready = prepReady(round)
-  const researchStale = researchIsStale(prep.companyResearchAt)
-  const researchSource = prep.companyResearchSource as
-    | ResearchSource
-    | undefined
-
-  const save = (patch: Partial<RoundPrep>) =>
-    setRoundPrep(app.id, round.id, patch)
-
-  const onNotesChange = (v: string) => {
-    setNotes(v)
-    pendingNotes.current = { appId: app.id, roundId: round.id, text: v }
-    if (notesTimer.current) clearTimeout(notesTimer.current)
-    notesTimer.current = setTimeout(() => {
-      pendingNotes.current = undefined
-      void save({ notes: v })
-    }, 600)
-  }
-
-  /**
-   * Copy, and say so only when the write actually resolved. The clipboard is
-   * absent in some contexts and rejects in others (denied permission, an
-   * unfocused document), and this button exists to get the sheet onto a second
-   * screen minutes before an interview — "Copied" over an empty clipboard is
-   * found out at the worst possible moment.
-   */
-  const copy = async (text: string, what: string): Promise<boolean> => {
-    setErrors((e) => e.filter((m) => !m.startsWith("Copy:")))
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("this browser didn't allow clipboard access")
-      }
-      await navigator.clipboard.writeText(text)
-      return true
-    } catch (error) {
-      setErrors((e) => [
-        ...e,
-        `Copy: couldn't copy ${what} — ${
-          error instanceof Error ? error.message : "the clipboard refused"
-        }.`
-      ])
-      return false
-    }
-  }
-
-  const copySheet = async () => {
-    if (!(await copy(prepCheatSheet(app, round), "the prep sheet"))) return
-    setCopied(true)
-    if (copyTimer.current) clearTimeout(copyTimer.current)
-    copyTimer.current = setTimeout(() => setCopied(false), 2_000)
-  }
-
-  /**
-   * Research and topics each report their own failure. They used to share one
-   * error slot, and because topics cleared it on start, a research failure
-   * during "Generate prep" vanished before the user could read it.
-   */
-  const genResearch = async (force = false): Promise<string | undefined> => {
-    setBusy((b) => ({ ...b, research: true }))
-    setErrors((e) => e.filter((m) => !m.startsWith("Research:")))
-    const r = await sendToBackground({
-      name: "generateCompanyResearch",
-      body: { company: app.company, jobUrl: app.jobUrl, force }
-    })
-    let text: string | undefined
-    if (r?.success) {
-      text = r.entry.text
-      await save({
-        companyResearch: r.entry.text,
-        companyResearchAt: r.entry.generatedAt,
-        companyResearchSource: r.entry.source
-      })
-    } else {
-      setErrors((e) => [
-        ...e,
-        `Research: ${r?.message ?? "couldn't fetch company research."}`
-      ])
-    }
-    setGrantOrigin(r?.needsHostPermission ?? "")
-    setBusy((b) => ({ ...b, research: false }))
-    return text
-  }
-
-  const genTopics = async (regen = false, research?: string) => {
-    if (
-      regen &&
-      hasKeptWork(
-        prep.likelyTopics,
-        prep.talkingPoints,
-        prep.questionsToAsk,
-        prep.gapDefenses,
-        prep.starStories
-      ) &&
-      !window.confirm(
-        "Regenerate replaces the AI-suggested items. Anything you ticked, pinned or added is kept. Continue?"
-      )
-    ) {
-      return
-    }
-    setBusy((b) => ({ ...b, topics: true }))
-    setErrors((e) => e.filter((m) => !m.startsWith("Prep:")))
-    setHint("")
-    const r = await sendToBackground({
-      name: "generateRoundPrep",
-      body: {
-        roundType: roundLabel(round),
-        companyName: app.company,
-        jobTitle: app.jobTitle,
-        jobDescription: app.jobDescription,
-        userProfile: profile,
-        roundContext: roundContextLine(round),
-        // Freshly fetched research beats the copy on the round, which is a
-        // render-time snapshot and may predate this run by seconds.
-        companyResearch: research ?? prep.companyResearch,
-        matchPercentage: app.matchPercentage,
-        matchSummary: app.matchSummary,
-        matchStrengths: app.matchStrengths,
-        matchWeaknesses: app.matchWeaknesses,
-        priorRounds: priorRounds(app, round.id).map((r) => ({
-          label: roundLabel(r),
-          date: r.date,
-          rating: r.debrief?.rating,
-          assessment: r.debrief?.assessment,
-          questionsAsked: r.debrief?.questionsAsked,
-          outcome: r.debrief?.outcome
-        })),
-        userNotes: notes
-      }
-    })
-    if (r?.success) {
-      await save({
-        logistics: r.logistics || prep.logistics,
-        likelyTopics: mergePrepItems(prep.likelyTopics, r.likelyTopics),
-        talkingPoints: mergePrepItems(prep.talkingPoints, r.talkingPoints),
-        questionsToAsk: mergePrepItems(prep.questionsToAsk, r.questionsToAsk),
-        gapDefenses: mergeGapDefenses(prep.gapDefenses, r.gapDefenses),
-        starStories: mergeStarStories(prep.starStories, r.starStories),
-        topicsPointsAt: new Date().toISOString()
-      })
-      const reasons: string[] = r.thinReasons ?? []
-      if (reasons.length) {
-        setHint(
-          `Generated without ${reasons.join(" or ")} — prep gets sharper once that's filled in.`
-        )
-      }
-    } else {
-      setErrors((e) => [...e, `Prep: ${r?.message ?? "generation failed."}`])
-    }
-    setBusy((b) => ({ ...b, topics: false }))
-  }
-
-  /**
-   * Research first, then topics with that research in hand — the topics call
-   * cites the company's actual products only because it runs second.
-   */
-  const generateAll = async (force: boolean) => {
-    const fresh = await genResearch(force)
-    await genTopics(force, fresh ?? prep.companyResearch)
-  }
-
-  const allowSite = async () => {
-    const origin = grantOrigin
-    if (!origin) return
-    const granted = await requestHostPermission(origin)
-    if (!granted) return
-    setGrantOrigin("")
-    await genResearch(true)
-  }
-
-  const anyBusy = !!busy.research || !!busy.topics
-  const siteOrigin = companyOriginFrom(app.jobUrl)
-
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2 min-w-0">
-          <BackLink label="Prep" onClick={onBack} />
-          <span className="text-aa-neutral-400">/</span>
-          <span className="text-aa-sm font-semibold text-aa-text-primary truncate">
-            {app.company} — {roundLabel(round)}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {ready && (
-            <button
-              type="button"
-              onClick={() => void copySheet()}
-              className="aa-btn-link inline-flex items-center gap-1">
-              {copied ? (
-                <Check className="w-3.5 h-3.5" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-              {copied ? "Copied" : "Copy sheet"}
-            </button>
+    <div className="max-w-5xl mx-auto">
+      <div className="flex items-center justify-between gap-aa-4 mb-aa-5 aa-no-print">
+        <BackLink label="Prep" onClick={onBack} />
+        <div className="flex items-center gap-aa-2 shrink-0">
+          {w.sheetHasContent && (
+            <>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="aa-btn-secondary inline-flex items-center gap-aa-2">
+                <Printer className="w-3.5 h-3.5" aria-hidden="true" />
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={() => void w.copySheet()}
+                className="aa-btn-accent inline-flex items-center gap-aa-2">
+                {w.copied ? (
+                  <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                )}
+                {w.copied ? "Copied" : "Copy sheet"}
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            onClick={() => void generateAll(ready)}
-            disabled={anyBusy}
-            className="inline-flex items-center gap-2 px-4 py-aa-px-9 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
-            {anyBusy ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" />
-            )}
-            {ready ? "Regenerate all" : "Generate prep"}
-          </button>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <RoundStrip
-          app={app}
-          round={round}
-          onViewInSchedule={onViewInSchedule}
-          right={
-            <span
-              className={`inline-block px-2 py-0.5 rounded-aa-pill text-aa-10 font-bold uppercase tracking-wide ${
-                ready
-                  ? "bg-aa-success-soft text-aa-success-strong"
-                  : "bg-aa-neutral-100 text-aa-text-secondary"
-              }`}>
-              {anyBusy ? "Generating…" : ready ? "Ready" : "Not started"}
-            </span>
-          }
-        />
-
-        <div
-          role="status"
-          aria-live="polite"
-          className="space-y-1 empty:hidden">
-          {errors.map((message) => (
-            <p key={message} className="text-aa-caption text-aa-error-strong">
-              {message}
+      <header className="mb-aa-5 space-y-aa-3">
+        <div className="flex items-start justify-between gap-aa-4 flex-wrap">
+          <div className="min-w-0">
+            <h1 className="aa-prep-title">
+              {app.company} — {name}
+            </h1>
+            <p className="text-aa-13 text-aa-text-secondary mt-aa-1">
+              {facts || "Not scheduled yet"}
             </p>
-          ))}
-          {hint && (
-            <p className="text-aa-caption text-aa-warning-strong">{hint}</p>
-          )}
-        </div>
-
-        {grantOrigin && (
-          <div className="aa-message-info flex items-start justify-between gap-3">
-            <span>
-              Bespoke can read {new URL(grantOrigin).host} — the company's own
-              site — to research them without a search account.
-            </span>
             <button
               type="button"
-              onClick={() => void allowSite()}
-              className="shrink-0 font-semibold underline bg-transparent border-0 p-0 cursor-pointer text-aa-neutral-700">
-              Allow
+              onClick={onViewInSchedule}
+              className="aa-btn-link inline-flex items-center gap-aa-px-1 mt-aa-1 aa-no-print">
+              View in Schedule
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
-        )}
+          {w.countdown && <CountdownChip countdown={w.countdown} />}
+        </div>
 
-        {!ready ? (
-          <div className="aa-card text-center py-12">
+        {/* Grouped, because only one of the two is ever visible and the live
+            region has to stay mounted even while idle. As a direct child of
+            the `space-y` header it would pick up a margin while empty and
+            open a gap under the title. */}
+        <div>
+          <GenerateProgress
+            stage={w.stage}
+            elapsed={w.elapsed}
+            company={app.company}
+            roundName={name}
+          />
+          {!w.busy && (
+            <ReadinessMeter
+              done={readiness.done}
+              total={readiness.total}
+              generatedLabel={generatedLabel}
+            />
+          )}
+        </div>
+      </header>
+
+      <div className="space-y-aa-3 mb-aa-5 empty:hidden aa-no-print">
+        {w.errors.copy && (
+          <SectionError
+            message={w.errors.copy}
+            onDismiss={() => w.dismissError("copy")}
+          />
+        )}
+        {w.hint && <ThinHint message={w.hint} onDismiss={w.dismissHint} />}
+        {w.grantHost && (
+          <GrantSiteBanner
+            host={w.grantHost}
+            onAllow={() => void w.allowSite()}
+          />
+        )}
+      </div>
+
+      {!w.sheetHasContent && !w.busy ? (
+        <div className="space-y-aa-5">
+          <div className="aa-runsheet-panel text-center">
             <p className="text-aa-sm font-semibold text-aa-text-primary">
               No prep generated yet
             </p>
-            <p className="text-aa-13 text-aa-text-secondary mt-1 max-w-md mx-auto">
-              Company research, likely topics for a {roundLabel(round)},
-              questions to ask them, answers for your weak spots, and stories
-              from your own profile — about 30 seconds.
+            <p className="text-aa-13 text-aa-text-secondary max-w-md mx-auto">
+              Company research, likely topics for a {name}, questions to ask
+              them, answers for your weak spots, and stories from your own
+              profile. Two model calls, usually under a minute.
             </p>
+            {w.errors.topics && (
+              <SectionError
+                message={w.errors.topics}
+                onRetry={() => void w.genTopics(false)}
+                onDismiss={() => w.dismissError("topics")}
+              />
+            )}
+            {w.errors.research && (
+              <SectionError
+                message={w.errors.research}
+                onRetry={() => void w.genResearch(false)}
+                onDismiss={() => w.dismissError("research")}
+              />
+            )}
             <button
               type="button"
-              onClick={() => void generateAll(false)}
-              disabled={anyBusy}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-aa-primary text-aa-text-on-primary border-0 rounded-aa-md text-aa-13 font-semibold cursor-pointer hover:bg-aa-primary-hover disabled:opacity-60 transition-colors">
-              {anyBusy ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
+              onClick={() => void w.generateAll(false)}
+              className="aa-btn-accent inline-flex items-center gap-aa-2">
+              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
               Generate prep
             </button>
           </div>
-        ) : (
-          <>
+          {/* Notes feed the next generation, so before the first run they are
+              the front door rather than the basement. */}
+          {notesPanel}
+        </div>
+      ) : !w.sheetHasContent ? (
+        <div className="aa-runsheet-panel">
+          <PrepSkeleton />
+        </div>
+      ) : (
+        <div className="aa-runsheet">
+          <PrepSectionRail entries={rail} />
+
+          <div className="space-y-aa-6 min-w-0">
             {prep.logistics && (
-              <SectionCard
-                title={`What to expect — ${roundLabel(round)}`}
-                generatedAt={prep.topicsPointsAt}>
+              <Section id={SECTION.expect} title={`What to expect — ${name}`}>
                 <p className="text-aa-13 text-aa-neutral-700 leading-relaxed">
                   {prep.logistics}
                 </p>
-              </SectionCard>
+              </Section>
             )}
 
-            <SectionCard
-              title="Company research"
-              generatedAt={prep.companyResearchAt}
-              subtitle={
-                researchSource ? (
-                  <p
-                    className={`text-aa-11 mt-0.5 ${
-                      researchSource === "model"
-                        ? "text-aa-warning-strong"
-                        : "text-aa-text-secondary"
-                    }`}>
-                    Source: {RESEARCH_SOURCE_LABELS[researchSource]}
-                    {researchStale && " · over a month old"}
-                  </p>
-                ) : researchStale ? (
-                  <p className="text-aa-11 text-aa-warning-strong mt-0.5">
-                    Over a month old — worth refreshing.
-                  </p>
-                ) : undefined
-              }
-              onCopy={
-                prep.companyResearch
-                  ? () =>
-                      void copy(
-                        prep.companyResearch ?? "",
-                        "the company research"
-                      )
-                  : undefined
-              }
-              onRegenerate={() => void genResearch(true)}
-              busy={busy.research}>
+            <section
+              id={SECTION.research}
+              tabIndex={-1}
+              className="aa-runsheet-panel focus:outline-none">
+              <div className="flex items-start justify-between gap-aa-3">
+                <div className="min-w-0">
+                  <h2 className="aa-runsheet-title">Company research</h2>
+                  <div className="mt-aa-1">
+                    <ResearchProvenance
+                      source={w.researchSource}
+                      label={w.researchSourceLabel}
+                      stale={w.researchStale}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-aa-3 shrink-0 aa-no-print">
+                  {prep.companyResearch && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void w.copyText(
+                          prep.companyResearch ?? "",
+                          "the company research"
+                        )
+                      }
+                      className="aa-btn-link">
+                      Copy
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void w.genResearch(true)}
+                    disabled={w.busy}
+                    className="aa-btn-link inline-flex items-center gap-aa-1">
+                    {w.researchBusy && (
+                      <Loader2
+                        className="w-3 h-3 animate-spin motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
+                    )}
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {w.errors.research && (
+                <SectionError
+                  message={w.errors.research}
+                  onRetry={() => void w.genResearch(true)}
+                  onDismiss={() => w.dismissError("research")}
+                />
+              )}
+
               {prep.companyResearch ? (
                 <p className="text-aa-13 text-aa-neutral-700 leading-relaxed whitespace-pre-line">
                   {prep.companyResearch}
                 </p>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => void genResearch(false)}
-                  disabled={busy.research}
-                  className="aa-btn-link">
-                  Fetch company research
-                </button>
+                !w.errors.research && (
+                  <button
+                    type="button"
+                    onClick={() => void w.genResearch(false)}
+                    disabled={w.busy}
+                    className="aa-btn-link">
+                    Fetch company research
+                  </button>
+                )
               )}
-              {!!prep.companyResearch && !!siteOrigin && (
-                <p className="text-aa-11 text-aa-text-secondary mt-2">
-                  Company site: {new URL(siteOrigin).host}
+
+              {!!prep.companyResearch && !!w.siteHost && (
+                <p className="text-aa-11 text-aa-text-secondary">
+                  Company site: {w.siteHost}
                 </p>
               )}
-            </SectionCard>
+            </section>
 
-            <SectionCard
-              title={`Likely topics — ${roundLabel(round)}`}
-              generatedAt={prep.topicsPointsAt}
-              onRegenerate={() => void genTopics(true)}
-              busy={busy.topics}>
-              <Checklist
-                items={prep.likelyTopics ?? []}
-                onChange={(next) => void save({ likelyTopics: next })}
-                addLabel="Add a topic"
-              />
-            </SectionCard>
+            {w.ready ? (
+              <div className="aa-runsheet-group">
+                <div className="aa-runsheet-group-head">
+                  <div className="min-w-0">
+                    <p className="text-aa-11 font-bold uppercase tracking-aa-wider-8 text-aa-text-secondary">
+                      Written for this round
+                    </p>
+                    <p className="text-aa-11 text-aa-neutral-500 mt-aa-px-1">
+                      These five sections are one generation — regenerating
+                      rewrites them together.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-aa-3 shrink-0 aa-no-print">
+                    {w.topicsBusy ? (
+                      <span className="aa-pill aa-pill-busy">Generating…</span>
+                    ) : (
+                      generatedLabel && (
+                        <span className="text-aa-11 text-aa-text-secondary">
+                          {generatedLabel}
+                        </span>
+                      )
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void w.genTopics(true)}
+                      disabled={w.busy}
+                      className="aa-btn-secondary inline-flex items-center gap-aa-2">
+                      {w.topicsBusy && (
+                        <Loader2
+                          className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none"
+                          aria-hidden="true"
+                        />
+                      )}
+                      Regenerate prep
+                    </button>
+                  </div>
+                </div>
 
-            <SectionCard
-              title="Your talking points"
-              generatedAt={prep.topicsPointsAt}
-              onRegenerate={() => void genTopics(true)}
-              busy={busy.topics}>
-              <Checklist
-                items={prep.talkingPoints ?? []}
-                onChange={(next) => void save({ talkingPoints: next })}
-                addLabel="Add a talking point"
-              />
-            </SectionCard>
+                {w.errors.topics && (
+                  <SectionError
+                    message={w.errors.topics}
+                    onRetry={() => void w.genTopics(false)}
+                    onDismiss={() => w.dismissError("topics")}
+                  />
+                )}
 
-            <SectionCard
-              title="Questions to ask them"
-              generatedAt={prep.topicsPointsAt}
-              onRegenerate={() => void genTopics(true)}
-              busy={busy.topics}>
-              <Checklist
-                items={prep.questionsToAsk ?? []}
-                onChange={(next) => void save({ questionsToAsk: next })}
-                addLabel="Add a question"
-              />
-            </SectionCard>
+                <Subsection
+                  id={SECTION.topics}
+                  title={`Likely topics — ${name}`}
+                  count={readiness.topics}>
+                  <Checklist
+                    items={prep.likelyTopics ?? []}
+                    onChange={(next) => void w.save({ likelyTopics: next })}
+                    addLabel="Add a topic"
+                  />
+                </Subsection>
 
-            <SectionCard
-              title="If they press on…"
-              generatedAt={prep.topicsPointsAt}
-              onRegenerate={() => void genTopics(true)}
-              busy={busy.topics}>
-              <GapDefenseList
-                items={prep.gapDefenses ?? []}
-                onChange={(next) => void save({ gapDefenses: next })}
-              />
-            </SectionCard>
+                <Subsection
+                  id={SECTION.points}
+                  title="Your talking points"
+                  count={readiness.points}>
+                  <Checklist
+                    items={prep.talkingPoints ?? []}
+                    onChange={(next) => void w.save({ talkingPoints: next })}
+                    addLabel="Add a talking point"
+                  />
+                </Subsection>
 
-            <SectionCard
-              title="Stories to have ready"
-              generatedAt={prep.topicsPointsAt}
-              onRegenerate={() => void genTopics(true)}
-              busy={busy.topics}>
-              <StarStoryList
-                items={prep.starStories ?? []}
-                onChange={(next) => void save({ starStories: next })}
-              />
-            </SectionCard>
-          </>
-        )}
+                <Subsection
+                  id={SECTION.questions}
+                  title="Questions to ask them"
+                  count={readiness.questions}>
+                  <Checklist
+                    items={prep.questionsToAsk ?? []}
+                    onChange={(next) => void w.save({ questionsToAsk: next })}
+                    addLabel="Add a question"
+                  />
+                </Subsection>
 
-        <div className="aa-card">
-          <h3 className="text-aa-13 font-semibold text-aa-text-primary">
-            My notes
-          </h3>
-          <p className="text-aa-11 text-aa-text-secondary mt-0.5 mb-2">
-            Kept when you regenerate — and fed back in, so what you know here
-            shapes the next run.
-          </p>
-          <textarea
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            rows={4}
-            placeholder="Questions to ask, things to double-check, reminders…"
-            className="w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
-          />
+                <Subsection
+                  id={SECTION.gaps}
+                  title="If they press on…"
+                  count={readiness.gaps}>
+                  <GapDefenseList
+                    items={prep.gapDefenses ?? []}
+                    onChange={(next) => void w.save({ gapDefenses: next })}
+                  />
+                </Subsection>
+
+                <Subsection
+                  id={SECTION.stories}
+                  title="Stories to have ready"
+                  count={readiness.stories}>
+                  <StarStoryList
+                    items={prep.starStories ?? []}
+                    onChange={(next) => void w.save({ starStories: next })}
+                  />
+                </Subsection>
+              </div>
+            ) : (
+              /* Research (or a note) exists but the model sections don't. The
+                 old page hid everything behind `prepReady()` here, including
+                 the research it had just fetched and saved. */
+              <div className="aa-runsheet-panel">
+                <h2 className="aa-runsheet-title">Prep for this round</h2>
+                <p className="text-aa-13 text-aa-text-secondary">
+                  Topics, talking points, questions, gap answers and stories
+                  haven't been generated yet.
+                </p>
+                {w.errors.topics && (
+                  <SectionError
+                    message={w.errors.topics}
+                    onRetry={() => void w.genTopics(false)}
+                    onDismiss={() => w.dismissError("topics")}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => void w.genTopics(false)}
+                  disabled={w.busy}
+                  className="aa-btn-accent inline-flex items-center gap-aa-2">
+                  <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                  Generate prep
+                </button>
+              </div>
+            )}
+
+            {notesPanel}
+          </div>
         </div>
-      </div>
+      )}
+
+      <RegenerateDialog
+        open={w.regenPending}
+        onConfirm={() => void w.confirmRegenerate()}
+        onCancel={w.cancelRegenerate}
+      />
     </div>
   )
 }

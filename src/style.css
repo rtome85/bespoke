@@ -236,9 +236,11 @@ body {
     @apply w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors;
   }
 
-  /* src/components/interviews/PrepWorkspace.tsx */
+  /* src/components/interviews/PrepWorkspace.tsx — the focus ring matches the
+     one every other control in the app already uses; without it this class
+     fell back to the UA outline alone. */
   .aa-btn-link {
-    @apply text-aa-caption font-semibold text-aa-primary hover:underline disabled:opacity-50 disabled:no-underline;
+    @apply text-aa-caption font-semibold text-aa-primary hover:underline disabled:opacity-50 disabled:no-underline rounded-aa-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary;
   }
 
   /* src/components/options/ApplicationsList.tsx */
@@ -404,5 +406,173 @@ body {
   /* src/components/documentPreview/DocumentPreviewPanel.tsx */
   .aa-toolbar-btn {
     @apply w-7 h-7 grid place-items-center rounded-aa-sm text-aa-neutral-500 hover:bg-aa-neutral-200 transition-colors;
+  }
+
+  /* ===================================================================
+     src/components/interviews/PrepWorkspace.tsx — the run sheet.
+     Six equal cards read as one grey column, so sections are separated
+     by a rule and by rhythm instead, and the only two things that keep
+     a surface of their own are the two with independent lifecycles:
+     company research and notes.
+     =================================================================== */
+
+  .aa-prep-title {
+    @apply text-aa-h2 font-bold tracking-aa-tighter-4 text-aa-text-primary;
+  }
+
+  /* State pill. Replaces a class string that was duplicated verbatim in six
+     files; the idle tone also moves off aa-text-secondary, which sat at
+     4.39:1 on aa-neutral-100 and missed AA. */
+  .aa-pill {
+    @apply inline-flex items-center gap-aa-2 rounded-aa-pill px-aa-2 py-aa-px-3 text-aa-10 font-bold uppercase tracking-wide;
+  }
+  .aa-pill-ok {
+    @apply bg-aa-success-soft text-aa-success-strong;
+  }
+  .aa-pill-idle {
+    @apply bg-aa-neutral-100 text-aa-neutral-700;
+  }
+  .aa-pill-busy {
+    @apply bg-aa-warning-soft text-aa-warning-strong;
+  }
+
+  /* Ticked over total — how ready the person is, as opposed to how much the
+     model wrote, which is all the old "Ready" pill ever measured. */
+  .aa-meter {
+    @apply h-aa-px-5 w-full overflow-hidden rounded-aa-pill bg-aa-neutral-200;
+  }
+  .aa-meter-fill {
+    @apply h-full rounded-aa-pill bg-aa-success transition-all duration-500 ease-out motion-reduce:transition-none;
+  }
+
+  /* Failure and nudge, rendered against the section that produced them
+     rather than in one shared stack at the top of the page. */
+  .aa-section-error {
+    @apply flex items-start justify-between gap-aa-3 rounded-aa-md bg-aa-error-soft px-aa-3 py-aa-2 text-aa-caption text-aa-error-strong;
+  }
+  .aa-section-hint {
+    @apply flex items-start justify-between gap-aa-3 rounded-aa-md bg-aa-warning-soft px-aa-3 py-aa-2 text-aa-caption text-aa-warning-strong;
+  }
+  .aa-section-error-btn {
+    @apply shrink-0 rounded-aa-sm font-semibold underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary;
+  }
+  .aa-section-dismiss {
+    @apply grid h-5 w-5 shrink-0 place-items-center rounded-aa-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary;
+  }
+
+  /* The shape of the answer, while the answer is still coming. */
+  .aa-skeleton {
+    @apply animate-pulse rounded-aa-sm bg-aa-neutral-100 motion-reduce:animate-none;
+  }
+
+  .aa-countdown {
+    @apply inline-flex shrink-0 items-center gap-aa-1 rounded-aa-pill px-aa-3 py-aa-px-5 text-aa-caption font-bold;
+  }
+  .aa-countdown-soon {
+    @apply bg-aa-warning-soft text-aa-warning-strong;
+  }
+  .aa-countdown-later {
+    @apply bg-aa-neutral-100 text-aa-neutral-700;
+  }
+
+  /* Rail + document. The rail is the answer to "have I done my gaps?" on a
+     sheet that runs several viewports deep. */
+  /* No `items-start` here: the rail column has to stretch to the full height
+     of the row, otherwise the sticky nav inside it has no track to travel
+     along and simply scrolls away with the sheet. */
+  .aa-runsheet {
+    @apply grid gap-aa-8;
+  }
+  .aa-runsheet-railcol {
+    @apply hidden lg:block;
+  }
+  /* The window is what scrolls on the options page, and the app bar is itself
+     `sticky top-0`, so the rail parks below it — the same offset SettingsRail
+     uses. `max-h`/`overflow` keep a long rail usable on a short window instead
+     of letting it run past the fold. */
+  .aa-runsheet-rail {
+    @apply lg:sticky lg:top-aa-appbar-offset lg:max-h-aa-rail lg:overflow-y-auto;
+  }
+  .aa-runsheet-rail-label {
+    @apply mb-aa-2 block text-aa-10 font-bold uppercase tracking-aa-wider-10 text-aa-text-secondary;
+  }
+  .aa-runsheet-link {
+    @apply flex w-full items-baseline justify-between gap-aa-2 rounded-aa-md px-aa-2 py-aa-px-5 text-left text-aa-13 text-aa-text-secondary transition-colors hover:bg-aa-neutral-100 hover:text-aa-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary;
+  }
+  .aa-runsheet-link-on {
+    @apply bg-aa-surface-brand-soft font-semibold text-aa-primary;
+  }
+  .aa-runsheet-count {
+    @apply shrink-0 text-aa-11 font-semibold tabular-nums;
+  }
+  /* The app bar is `sticky top-0`, so a rail jump that aligns a target with
+     the top of the viewport parks it underneath. Every rail destination
+     reserves the bar's height plus the same gap the rail itself sits at. */
+  .aa-runsheet-section {
+    @apply scroll-mt-aa-appbar-offset pt-aa-5;
+  }
+  .aa-runsheet-title {
+    @apply text-aa-17 font-semibold tracking-aa-tighter-2 text-aa-text-primary;
+  }
+
+  /* The boundary that draws the shared lifecycle. Five sections come out of
+     one model call, so one Regenerate sits on the box that encloses them
+     rather than four identical ones that each rewrote all five. */
+  .aa-runsheet-group {
+    @apply space-y-aa-5 rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5;
+  }
+  .aa-runsheet-group-head {
+    @apply flex items-center justify-between gap-aa-3 border-b border-aa-border pb-aa-4;
+  }
+  /* The hairline belongs *between* subsections. `first:` can't express that
+     here — the group head, and sometimes a failure row, precede the first
+     subsection — so the rule hangs off the adjacent-sibling pair instead and
+     never doubles up with the head's own bottom border. */
+  .aa-runsheet-sub {
+    @apply scroll-mt-aa-appbar-offset space-y-aa-3;
+  }
+  .aa-runsheet-sub + .aa-runsheet-sub {
+    @apply border-t border-aa-border-subtle pt-aa-px-18;
+  }
+  .aa-runsheet-sub-title {
+    @apply text-aa-15 font-semibold tracking-aa-tighter-2 text-aa-text-primary;
+  }
+  /* Backs the company research and notes sections, both of which the rail
+     jumps to, so it needs the same clearance. */
+  .aa-runsheet-panel {
+    @apply scroll-mt-aa-appbar-offset space-y-aa-3 rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5;
+  }
+}
+
+/* The rail's track. Written as a plain property for the same reason as
+   .aa-roster-grid: @apply has no arbitrary-track equivalent, and the width
+   comes from the design rather than from the spacing scale. */
+@media (min-width: 1024px) {
+  .aa-runsheet {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Print. prepCheatSheet.ts says it plainly: prep is read minutes before
+   an interview, usually on a second screen or on paper — somewhere this
+   extension isn't. Ctrl+P should produce that sheet, not a screenshot of
+   an app, so the chrome drops out and the sheet runs full width.
+   --------------------------------------------------------------------- */
+@media print {
+  .aa-no-print {
+    display: none !important;
+  }
+  .aa-runsheet {
+    display: block !important;
+  }
+  .aa-runsheet-group,
+  .aa-runsheet-panel {
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  .aa-runsheet-section,
+  .aa-runsheet-sub {
+    break-inside: avoid;
   }
 }

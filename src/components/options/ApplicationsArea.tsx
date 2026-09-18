@@ -56,7 +56,12 @@ export function ApplicationsArea({
         email={email}
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-8 min-w-0">
+      {/* No `overflow-y-auto` here: the shell is `min-h-screen`, so this
+          column has no height to scroll within and the window is what
+          actually scrolls. The declaration did nothing except register this
+          div as the nearest scrollport, which silently disabled `sticky` for
+          everything inside it (see the Prep section rail). */}
+      <div className="flex-1 px-8 py-8 min-w-0">
         {route.area === "applications" ? (
           <div>
             {route.view === "overview" ? (
