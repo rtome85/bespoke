@@ -139,8 +139,10 @@ export function PrepWorkspace({
     roundId: string
     text: string
   }>()
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>()
   useEffect(
     () => () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current)
       if (!notesTimer.current) return
       clearTimeout(notesTimer.current)
       const p = pendingNotes.current
@@ -171,10 +173,37 @@ export function PrepWorkspace({
     }, 600)
   }
 
-  const copySheet = () => {
-    void navigator.clipboard?.writeText(prepCheatSheet(app, round))
+  /**
+   * Copy, and say so only when the write actually resolved. The clipboard is
+   * absent in some contexts and rejects in others (denied permission, an
+   * unfocused document), and this button exists to get the sheet onto a second
+   * screen minutes before an interview — "Copied" over an empty clipboard is
+   * found out at the worst possible moment.
+   */
+  const copy = async (text: string, what: string): Promise<boolean> => {
+    setErrors((e) => e.filter((m) => !m.startsWith("Copy:")))
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("this browser didn't allow clipboard access")
+      }
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch (error) {
+      setErrors((e) => [
+        ...e,
+        `Copy: couldn't copy ${what} — ${
+          error instanceof Error ? error.message : "the clipboard refused"
+        }.`
+      ])
+      return false
+    }
+  }
+
+  const copySheet = async () => {
+    if (!(await copy(prepCheatSheet(app, round), "the prep sheet"))) return
     setCopied(true)
-    setTimeout(() => setCopied(false), 2_000)
+    if (copyTimer.current) clearTimeout(copyTimer.current)
+    copyTimer.current = setTimeout(() => setCopied(false), 2_000)
   }
 
   /**
@@ -311,7 +340,7 @@ export function PrepWorkspace({
           {ready && (
             <button
               type="button"
-              onClick={copySheet}
+              onClick={() => void copySheet()}
               className="aa-btn-link inline-flex items-center gap-1">
               {copied ? (
                 <Check className="w-3.5 h-3.5" />
@@ -440,8 +469,9 @@ export function PrepWorkspace({
               onCopy={
                 prep.companyResearch
                   ? () =>
-                      void navigator.clipboard?.writeText(
-                        prep.companyResearch ?? ""
+                      void copy(
+                        prep.companyResearch ?? "",
+                        "the company research"
                       )
                   : undefined
               }
