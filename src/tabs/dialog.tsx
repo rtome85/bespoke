@@ -203,7 +203,7 @@ function IndexDialog() {
           }
           error={saveFormError}
           generatingDocuments={generatingDocsForApp}
-          documentGenerationError={docsGenError}
+          documentGenerationError={docsGenError || docsSaveError}
           onSaveDocumentsChange={setSaveDocs}
           onGenerateDocuments={generateDocumentsForApplication}
           onSave={handleSaveApplication}

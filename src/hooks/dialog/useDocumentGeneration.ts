@@ -5,10 +5,7 @@ import { sendToBackground } from "@plasmohq/messaging"
 
 import { useDocumentGenerationProgress } from "~hooks/dialog/useSimulatedProgress"
 import { STORAGE_KEYS } from "~storage/keys"
-import {
-  mutateSavedApplications,
-  saveGeneratedDocuments
-} from "~storage/savedApplications"
+import { saveGeneratedDocuments } from "~storage/savedApplications"
 import type { GeneratedDocuments, GenerationResult } from "~types/dialog"
 import type { DocumentPreviewDraft } from "~types/documentPreview"
 import type { SavedApplication, UserProfile } from "~types/userProfile"
@@ -71,8 +68,9 @@ export function useDocumentGeneration({
           applicationId: editingApplication?.id,
           company: editingApplication?.company ?? companyName,
           jobTitle: editingApplication?.jobTitle ?? jobTitle,
-          jobUrl: pendingJobUrl || undefined,
-          jobDescription: jobDescription || undefined,
+          jobUrl: editingApplication?.jobUrl ?? pendingJobUrl ?? undefined,
+          jobDescription:
+            editingApplication?.jobDescription || jobDescription || undefined,
           matchPercentage: result?.match.percentage,
           matchSummary: result?.match.summary,
           matchStrengths: result?.match.strengths,
@@ -172,24 +170,16 @@ export function useDocumentGeneration({
           coverLetterContent: response.data.coverLetterContent,
           coverLetterFilename: response.data.coverLetterFilename
         }
-        const updatedApplication: SavedApplication = {
-          ...editingApplication,
-          ...documents
-        }
-        const updatedApplications = await mutateSavedApplications((current) =>
-          current.map((application) =>
-            application.id === updatedApplication.id
-              ? updatedApplication
-              : application
-          )
-        )
-        setSavedApplications(updatedApplications)
-        setEditingApplication(updatedApplication)
-        setSavedNoticeId((current) => current + 1)
-        // Keep the match report in step with what's now on the application.
+        // Held in memory first, so a failed write still leaves the documents
+        // on screen to preview. Keeps the match report in step too.
         setResult((current) =>
           current ? { ...current, ...documents } : current
         )
+        // Same writer as the report screen, so this path also survives the
+        // entry being deleted elsewhere while the form sat open.
+        if (await autoSave(documents)) {
+          setSavedNoticeId((current) => current + 1)
+        }
       } else {
         setApplicationDocumentsError(
           response?.message || "Generation failed. Please try again."
