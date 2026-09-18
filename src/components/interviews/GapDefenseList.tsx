@@ -33,9 +33,7 @@ export function GapDefenseList({ items, onChange }: Props) {
   return (
     <div className="space-y-6">
       {items.map((item, i) => (
-        <div
-          key={i}
-          className="group">
+        <div key={i} className="group">
           <div className="flex items-start gap-2">
             <button
               type="button"
@@ -81,7 +79,16 @@ export function GapDefenseList({ items, onChange }: Props) {
           </div>
           <textarea
             value={item.response}
-            onChange={(e) => patch(i, { response: e.target.value })}
+            // Writing your own answer is what `userAdded` protects, exactly
+            // like ticking or pinning one: without this, regenerating replaces
+            // the wording you just put in your own words. Clearing it back to
+            // empty releases that hold, so the next run can re-suggest one.
+            onChange={(e) =>
+              patch(i, {
+                response: e.target.value,
+                userAdded: e.target.value.trim().length > 0
+              })
+            }
             rows={3}
             aria-label={`Your answer for: ${item.gap}`}
             className="mt-2 w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
