@@ -49,8 +49,28 @@ const SOURCE_BUDGET = 14_000
 
 interface Researched {
   info: CompanyInfo
+  /** Rendered markdown. Never empty — see `asResearched`. */
+  text: string
   source: ResearchSource
   sourceUrls: string[]
+}
+
+/**
+ * A result, or `undefined` when the parse produced nothing worth showing.
+ *
+ * Rendering is the test: `companyInfoToMarkdown` drops blank and
+ * "Not available" fields, so an empty render means the source answered with
+ * nothing usable. Rejecting it here rather than downstream is what keeps the
+ * fallback chain walking — a source that returns unparseable JSON would
+ * otherwise satisfy `if (researched) break` and strand every source behind it.
+ */
+function asResearched(
+  info: CompanyInfo,
+  source: ResearchSource,
+  sourceUrls: string[]
+): Researched | undefined {
+  const text = companyInfoToMarkdown(info)
+  return text ? { info, text, source, sourceUrls } : undefined
 }
 
 /**
@@ -63,7 +83,7 @@ async function synthesize(
   sources: string,
   urls: string[],
   source: ResearchSource
-): Promise<Researched> {
+): Promise<Researched | undefined> {
   const route = await resolveJobRoute("prep")
   if ("error" in route) throw new Error(route.error)
 
@@ -113,7 +133,7 @@ async function synthesize(
     content = await run(route.fallback)
   }
 
-  return { info: parseCompanyInfo(content), source, sourceUrls: urls }
+  return asResearched(parseCompanyInfo(content), source, urls)
 }
 
 /** Which source the user pinned research to on the Model routing page. */
@@ -199,7 +219,9 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
         const info = await new PerplexityClient(
           perplexityConfig
         ).fetchCompanyInfo(company)
-        return { info, source: "perplexity", sourceUrls: [] }
+        const result = asResearched(info, "perplexity", [])
+        if (!result) attempts.push("Perplexity: nothing usable in the reply")
+        return result
       } catch (error) {
         note("Perplexity", error)
         return undefined
@@ -221,12 +243,14 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           attempts.push("Web search: no results")
           return undefined
         }
-        return await synthesize(
+        const result = await synthesize(
           company,
           formatResults(results),
           results.map((r) => r.url),
           "search"
         )
+        if (!result) attempts.push("Web search: nothing usable in the results")
+        return result
       } catch (error) {
         note("Web search", error)
         return undefined
@@ -252,12 +276,14 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           attempts.push(`${origin}: nothing readable`)
           return undefined
         }
-        return await synthesize(
+        const result = await synthesize(
           company,
           formatPages(pages),
           pages.map((p) => p.url),
           "site"
         )
+        if (!result) attempts.push(`${origin}: nothing usable on those pages`)
+        return result
       } catch (error) {
         note("Company site", error)
         return undefined
@@ -266,12 +292,14 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
 
     const viaModel = async (): Promise<Researched | undefined> => {
       try {
-        return await synthesize(
+        const result = await synthesize(
           company,
           `(No web sources were available. Answer from what you already know about ${company}, and use "Not available" wherever you are unsure.)`,
           [],
           "model"
         )
+        if (!result) attempts.push("Model knowledge: nothing usable")
+        return result
       } catch (error) {
         note("Model knowledge", error)
         return undefined
@@ -300,9 +328,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       if (researched) break
     }
 
-    const text = researched ? companyInfoToMarkdown(researched.info) : ""
-
-    if (!researched || !text) {
+    if (!researched) {
       // A pinned source that failed is one problem to fix; `auto` exhausting
       // everything is a different message, because the fix is to connect
       // something rather than to repair what is already chosen.
@@ -319,7 +345,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     }
 
     const entry: CompanyResearchEntry = {
-      text,
+      text: researched.text,
       parsed: researched.info,
       generatedAt: new Date().toISOString(),
       source: researched.source,
