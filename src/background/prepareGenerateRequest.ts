@@ -72,6 +72,15 @@ function resolve(
 ): ResolvedRoute | { error: string } {
   const cfg = providers[target.provider]
   const meta = PROVIDER_META[target.provider]
+  // Storage is not only written by the settings UI: a Drive restore copies a
+  // routing table in wholesale, so an unknown provider can reach here without
+  // passing the importer's validation. Say so, rather than reading `.name`
+  // off nothing a line later.
+  if (!meta) {
+    return {
+      error: `Unknown provider "${String(target.provider).slice(0, 40)}" in Model routing. Pick a model in Settings.`
+    }
+  }
   if (!cfg || cfg.enabled === false) {
     return { error: `${meta.name} is not connected. Connect it in Settings.` }
   }

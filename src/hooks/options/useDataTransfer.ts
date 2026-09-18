@@ -1,9 +1,11 @@
+import { PROVIDER_IDS } from "~constants/options"
 import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import { STORAGE_KEYS } from "~storage/keys"
 import { mutateSavedApplications } from "~storage/savedApplications"
 import { RESEARCH_PREFERENCES, SEARCH_ENGINE_IDS } from "~types/config"
 import type {
   CustomPrompts,
+  LLMProviderId,
   LLMTuningConfig,
   ModelRouting,
   OllamaConfig,
@@ -110,11 +112,17 @@ function isValidProvidersConfig(value: unknown): value is ProvidersConfig {
   )
 }
 
+/**
+ * Shared by every route in the table. `provider` has to be a known id, not
+ * merely a string: `resolve` looks the target up in `PROVIDER_META` and reads
+ * the result, so an unrecognised name from a hand-edited backup would arrive
+ * as `undefined` there.
+ */
 function isValidRouteTarget(value: unknown): boolean {
   return (
     isRecord(value) &&
-    typeof value.provider === "string" &&
-    typeof value.model === "string"
+    typeof value.model === "string" &&
+    PROVIDER_IDS.includes(value.provider as LLMProviderId)
   )
 }
 
