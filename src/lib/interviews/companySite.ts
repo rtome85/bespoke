@@ -75,9 +75,17 @@ export function isJobBoard(host: string): boolean {
 
 /**
  * The company's own origin, derived from a saved job posting URL. Returns
- * undefined for job boards and for anything that isn't a parseable https URL —
- * both mean "we don't know their domain", which the caller treats as "this
- * strategy is unavailable" rather than as a failure.
+ * undefined for job boards and for anything that isn't a parseable http(s)
+ * URL — both mean "we don't know their domain", which the caller treats as
+ * "this strategy is unavailable" rather than as a failure.
+ *
+ * The origin is always https, whatever the saved link used. Pages read here
+ * are fed to a model as source material, so over cleartext anyone on the path
+ * could rewrite what it reads — and the host being interviewed with would be
+ * on the wire besides. An http posting link is usually just an old one for a
+ * site that serves https today, so it is upgraded rather than refused; a host
+ * that genuinely has no https simply fails to fetch, and the research chain
+ * moves on.
  */
 export function companyOriginFrom(jobUrl?: string): string | undefined {
   if (!jobUrl?.trim()) return undefined
@@ -85,7 +93,7 @@ export function companyOriginFrom(jobUrl?: string): string | undefined {
     const url = new URL(jobUrl.trim())
     if (url.protocol !== "https:" && url.protocol !== "http:") return undefined
     if (isJobBoard(url.host)) return undefined
-    return `${url.protocol}//${url.host}`
+    return `https://${url.host}`
   } catch {
     return undefined
   }

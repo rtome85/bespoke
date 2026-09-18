@@ -58,12 +58,12 @@
           "sidePanel"
         ],
         "optional_host_permissions": [
-          "*://*/*"
+          "https://*/*"
         ]
       },
       "firefox": {
         "optional_permissions": [
-          "*://*/*"
+          "https://*/*"
         ]
       }
     },
