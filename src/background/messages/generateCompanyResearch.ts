@@ -181,9 +181,18 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   }
 
   try {
+    const routing = await loadResearchPreference()
+
     if (!body.force) {
       const cached = await readCompanyResearch(company)
-      if (cached) {
+      // A pinned preference governs the cache too: reusing an entry from a
+      // different source would quietly serve what the user just excluded —
+      // "web search only" answering from model knowledge, provenance line and
+      // all. Entries written before `source` existed, and those seeded by the
+      // side panel's match flow, all came from Perplexity.
+      const fromPinnedSource =
+        routing === "auto" || (cached?.source ?? "perplexity") === routing
+      if (cached && fromPinnedSource) {
         res.send({ success: true, cached: true, entry: cached })
         return
       }
@@ -196,8 +205,6 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       perplexityConfig?: PerplexityConfig
       searchConfig?: SearchConfig
     }
-
-    const routing = await loadResearchPreference()
 
     // Why each source was skipped, so a failure can say what to connect
     // rather than just "research failed".

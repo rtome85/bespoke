@@ -101,6 +101,7 @@ export async function seedCompanyResearch(
   await writeCompanyResearch(company, {
     text,
     parsed: info,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
+    source: "perplexity"
   })
 }
