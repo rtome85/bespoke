@@ -174,7 +174,9 @@ export function MatchReportScreen({
                     onPreview={onPreviewDocuments}
                   />
                   {documentsSaveError && (
-                    <p className="px-2 text-aa-13 text-aa-error-strong">
+                    <p
+                      role="alert"
+                      className="px-2 text-aa-13 text-aa-error-strong">
                       {documentsSaveError}
                     </p>
                   )}
