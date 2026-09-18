@@ -243,20 +243,25 @@ export function PrepWorkspace({
           {w.countdown && <CountdownChip countdown={w.countdown} />}
         </div>
 
-        {w.busy ? (
+        {/* Grouped, because only one of the two is ever visible and the live
+            region has to stay mounted even while idle. As a direct child of
+            the `space-y` header it would pick up a margin while empty and
+            open a gap under the title. */}
+        <div>
           <GenerateProgress
             stage={w.stage}
             elapsed={w.elapsed}
             company={app.company}
             roundName={name}
           />
-        ) : (
-          <ReadinessMeter
-            done={readiness.done}
-            total={readiness.total}
-            generatedLabel={generatedLabel}
-          />
-        )}
+          {!w.busy && (
+            <ReadinessMeter
+              done={readiness.done}
+              total={readiness.total}
+              generatedLabel={generatedLabel}
+            />
+          )}
+        </div>
       </header>
 
       <div className="space-y-aa-3 mb-aa-5 empty:hidden aa-no-print">

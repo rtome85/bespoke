@@ -150,25 +150,34 @@ export function GenerateProgress({
   company: string
   roundName: string
 }) {
-  if (stage === "idle") return null
+  const running = stage !== "idle"
   const step = stage === "research" ? 1 : 2
   const what =
     stage === "research"
       ? `Researching ${company}`
       : `Writing prep for a ${roundName}`
+  // The live region stays mounted while idle and only its contents come and
+  // go. A `role="status"` element inserted into the DOM at the same moment as
+  // its text is not reliably announced — assistive tech has to be watching the
+  // region before the change happens for it to count as one. Empty, the flex
+  // box has no line boxes and so no height.
   return (
     <p
       role="status"
       aria-live="polite"
       className="flex items-center gap-aa-2 text-aa-13 text-aa-text-secondary">
-      <Loader2
-        className="w-3.5 h-3.5 shrink-0 animate-spin motion-reduce:animate-none"
-        aria-hidden="true"
-      />
-      <span>
-        Step {step} of 2 · {what}
-        {elapsed > 8 && ` · ${elapsed}s`}
-      </span>
+      {running && (
+        <>
+          <Loader2
+            className="w-3.5 h-3.5 shrink-0 animate-spin motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+          <span>
+            Step {step} of 2 · {what}
+            {elapsed > 8 && ` · ${elapsed}s`}
+          </span>
+        </>
+      )}
     </p>
   )
 }
