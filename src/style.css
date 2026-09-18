@@ -506,7 +506,7 @@ body {
     @apply shrink-0 text-aa-11 font-semibold tabular-nums;
   }
   .aa-runsheet-section {
-    @apply scroll-mt-aa-4 border-t border-aa-border pt-aa-5;
+    @apply scroll-mt-aa-4 pt-aa-5;
   }
   .aa-runsheet-title {
     @apply text-aa-17 font-semibold tracking-aa-tighter-2 text-aa-text-primary;
