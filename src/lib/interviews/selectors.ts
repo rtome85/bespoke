@@ -84,6 +84,56 @@ export function relativeDayLabel(
   return n > 0 ? `in ${n} days` : `${-n} days ago`
 }
 
+/**
+ * "just now" / "2h ago" / "yesterday" / "6 days ago" for a full ISO timestamp.
+ *
+ * `relativeDayLabel` above works on a bare "YYYY-MM-DD" and so collapses
+ * everything inside one day to "today" — fine on an agenda, wrong on the prep
+ * sheet, where prep written eight minutes ago and prep written eight hours ago
+ * are a meaningfully different thing to be holding when the interview is in
+ * twenty minutes.
+ */
+export function relativeTimeLabel(iso: string, now: Date = new Date()): string {
+  const then = Date.parse(iso)
+  if (Number.isNaN(then)) return ""
+  const minutes = Math.round((now.getTime() - then) / 60_000)
+  if (minutes < 1) return "just now"
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  return relativeDayLabel(iso.slice(0, 10), now)
+}
+
+/**
+ * Minutes from now until the round starts — negative once it has begun, and
+ * null when the round has no date or no time. The prep workspace is the only
+ * page that knows which interview it is about, so it is the one page that can
+ * say how long is left.
+ */
+export function minutesUntilRound(
+  round: InterviewRound,
+  now: Date = new Date()
+): number | null {
+  const start = roundStartMs(round)
+  return start === null ? null : Math.round((start - now.getTime()) / 60_000)
+}
+
+/** "in 38 min" / "in 2h 10m" / "in 3 days" / "25 min ago". */
+export function countdownLabel(minutes: number): string {
+  const past = minutes < 0
+  const abs = Math.abs(minutes)
+  const days = Math.floor(abs / 1_440)
+  const hours = Math.floor((abs % 1_440) / 60)
+  const mins = abs % 60
+  const span =
+    days >= 1
+      ? `${days} day${days === 1 ? "" : "s"}`
+      : hours >= 1
+        ? `${hours}h ${mins}m`
+        : `${mins} min`
+  return past ? `${span} ago` : `in ${span}`
+}
+
 /** Local epoch ms for a round's start, or null when date/time is incomplete. */
 export function roundStartMs(round: InterviewRound): number | null {
   if (!round.date || !round.time) return null
