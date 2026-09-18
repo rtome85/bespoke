@@ -280,7 +280,14 @@ export function NotesPanel({
 }) {
   const fieldId = useId()
   return (
-    <section id={id} className="aa-runsheet-panel">
+    // Focusable for the same reason as the sections in PrepWorkspace: the
+    // rail scrolls here and then calls `focus()`, which is a no-op on a
+    // <section> without a tabIndex, leaving a keyboard user behind on the
+    // rail button.
+    <section
+      id={id}
+      tabIndex={-1}
+      className="aa-runsheet-panel focus:outline-none">
       <div className="flex items-center justify-between gap-aa-3">
         <label htmlFor={fieldId} className="aa-runsheet-title">
           My notes
