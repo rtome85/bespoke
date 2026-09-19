@@ -1,5 +1,5 @@
 import type { GenerateRequest, LLMTuningConfig } from "~types/config"
-import { DEFAULT_LLM_TUNING } from "~types/config"
+import { DEFAULT_LLM_TUNING, OUTPUT_LANGUAGE_META } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
 
 import type { LLMClient } from "./llm/types"
@@ -139,6 +139,33 @@ export class LLMService {
     return formatUserProfile(profile, includeYears)
   }
 
+  /**
+   * The language block appended to every document system prompt. It has to
+   * outrank the prompt body, which is written in English and names English
+   * section headings — without the explicit override the model mirrors the
+   * prompt's language instead of the posting's.
+   */
+  private languageInstructions(tuning: LLMTuningConfig): string {
+    const shared = `- Translate the section headings and every fixed label too — the structure, heading order and Markdown formatting stay exactly as specified above, only the words change.
+- Leave proper nouns alone: company names, the job title as advertised, product and technology names, URLs, email addresses and phone numbers.
+- Never mix languages: no English headings, dates or boilerplate left behind in a document written in another language.`
+
+    const configured =
+      tuning.outputLanguage ?? DEFAULT_LLM_TUNING.outputLanguage
+    const target = OUTPUT_LANGUAGE_META[configured]?.name
+
+    if (!target) {
+      return `OUTPUT LANGUAGE — this overrides the language of every instruction above:
+- Write the ENTIRE document in the language the job description is written in, not the language of these instructions. A Portuguese posting gets a Portuguese document, a German posting a German one.
+- If the posting mixes languages, follow the language its responsibilities and requirements are written in.
+${shared}`
+    }
+
+    return `OUTPUT LANGUAGE — this overrides the language of every instruction above:
+- Write the ENTIRE document in ${target}, whatever language the job description is written in.
+${shared}`
+  }
+
   private tuningInstructions(tuning: LLMTuningConfig): {
     toneInstruction: string
     focusInstruction: string
@@ -240,9 +267,15 @@ export class LLMService {
     ]
       .filter(Boolean)
       .join(" ")
-    const systemPrompt = extraInstructions
-      ? `${prompts.resumeSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
-      : prompts.resumeSystemPrompt
+    const systemPrompt = [
+      prompts.resumeSystemPrompt,
+      extraInstructions
+        ? `ADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
+        : "",
+      this.languageInstructions(llmTuning)
+    ]
+      .filter(Boolean)
+      .join("\n\n")
 
     const interpolatedUserPrompt = this.interpolatePrompt(
       prompts.resumeUserPromptTemplate,
@@ -281,9 +314,15 @@ export class LLMService {
     const extraInstructions = [toneInstruction, readingLevelInstruction]
       .filter(Boolean)
       .join(" ")
-    const systemPrompt = extraInstructions
-      ? `${prompts.coverLetterSystemPrompt}\n\nADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
-      : prompts.coverLetterSystemPrompt
+    const systemPrompt = [
+      prompts.coverLetterSystemPrompt,
+      extraInstructions
+        ? `ADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
+        : "",
+      this.languageInstructions(llmTuning)
+    ]
+      .filter(Boolean)
+      .join("\n\n")
 
     const interpolatedUserPrompt = this.interpolatePrompt(
       prompts.coverLetterUserPromptTemplate,

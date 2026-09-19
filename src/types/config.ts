@@ -353,6 +353,45 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
 ]
 
+/**
+ * Language the generated CV and cover letter are written in. `"auto"` (the
+ * default) follows the job posting — a Portuguese posting gets a Portuguese
+ * CV — anything else forces that language regardless of the posting.
+ */
+export type OutputLanguage =
+  | "auto"
+  | "en"
+  | "pt"
+  | "pt-BR"
+  | "es"
+  | "fr"
+  | "de"
+  | "it"
+  | "nl"
+
+/**
+ * `label` is the settings dropdown entry; `name` is how the language is named
+ * to the model, so it must stay unambiguous ("European Portuguese", not "pt").
+ */
+export const OUTPUT_LANGUAGE_META: Record<
+  OutputLanguage,
+  { label: string; name: string }
+> = {
+  auto: { label: "Match the job posting", name: "" },
+  en: { label: "English", name: "English" },
+  pt: { label: "Portuguese (Portugal)", name: "European Portuguese" },
+  "pt-BR": { label: "Portuguese (Brazil)", name: "Brazilian Portuguese" },
+  es: { label: "Spanish", name: "Spanish" },
+  fr: { label: "French", name: "French" },
+  de: { label: "German", name: "German" },
+  it: { label: "Italian", name: "Italian" },
+  nl: { label: "Dutch", name: "Dutch" }
+}
+
+export const OUTPUT_LANGUAGES = Object.keys(
+  OUTPUT_LANGUAGE_META
+) as OutputLanguage[]
+
 export interface LLMTuningConfig {
   /** Creativity / randomness (0.1 = deterministic, 1.5 = very creative). Default 0.7 */
   temperature: number
@@ -370,6 +409,12 @@ export interface LLMTuningConfig {
   bulletDensity: "concise" | "standard" | "detailed"
   /** Vocabulary and sentence complexity target */
   readingLevel: "simple" | "standard" | "advanced"
+  /**
+   * Language the CV and cover letter are written in. Optional in storage —
+   * configs saved before this setting existed have no value, and every reader
+   * falls back to `DEFAULT_LLM_TUNING.outputLanguage`.
+   */
+  outputLanguage?: OutputLanguage
 }
 
 export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
@@ -380,7 +425,8 @@ export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
   writingTone: "professional",
   resumeFocus: "balanced",
   bulletDensity: "standard",
-  readingLevel: "standard"
+  readingLevel: "standard",
+  outputLanguage: "auto"
 }
 
 export interface CustomPrompts {
