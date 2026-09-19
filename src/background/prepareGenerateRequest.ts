@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from "~storage/keys"
 import type {
   GenerateRequest,
   LLMProviderId,
+  LLMTuningConfig,
   ModelRouting,
   ProviderConfig,
   ProvidersConfig,
@@ -186,7 +187,13 @@ export async function prepareGenerateRequest(
   })
 
   const customPrompts = storage[STORAGE_KEYS.CUSTOM_PROMPTS] || DEFAULT_PROMPTS
-  const llmTuning = storage[STORAGE_KEYS.LLM_TUNING] || DEFAULT_LLM_TUNING
+  // Spread over the defaults rather than picking one or the other: a tuning
+  // object saved before a setting existed (outputLanguage, say) is otherwise
+  // missing that key entirely.
+  const llmTuning: LLMTuningConfig = {
+    ...DEFAULT_LLM_TUNING,
+    ...(storage[STORAGE_KEYS.LLM_TUNING] ?? {})
+  }
   const jobData = storage[STORAGE_KEYS.PENDING_JOB_DATA]
 
   const { providers, routing } = await loadProvidersAndRouting()

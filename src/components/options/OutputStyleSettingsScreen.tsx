@@ -10,7 +10,13 @@ import {
   STRICTNESS,
   TONE
 } from "~constants/options"
-import { DEFAULT_LLM_TUNING, type LLMTuningConfig } from "~types/config"
+import {
+  DEFAULT_LLM_TUNING,
+  OUTPUT_LANGUAGE_META,
+  OUTPUT_LANGUAGES,
+  type LLMTuningConfig,
+  type OutputLanguage
+} from "~types/config"
 
 interface Props {
   tuning: LLMTuningConfig
@@ -51,6 +57,11 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
     BULLET_DENSITY.indexOf(tuning.bulletDensity)
   )
   const readingIndex = fallbackIndex(READING_LEVEL.indexOf(tuning.readingLevel))
+  // Configs saved before this setting existed carry no language at all.
+  const languageValue =
+    tuning.outputLanguage && OUTPUT_LANGUAGE_META[tuning.outputLanguage]
+      ? tuning.outputLanguage
+      : "auto"
 
   return (
     <div className="aa-card">
@@ -73,6 +84,34 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
           </SettingRow>
 
           <p className="aa-settings-section-label">WRITING</p>
+          <SettingRow
+            label="Language"
+            sub="Language the CV and cover letter are written in">
+            <div className="w-aa-px-460 max-w-full">
+              <select
+                id="output-language"
+                aria-label="Document language"
+                value={languageValue}
+                onChange={(event) =>
+                  onChange({
+                    ...tuning,
+                    outputLanguage: event.target.value as OutputLanguage
+                  })
+                }
+                className="aa-input">
+                {OUTPUT_LANGUAGES.map((language) => (
+                  <option key={language} value={language}>
+                    {OUTPUT_LANGUAGE_META[language].label}
+                  </option>
+                ))}
+              </select>
+              <p className="aa-hint">
+                {languageValue === "auto"
+                  ? "A Portuguese posting gets a Portuguese CV, a German posting a German one."
+                  : `Always written in ${OUTPUT_LANGUAGE_META[languageValue].label}, whatever language the posting uses.`}
+              </p>
+            </div>
+          </SettingRow>
           <SettingRow
             label="Tone"
             sub="Voice used across the CV and cover letter">
@@ -157,7 +196,8 @@ export function OutputStyleSettingsScreen({ tuning, onChange }: Props) {
               writingTone: DEFAULT_LLM_TUNING.writingTone,
               resumeFocus: DEFAULT_LLM_TUNING.resumeFocus,
               bulletDensity: DEFAULT_LLM_TUNING.bulletDensity,
-              readingLevel: DEFAULT_LLM_TUNING.readingLevel
+              readingLevel: DEFAULT_LLM_TUNING.readingLevel,
+              outputLanguage: DEFAULT_LLM_TUNING.outputLanguage
             })
           }
           className="text-aa-caption font-semibold text-aa-primary bg-transparent border-0 p-0 cursor-pointer">
