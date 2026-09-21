@@ -117,6 +117,103 @@ export function formatUserProfile(
     .join("\n\n")
 }
 
+interface LanguageRequirement {
+  language: string
+  level: string
+}
+
+/**
+ * Endonyms for the languages postings most often ask for, so a profile that
+ * writes "Français" still matches a requirement reported as "French". Only
+ * ever used to recognise a language the candidate DOES list — a name missing
+ * from the table can still block the score, never the other way round.
+ */
+const LANGUAGE_ALIASES: Record<string, string[]> = {
+  english: ["ingles", "inglese", "englisch", "anglais", "engels"],
+  french: ["francais", "frances", "francese", "franzosisch", "frans"],
+  german: ["deutsch", "alemao", "aleman", "allemand", "tedesco", "duits"],
+  spanish: ["espanol", "espanhol", "espagnol", "spagnolo", "spanisch"],
+  portuguese: ["portugues", "portugais", "portoghese", "portugiesisch"],
+  italian: ["italiano", "italien", "italienisch", "italiaans"],
+  dutch: ["nederlands", "hollands", "neerlandais", "niederlandisch"],
+  chinese: ["mandarin", "mandarim", "chinois", "chinesisch", "putonghua"]
+}
+
+/** Strip case, accents and anything a level suffix may have left behind. */
+function normalizeLanguageName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "")
+}
+
+function canonicalLanguageName(name: string): string {
+  const normalized = normalizeLanguageName(name)
+  if (!normalized) return ""
+  for (const [canonical, aliases] of Object.entries(LANGUAGE_ALIASES)) {
+    if (
+      normalized.includes(canonical) ||
+      aliases.some((alias) => normalized.includes(alias))
+    ) {
+      return canonical
+    }
+  }
+  return normalized
+}
+
+function profileListsLanguage(profile: UserProfile, name: string): boolean {
+  const target = canonicalLanguageName(name)
+  if (!target) return false
+  return (profile.languages ?? []).some((entry) => {
+    const listed = canonicalLanguageName(entry.name)
+    return (
+      listed.length > 0 && (listed.includes(target) || target.includes(listed))
+    )
+  })
+}
+
+/**
+ * Hard language requirements the candidate cannot meet. The model flags
+ * them, but a "missing" verdict only counts when the profile agrees — a
+ * language the candidate actually lists must never zero the score.
+ */
+function findBlockingLanguages(
+  raw: unknown,
+  profile: UserProfile
+): LanguageRequirement[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((entry) => {
+      const item = (entry ?? {}) as Record<string, unknown>
+      return {
+        language: String(item.language ?? "").trim(),
+        level: String(item.level ?? "").trim(),
+        required: item.required === true,
+        candidateMeets: item.candidateMeets === true
+      }
+    })
+    .filter(
+      (item) =>
+        item.language.length > 0 &&
+        item.required &&
+        !item.candidateMeets &&
+        !profileListsLanguage(profile, item.language)
+    )
+    .map(({ language, level }) => ({ language, level }))
+}
+
+function describeLanguage(requirement: LanguageRequirement): string {
+  return requirement.level
+    ? `${requirement.language} (${requirement.level})`
+    : requirement.language
+}
+
+function joinList(items: string[]): string {
+  if (items.length < 2) return items.join("")
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`
+}
+
 /**
  * Provider-agnostic prompt building + response parsing. The only
  * provider-specific piece is the injected LLMClient.
@@ -409,6 +506,12 @@ DIMENSION SCORING — be literal, score only what is explicitly stated in the ca
 - "domainFit" (0–100): relevance of the candidate's industry/domain background. 100 = same domain, 50 = adjacent, 0 = unrelated.
 - "bonusSkills" (0–100): coverage of the job's nice-to-have/preferred (non-required) skills. 100 = all bonus skills present, 0 = none.
 
+HUMAN LANGUAGE REQUIREMENTS — report every spoken/written language the posting mentions in "languageRequirements" (never programming languages):
+- "required": true only when the posting states the language as a hard requirement — listed among the requirements/qualifications, or phrased as "must", "fluent in", "mandatory", or with a required level such as B2/C1. Use false when it is framed as nice to have, a plus, an asset, an advantage, preferred, desirable or optional.
+- "candidateMeets": true only when the candidate profile explicitly lists that language — in any spelling or language — at the requested level or above. Native or mother tongue meets any level. If the profile does not list the language at all, this is false.
+- Return an empty array when the posting mentions no human language requirement.
+- Score the four dimensions normally either way; the language rule is applied afterwards.
+
 Respond with ONLY a single valid JSON object — no prose, no markdown fences.
 
 Required shape:
@@ -417,6 +520,14 @@ Required shape:
   "experienceMatch": <integer 0–100>,
   "domainFit": <integer 0–100>,
   "bonusSkills": <integer 0–100>,
+  "languageRequirements": [
+    {
+      "language": "<language name in English>",
+      "level": "<level the posting asks for, e.g. B2 or fluent — empty if unstated>",
+      "required": <true|false>,
+      "candidateMeets": <true|false>
+    }
+  ],
   "summary": "<2 concise sentences summarising overall fit>",
   "strengths": ["<specific strength>", ...],
   "weaknesses": ["<specific gap>", ...],
@@ -471,15 +582,34 @@ ${this.formatUserProfile(request.userProfile, true)}`
         0.4 * skills + 0.3 * exp + 0.2 * domain + 0.1 * bonus
       )
 
+      // A language the posting requires outright and the candidate does not
+      // speak is a hard filter, not a deduction — the score goes to 0 however
+      // well the rest of the profile fits. Nice-to-have languages score as usual.
+      const blocking = findBlockingLanguages(
+        parsed.languageRequirements,
+        request.userProfile
+      )
+      const summary = String(parsed.summary || "")
+      const weaknesses = Array.isArray(parsed.weaknesses)
+        ? parsed.weaknesses.map(String)
+        : []
+
       return {
-        percentage,
-        summary: String(parsed.summary || ""),
+        percentage: blocking.length > 0 ? 0 : percentage,
+        summary:
+          blocking.length > 0
+            ? `This role requires ${joinList(blocking.map(describeLanguage))}, which the candidate does not speak or write. ${summary}`.trim()
+            : summary,
         strengths: Array.isArray(parsed.strengths)
           ? parsed.strengths.map(String)
           : [],
-        weaknesses: Array.isArray(parsed.weaknesses)
-          ? parsed.weaknesses.map(String)
-          : [],
+        weaknesses: [
+          ...blocking.map(
+            (requirement) =>
+              `Does not speak or write ${describeLanguage(requirement)}, which the posting lists as a requirement.`
+          ),
+          ...weaknesses
+        ],
         improvements: Array.isArray(parsed.improvements)
           ? parsed.improvements.map(String)
           : []
