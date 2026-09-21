@@ -6,6 +6,8 @@ import type { ReactNode } from "react"
 // ~lib/pdf/map-tokens.ts) instead of injecting marked's HTML output —
 // LLM output is untrusted text, and building React elements directly from
 // typed tokens means there's no HTML string to sanitize in the first place.
+// Body blocks inherit their colour from the caller's wrapper: the document
+// preview runs at full contrast, the Prep research card at body tone.
 const SAFE_HREF = /^(https?:|mailto:)/i
 
 function renderInline(tokens: Token[] | undefined): ReactNode {
@@ -109,9 +111,7 @@ function renderBlock(token: Token, i: number): ReactNode {
     case "paragraph": {
       const t = token as Tokens.Paragraph
       return (
-        <p
-          key={i}
-          className="text-aa-13 leading-relaxed text-aa-text-primary mt-2 first:mt-0">
+        <p key={i} className="text-aa-13 leading-relaxed mt-2 first:mt-0">
           {renderInline(t.tokens)}
         </p>
       )
@@ -124,13 +124,11 @@ function renderBlock(token: Token, i: number): ReactNode {
       return t.ordered ? (
         <ol
           key={i}
-          className="mt-2 pl-5 list-decimal text-aa-13 leading-relaxed text-aa-text-primary">
+          className="mt-2 pl-5 list-decimal text-aa-13 leading-relaxed">
           {items}
         </ol>
       ) : (
-        <ul
-          key={i}
-          className="mt-2 pl-5 list-disc text-aa-13 leading-relaxed text-aa-text-primary">
+        <ul key={i} className="mt-2 pl-5 list-disc text-aa-13 leading-relaxed">
           {items}
         </ul>
       )
@@ -142,9 +140,7 @@ function renderBlock(token: Token, i: number): ReactNode {
     default:
       if ("text" in token && typeof token.text === "string") {
         return (
-          <p
-            key={i}
-            className="text-aa-13 leading-relaxed text-aa-text-primary mt-2">
+          <p key={i} className="text-aa-13 leading-relaxed mt-2">
             {token.text}
           </p>
         )
