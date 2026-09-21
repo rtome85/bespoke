@@ -9,11 +9,19 @@ import {
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_LLM_TUNING,
+  DEFAULT_TECHNICAL_PREP_PROMPT,
   LEGACY_INTERVIEW_PREP_PROMPTS,
+  LEGACY_TECHNICAL_PREP_PROMPTS,
   type LLMTuningConfig,
   type PerplexityConfig
 } from "~types/config"
-import type { GapDefense, StarStory, UserProfile } from "~types/userProfile"
+import type {
+  GapDefense,
+  StarStory,
+  TechExercise,
+  TechQuestion,
+  UserProfile
+} from "~types/userProfile"
 
 /** One earlier round of the same process, as the UI knows it. */
 export interface PriorRoundContext {
@@ -27,6 +35,12 @@ export interface PriorRoundContext {
 
 interface Body {
   roundType: string
+  /**
+   * Technical rounds are prepped as a study plan rather than as behavioural
+   * coaching: a different prompt, a different set of sections back. Set from
+   * `isTechnicalRound` at the call site.
+   */
+  technical?: boolean
   companyName: string
   jobTitle: string
   jobDescription?: string
@@ -94,6 +108,33 @@ function asStarStories(v: unknown, max: number): StarStory[] {
   )
 }
 
+function asTechQuestions(v: unknown, max: number): TechQuestion[] {
+  return (
+    (Array.isArray(v) ? v : [])
+      .map((raw) => ({
+        question: asText(raw?.question, 300),
+        answer: asText(raw?.answer, 1_200),
+        topic: asText(raw?.topic, 60)
+      }))
+      // A question with no answer is a quiz, not prep — the whole point of the
+      // drill is having something to check yourself against.
+      .filter((q) => q.question && q.answer)
+      .slice(0, max)
+  )
+}
+
+function asTechExercises(v: unknown, max: number): TechExercise[] {
+  return (Array.isArray(v) ? v : [])
+    .map((raw) => ({
+      title: asText(raw?.title, 120),
+      prompt: asText(raw?.prompt, 1_200),
+      approach: asText(raw?.approach, 1_200),
+      topic: asText(raw?.topic, 60)
+    }))
+    .filter((e) => e.title && e.prompt)
+    .slice(0, max)
+}
+
 export interface ParsedPrep {
   logistics: string
   likelyTopics: string[]
@@ -101,6 +142,8 @@ export interface ParsedPrep {
   questionsToAsk: string[]
   gapDefenses: GapDefense[]
   starStories: StarStory[]
+  techQuestions: TechQuestion[]
+  techExercises: TechExercise[]
 }
 
 const EMPTY_PREP: ParsedPrep = {
@@ -109,17 +152,33 @@ const EMPTY_PREP: ParsedPrep = {
   talkingPoints: [],
   questionsToAsk: [],
   gapDefenses: [],
-  starStories: []
+  starStories: [],
+  techQuestions: [],
+  techExercises: []
 }
 
-export function prepIsEmpty(p: ParsedPrep): boolean {
+/**
+ * Did this response carry anything the round in hand can actually use?
+ *
+ * Judged against the sheet being generated, not against every field the parser
+ * knows. Only `logistics`, `likelyTopics` and `questionsToAsk` are written by
+ * both prompts; the rest belong to one sheet each, and the caller writes only
+ * its own. So a technical round answered with nothing but talking points and
+ * STAR stories is empty *for that round* — counting them would report success,
+ * merge the absent sections down to nothing, and leave the user staring at a
+ * blank sheet stamped "generated just now" with no error to act on. That is
+ * the exact failure this gate exists to turn into a message naming the prompt
+ * to go and fix.
+ */
+export function prepIsEmpty(p: ParsedPrep, technical = false): boolean {
+  const ownSections = technical
+    ? [p.techQuestions, p.techExercises]
+    : [p.talkingPoints, p.gapDefenses, p.starStories]
   return (
     !p.logistics &&
     !p.likelyTopics.length &&
-    !p.talkingPoints.length &&
     !p.questionsToAsk.length &&
-    !p.gapDefenses.length &&
-    !p.starStories.length
+    ownSections.every((section) => !section.length)
   )
 }
 
@@ -141,7 +200,9 @@ export function parsePrep(content: string): ParsedPrep {
       talkingPoints: asStringList(p.talkingPoints, 8),
       questionsToAsk: asStringList(p.questionsToAsk, 6),
       gapDefenses: asGapDefenses(p.gapDefenses, 5),
-      starStories: asStarStories(p.starStories, 4)
+      starStories: asStarStories(p.starStories, 4),
+      techQuestions: asTechQuestions(p.techQuestions, 8),
+      techExercises: asTechExercises(p.techExercises, 5)
     }
   } catch {
     return EMPTY_PREP
@@ -215,10 +276,21 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       "llmTuning"
     ])) as { perplexityConfig?: PerplexityConfig; llmTuning?: LLMTuningConfig }
 
-    const stored = perplexityConfig?.interviewPrepPrompt
-    const customized =
-      !!stored?.trim() && !LEGACY_INTERVIEW_PREP_PROMPTS.includes(stored)
-    const template = customized ? stored! : DEFAULT_INTERVIEW_PREP_PROMPT
+    // A technical round runs a prompt of its own, kept in its own storage
+    // slot: the two ask for different sections, so one edited template must
+    // not be able to strand the other round type on the wrong structure.
+    const technical = !!body.technical
+    const stored = technical
+      ? perplexityConfig?.technicalPrepPrompt
+      : perplexityConfig?.interviewPrepPrompt
+    const legacy = technical
+      ? LEGACY_TECHNICAL_PREP_PROMPTS
+      : LEGACY_INTERVIEW_PREP_PROMPTS
+    const shipped = technical
+      ? DEFAULT_TECHNICAL_PREP_PROMPT
+      : DEFAULT_INTERVIEW_PREP_PROMPT
+    const customized = !!stored?.trim() && !legacy.includes(stored)
+    const template = customized ? stored! : shipped
     const tuning = llmTuning ?? DEFAULT_LLM_TUNING
 
     const userPrompt = template
@@ -231,7 +303,14 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       )
       .replace(
         /\{\{userProfile\}\}/g,
-        body.userProfile ? formatUserProfile(body.userProfile) : NOT_PROVIDED
+        body.userProfile
+          ? // The technical sheet pitches every exercise and question at the
+            // depth the ad asks for, which it can only do by comparing the
+            // years the job wants against the years the candidate has. Without
+            // this flag the per-skill years are stripped from the profile
+            // block and that comparison runs blind.
+            formatUserProfile(body.userProfile, technical)
+          : NOT_PROVIDED
       )
       .replace(
         /\{\{roundContext\}\}/g,
@@ -248,8 +327,9 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const messages: ChatMessage[] = [
       {
         role: "system",
-        content:
-          "You are an interview preparation assistant. Return only valid JSON, no markdown."
+        content: technical
+          ? "You are a senior engineer preparing a candidate for a technical interview. Every technical claim you make must be correct. Return only valid JSON, no markdown."
+          : "You are an interview preparation assistant. Return only valid JSON, no markdown."
       },
       { role: "user", content: userPrompt }
     ]
@@ -267,7 +347,9 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
           // Structured JSON: capped harder than free prose (see AGENTS.md).
           temperature: Math.min(tuning.temperature, 0.4),
           topP: tuning.topP,
-          maxTokens: 3_000,
+          // The technical sheet carries worked answers for up to eight
+          // questions and five exercises — it truncates at 3k.
+          maxTokens: technical ? 4_500 : 3_000,
           signal: controller.signal
         })
       } finally {
@@ -284,11 +366,13 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     }
 
     const prep = parsePrep(content)
-    if (prepIsEmpty(prep)) {
+    if (prepIsEmpty(prep, technical)) {
       res.send({
         success: false,
         message: customized
-          ? "The model didn't return usable JSON. Check your custom prep prompt on the Prompts page, or reset it."
+          ? `The model didn't return usable JSON. Check your custom ${
+              technical ? "technical " : ""
+            }prep prompt on the Prompts page, or reset it.`
           : "The model didn't return anything usable. Try again."
       })
       return
@@ -297,11 +381,23 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     // Thin inputs produce generic prep. Say which one was missing rather than
     // letting the user wonder why the result reads like a web article.
     const thin: string[] = []
-    if (!body.jobDescription?.trim()) thin.push("a job description")
+    if (!body.jobDescription?.trim()) {
+      // For a technical round the description is where the stack comes from,
+      // so "generated without one" means the exercises are guesswork.
+      thin.push(
+        technical
+          ? "a job description to read the stack from"
+          : "a job description"
+      )
+    }
     if (!body.userProfile?.workExperience?.length) {
       thin.push("any work experience in your profile")
     }
-    if (!body.companyResearch?.trim()) thin.push("company research")
+    // Company research shapes behavioural prep; a technical drill is built
+    // from the stack, so its absence isn't worth a warning there.
+    if (!technical && !body.companyResearch?.trim()) {
+      thin.push("company research")
+    }
 
     res.send({
       success: true,

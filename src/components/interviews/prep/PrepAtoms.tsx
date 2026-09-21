@@ -338,7 +338,7 @@ export function RegenerateDialog({
   return (
     <ConfirmDialog
       title="Regenerate this prep?"
-      message="Regenerate replaces the AI-suggested items across all five sections. Anything you ticked, pinned or added is kept."
+      message="Regenerate replaces the AI-suggested items in every section it writes. Anything you ticked, pinned or added is kept."
       confirmLabel="Regenerate"
       cancelLabel="Keep what's here"
       onConfirm={onConfirm}

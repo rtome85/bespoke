@@ -10,6 +10,7 @@ import {
   DEFAULT_PERPLEXITY_PROMPT,
   DEFAULT_PROMPTS,
   DEFAULT_SEARCH_CONFIG,
+  DEFAULT_TECHNICAL_PREP_PROMPT,
   type CustomPrompts,
   type LLMTuningConfig,
   type ModelRouting,
@@ -38,7 +39,8 @@ export function useOptionsStoredState() {
       apiKey: "",
       enabled: false,
       customPrompt: DEFAULT_PERPLEXITY_PROMPT,
-      interviewPrepPrompt: DEFAULT_INTERVIEW_PREP_PROMPT
+      interviewPrepPrompt: DEFAULT_INTERVIEW_PREP_PROMPT,
+      technicalPrepPrompt: DEFAULT_TECHNICAL_PREP_PROMPT
     })
   const [searchConfig, setSearchConfig] = useDebouncedStorage<SearchConfig>(
     STORAGE_KEYS.SEARCH_CONFIG,

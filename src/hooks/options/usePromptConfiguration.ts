@@ -75,6 +75,11 @@ export function usePromptConfiguration({
         ...perplexityConfig,
         interviewPrepPrompt: prompt
       })
+    } else if (perplexityDialogState.promptType === "technicalPreparation") {
+      setPerplexityConfig({
+        ...perplexityConfig,
+        technicalPrepPrompt: prompt
+      })
     }
   }
 

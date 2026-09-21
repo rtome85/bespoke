@@ -122,6 +122,42 @@ export interface StarStory {
   userAdded?: boolean
 }
 
+/**
+ * A technical question an interviewer is likely to ask, with an answer worth
+ * rehearsing. `topic` is the technology or framework from the job description
+ * the question comes out of, so the drill can be read stack by stack.
+ */
+export interface TechQuestion {
+  question: string
+  answer: string
+  topic?: string
+  checked?: boolean // "I can answer this"
+  pinned?: boolean
+  userAdded?: boolean
+}
+
+/**
+ * A hands-on exercise to work through before a technical round — the kind of
+ * task the interviewer is likely to set, with what a strong solution shows so
+ * the candidate can mark their own attempt.
+ */
+export interface TechExercise {
+  title: string
+  /** The task itself, phrased the way an interviewer would set it. */
+  prompt: string
+  /**
+   * What a strong answer demonstrates — the self-review checklist. Optional:
+   * a title and a task are already a complete exercise, so one that comes
+   * back without this is kept and simply renders without the block, rather
+   * than being dropped for missing a field it can do without.
+   */
+  approach?: string
+  topic?: string
+  checked?: boolean // "I worked through this"
+  pinned?: boolean
+  userAdded?: boolean
+}
+
 export interface RoundPrep {
   companyResearch?: string // markdown; copied from companyResearchCache at generate time
   companyResearchAt?: string // ISO
@@ -133,8 +169,18 @@ export interface RoundPrep {
   questionsToAsk?: PrepItem[]
   /** Prepared answers for the weak spots in this candidate's fit. */
   gapDefenses?: GapDefense[]
-  /** Rehearsable STAR stories drawn from the profile. */
+  /**
+   * Rehearsable STAR stories drawn from the profile. Behavioural — written for
+   * every round type except Technical (see `isTechnicalRound`).
+   */
   starStories?: StarStory[]
+  /**
+   * Technical rounds only: likely questions about this job's stack, each with
+   * an answer to rehearse.
+   */
+  techQuestions?: TechQuestion[]
+  /** Technical rounds only: exercises to work through before the round. */
+  techExercises?: TechExercise[]
   /** What to expect from this round — 2-3 sentences of prose. */
   logistics?: string
   topicsPointsAt?: string // ISO — last LLM generation of the model-written sections
