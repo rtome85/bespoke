@@ -145,8 +145,13 @@ export interface TechExercise {
   title: string
   /** The task itself, phrased the way an interviewer would set it. */
   prompt: string
-  /** What a strong answer demonstrates — the self-review checklist. */
-  approach: string
+  /**
+   * What a strong answer demonstrates — the self-review checklist. Optional:
+   * a title and a task are already a complete exercise, so one that comes
+   * back without this is kept and simply renders without the block, rather
+   * than being dropped for missing a field it can do without.
+   */
+  approach?: string
   topic?: string
   checked?: boolean // "I worked through this"
   pinned?: boolean
