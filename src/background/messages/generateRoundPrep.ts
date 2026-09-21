@@ -157,16 +157,28 @@ const EMPTY_PREP: ParsedPrep = {
   techExercises: []
 }
 
-export function prepIsEmpty(p: ParsedPrep): boolean {
+/**
+ * Did this response carry anything the round in hand can actually use?
+ *
+ * Judged against the sheet being generated, not against every field the parser
+ * knows. Only `logistics`, `likelyTopics` and `questionsToAsk` are written by
+ * both prompts; the rest belong to one sheet each, and the caller writes only
+ * its own. So a technical round answered with nothing but talking points and
+ * STAR stories is empty *for that round* — counting them would report success,
+ * merge the absent sections down to nothing, and leave the user staring at a
+ * blank sheet stamped "generated just now" with no error to act on. That is
+ * the exact failure this gate exists to turn into a message naming the prompt
+ * to go and fix.
+ */
+export function prepIsEmpty(p: ParsedPrep, technical = false): boolean {
+  const ownSections = technical
+    ? [p.techQuestions, p.techExercises]
+    : [p.talkingPoints, p.gapDefenses, p.starStories]
   return (
     !p.logistics &&
     !p.likelyTopics.length &&
-    !p.talkingPoints.length &&
     !p.questionsToAsk.length &&
-    !p.gapDefenses.length &&
-    !p.starStories.length &&
-    !p.techQuestions.length &&
-    !p.techExercises.length
+    ownSections.every((section) => !section.length)
   )
 }
 
@@ -354,7 +366,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     }
 
     const prep = parsePrep(content)
-    if (prepIsEmpty(prep)) {
+    if (prepIsEmpty(prep, technical)) {
       res.send({
         success: false,
         message: customized
