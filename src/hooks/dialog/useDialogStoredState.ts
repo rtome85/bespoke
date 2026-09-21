@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
 import { PROVIDER_META } from "~types/config"
-import type { ModelRouting, PerplexityConfig, RouteTarget } from "~types/config"
+import type { ModelRouting, RouteTarget } from "~types/config"
 import type { PendingJobData, RoutingLabels } from "~types/dialog"
 import {
   DEFAULT_USER_PROFILE,
@@ -14,7 +14,6 @@ interface StoredDialogState {
   userProfile?: UserProfile
   pendingJobData?: PendingJobData
   savedApplications?: SavedApplication[]
-  perplexityConfig?: PerplexityConfig
   modelRouting?: ModelRouting
 }
 
@@ -31,8 +30,6 @@ export function useDialogStoredState() {
   const [savedApplications, setSavedApplications] = useState<
     SavedApplication[]
   >([])
-  const [perplexityConfig, setPerplexityConfig] =
-    useState<PerplexityConfig | null>(null)
   const [initialPendingJobData, setInitialPendingJobData] =
     useState<PendingJobData | null>(null)
 
@@ -42,7 +39,6 @@ export function useDialogStoredState() {
         STORAGE_KEYS.USER_PROFILE,
         STORAGE_KEYS.PENDING_JOB_DATA,
         STORAGE_KEYS.SAVED_APPLICATIONS,
-        "perplexityConfig",
         STORAGE_KEYS.MODEL_ROUTING
       ],
       (result: StoredDialogState) => {
@@ -55,9 +51,6 @@ export function useDialogStoredState() {
         if (result.userProfile) setUserProfile(result.userProfile)
         if (result.savedApplications) {
           setSavedApplications(result.savedApplications)
-        }
-        if (result.perplexityConfig) {
-          setPerplexityConfig(result.perplexityConfig)
         }
         if (result.pendingJobData) {
           setInitialPendingJobData(result.pendingJobData)
@@ -72,7 +65,6 @@ export function useDialogStoredState() {
     setUserProfile,
     savedApplications,
     setSavedApplications,
-    perplexityConfig,
     initialPendingJobData
   }
 }

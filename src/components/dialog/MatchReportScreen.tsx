@@ -27,6 +27,7 @@ interface Props {
   openMatchSection: MatchAccordionSection | null
   companyInfo: CompanyInfo | null
   companyInfoLoading: boolean
+  companyInfoError: string
   projectsExpanded: boolean
   addedGapSkills: AddedGapSkills
   documentsLoading: boolean
@@ -57,6 +58,7 @@ export function MatchReportScreen({
   openMatchSection,
   companyInfo,
   companyInfoLoading,
+  companyInfoError,
   projectsExpanded,
   addedGapSkills,
   documentsLoading,
@@ -149,11 +151,12 @@ export function MatchReportScreen({
               openSection={openMatchSection}
               onToggle={onToggleMatchSection}
             />
-            {(companyInfo || companyInfoLoading) && (
+            {(companyInfo || companyInfoLoading || companyInfoError) && (
               <CompanyResearchCard
                 companyName={companyName}
                 info={companyInfo}
                 isLoading={companyInfoLoading}
+                error={companyInfoError}
                 projectsExpanded={projectsExpanded}
                 onToggleProjects={onToggleProjects}
               />

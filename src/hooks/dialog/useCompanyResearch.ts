@@ -1,83 +1,76 @@
 import { useEffect, useState } from "react"
 
-import type { CompanyInfo } from "~api/perplexityClient"
-import { parseCompanyInfo } from "~lib/companyResearchParser"
-import { seedCompanyResearch } from "~lib/interviews/companyResearch"
-import type { PerplexityConfig } from "~types/config"
+import { sendToBackground } from "@plasmohq/messaging"
 
+import type { CompanyInfo } from "~api/perplexityClient"
+import type { CompanyResearchEntry } from "~lib/interviews/companyResearch"
+
+/**
+ * Company research for the match report.
+ *
+ * Routed through the `generateCompanyResearch` worker rather than calling
+ * Perplexity from the panel: the source is whatever the user picked under
+ * Model routing → Company research (`auto`, web search, the company's own
+ * site, model knowledge), and the worker owns the fallback chain and the
+ * per-company cache. Calling Perplexity directly left the card blank for
+ * everyone whose research runs on any other source.
+ *
+ * A failure is reported rather than swallowed — a silently empty card is
+ * indistinguishable from research being switched off.
+ */
 export function useCompanyResearch(
   companyName: string,
   hasMatchResult: boolean,
-  config: PerplexityConfig | null
+  jobUrl: string
 ) {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
   const [companyInfoLoading, setCompanyInfoLoading] = useState(false)
+  const [companyInfoError, setCompanyInfoError] = useState("")
 
   useEffect(() => {
-    if (!hasMatchResult || !companyName || !config?.enabled || !config.apiKey) {
+    if (!hasMatchResult || !companyName.trim()) {
       setCompanyInfo(null)
       setCompanyInfoLoading(false)
+      setCompanyInfoError("")
       return
     }
 
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 30_000)
     let active = true
 
     const fetchCompanyInfo = async () => {
       setCompanyInfoLoading(true)
       setCompanyInfo(null)
+      setCompanyInfoError("")
 
       try {
-        const response = await fetch(
-          "https://api.perplexity.ai/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${config.apiKey}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              model: "sonar",
-              messages: [
-                {
-                  role: "system",
-                  content:
-                    "You are a company research assistant. Always respond with valid JSON only, no markdown formatting."
-                },
-                {
-                  role: "user",
-                  content: config.customPrompt.replace(
-                    /\{\{companyName\}\}/g,
-                    companyName
-                  )
-                }
-              ],
-              max_tokens: 800,
-              temperature: 0.2
-            }),
-            signal: controller.signal
-          }
-        )
+        const response = await sendToBackground({
+          name: "generateCompanyResearch",
+          body: { company: companyName, jobUrl }
+        })
+        if (!active) return
 
-        if (!response.ok) {
-          if (active) setCompanyInfo(null)
+        if (!response?.success) {
+          setCompanyInfo(null)
+          setCompanyInfoError(
+            response?.message ?? "Couldn't research this company."
+          )
           return
         }
 
-        const data = await response.json()
-        const content = data.choices?.[0]?.["message"]?.["content"] || ""
-        const info = parseCompanyInfo(content)
-        if (!active) return
-        setCompanyInfo(info)
-        void seedCompanyResearch(companyName, info)
-      } catch (error) {
+        // The card renders structured fields, so an entry cached before the
+        // parsed form existed has nothing for it to draw.
+        const entry = response.entry as CompanyResearchEntry | undefined
+        setCompanyInfo(entry?.parsed ?? null)
+      } catch {
+        // A throw here is the message never reaching the worker, not research
+        // failing — transport text ("Receiving end does not exist") is not copy
+        // to put on the card. The worker's own failures arrive as `success:
+        // false` above, already worded for the user.
         if (active) {
           setCompanyInfo(null)
-          console.error("Failed to fetch company info:", error)
+          setCompanyInfoError("Couldn't reach company research.")
         }
       } finally {
-        clearTimeout(timeout)
         if (active) setCompanyInfoLoading(false)
       }
     }
@@ -86,10 +79,8 @@ export function useCompanyResearch(
 
     return () => {
       active = false
-      clearTimeout(timeout)
-      controller.abort()
     }
-  }, [companyName, config, hasMatchResult])
+  }, [companyName, hasMatchResult, jobUrl])
 
-  return { companyInfo, companyInfoLoading }
+  return { companyInfo, companyInfoLoading, companyInfoError }
 }

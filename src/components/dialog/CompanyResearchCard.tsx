@@ -6,6 +6,8 @@ interface Props {
   companyName: string
   info: CompanyInfo | null
   isLoading: boolean
+  /** Why research produced nothing, shown in place of the card's contents. */
+  error: string
   projectsExpanded: boolean
   onToggleProjects: () => void
 }
@@ -14,11 +16,12 @@ export function CompanyResearchCard({
   companyName,
   info,
   isLoading,
+  error,
   projectsExpanded,
   onToggleProjects
 }: Props) {
   return (
-    <div className="rounded-aa-lg p-aa-4 flex flex-col gap-aa-3">
+    <div className="pt-4 border-t border-aa-border flex flex-col gap-aa-3">
       {isLoading ? (
         <div className="flex items-center gap-aa-2 animate-pulse">
           <Building2 className="w-4 h-4 text-aa-neutral-500" />
@@ -26,6 +29,8 @@ export function CompanyResearchCard({
             Researching {companyName}...
           </span>
         </div>
+      ) : error ? (
+        <p className="aa-section-error">{error}</p>
       ) : (
         info && (
           <>

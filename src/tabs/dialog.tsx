@@ -27,7 +27,6 @@ function IndexDialog() {
     userProfile,
     setUserProfile,
     setSavedApplications,
-    perplexityConfig,
     initialPendingJobData
   } = useDialogStoredState()
   const {
@@ -62,11 +61,8 @@ function IndexDialog() {
     userProfile,
     setUserProfile
   })
-  const { companyInfo, companyInfoLoading } = useCompanyResearch(
-    companyName,
-    Boolean(result),
-    perplexityConfig
-  )
+  const { companyInfo, companyInfoLoading, companyInfoError } =
+    useCompanyResearch(companyName, Boolean(result), pendingJobUrl)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
   const [matchAccordionOpen, setMatchAccordionOpen] =
     useState<MatchAccordionSection | null>("strengths")
@@ -164,6 +160,7 @@ function IndexDialog() {
           openMatchSection={matchAccordionOpen}
           companyInfo={companyInfo}
           companyInfoLoading={companyInfoLoading}
+          companyInfoError={companyInfoError}
           projectsExpanded={projectsExpanded}
           addedGapSkills={addedGapSkills}
           documentsLoading={docsLoading}
