@@ -310,7 +310,7 @@ export function DocumentPreviewPanel({
             className="w-full h-full min-h-80 px-4 py-3.5 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 leading-relaxed text-aa-text-primary font-mono focus:outline-none focus:border-aa-primary transition-colors resize-none"
           />
         ) : (
-          <div className="min-h-80 h-full overflow-y-auto px-8 py-6 bg-aa-surface border border-aa-border rounded-aa-md">
+          <div className="min-h-80 h-full overflow-y-auto px-8 py-6 bg-aa-surface border border-aa-border rounded-aa-md text-aa-text-primary">
             <MarkdownPreview content={content} />
           </div>
         )}

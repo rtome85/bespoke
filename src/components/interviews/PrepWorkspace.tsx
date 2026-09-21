@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react"
 
 import { BackLink } from "~components/common/BackLink"
+import { MarkdownPreview } from "~components/documentPreview/MarkdownPreview"
 import { Checklist } from "~components/interviews/Checklist"
 import { GapDefenseList } from "~components/interviews/GapDefenseList"
 import {
@@ -388,9 +389,15 @@ export function PrepWorkspace({
               )}
 
               {prep.companyResearch ? (
-                <p className="text-aa-13 text-aa-neutral-700 leading-relaxed whitespace-pre-line">
-                  {prep.companyResearch}
-                </p>
+                // Research comes back as markdown (companyInfoToMarkdown, or
+                // the model's own prose), so it renders as markdown rather
+                // than showing its `**bold**` raw. `whitespace-pre-line` keeps
+                // the line breaks *inside* a paragraph — the Industry / Size
+                // pair is two lines of one markdown paragraph, and the token
+                // walker has no <br> to work from.
+                <div className="text-aa-13 text-aa-neutral-700 leading-relaxed whitespace-pre-line">
+                  <MarkdownPreview content={prep.companyResearch} />
+                </div>
               ) : (
                 !w.errors.research && (
                   <button
