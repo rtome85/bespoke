@@ -31,7 +31,7 @@ export function CompanyResearchCard({
           <>
             <div className="flex items-center gap-aa-2">
               <Building2 className="w-4 h-4 text-aa-neutral-500" />
-              <h3 className="text-aa-sm font-semibold text-aa-text-primary">
+              <h3 className="font-aa-heading text-aa-sm font-semibold text-aa-text-primary">
                 About {companyName}
               </h3>
             </div>

@@ -97,7 +97,7 @@ export function MatchReportScreen({
         <div className="bg-aa-surface-subtle px-aa-8 pt-aa-8 pb-aa-6 flex flex-col">
           <div className="flex items-center justify-between gap-aa-4">
             <div className="flex flex-col gap-1.5">
-              <h1 className="text-aa-h2 font-bold leading-aa-1.2 tracking-aa-tighter-4 text-aa-text-primary">
+              <h1 className="font-aa-heading text-aa-h2 font-bold leading-aa-1.2 tracking-aa-tighter-4 text-aa-text-primary">
                 {fullName || "Match report"}
               </h1>
               <p className="text-aa-13 leading-aa-1.4 text-aa-text-secondary">

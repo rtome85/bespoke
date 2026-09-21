@@ -57,7 +57,7 @@ export function MatchBreakdown({ match, openSection, onToggle }: Props) {
                 className="w-4 h-4 shrink-0"
                 style={{ color: row.color }}
               />
-              <span className="flex-1 text-aa-15 font-semibold text-aa-text-primary">
+              <span className="flex-1 font-aa-heading text-aa-15 font-semibold text-aa-text-primary">
                 {row.label}
               </span>
               <span className="text-aa-13 font-semibold text-aa-text-secondary tabular-nums">
