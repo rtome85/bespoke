@@ -8,7 +8,7 @@ interface Props {
 
 export function ScoreSummaryCard({ percentage, summary, presentation }: Props) {
   return (
-    <div className="bg-aa-surface-subtle rounded-aa-lg p-aa-6 flex flex-col gap-aa-4">
+    <div className="flex flex-col gap-aa-4">
       <div className="flex items-end justify-between">
         <div className="flex items-end gap-aa-px-1">
           <span
@@ -27,21 +27,19 @@ export function ScoreSummaryCard({ percentage, summary, presentation }: Props) {
         </span>
       </div>
 
-      <div className="flex flex-col gap-aa-2">
-        <div className="flex gap-aa-px-3">
-          {Array.from({ length: 20 }).map((_, index) => (
-            <div
-              key={index}
-              className="flex-1 h-2.5 rounded-aa-2xs transition-colors duration-500"
-              style={{
-                backgroundColor:
-                  index < Math.round(percentage / 5)
-                    ? presentation.fill
-                    : "var(--aa-neutral-200)"
-              }}
-            />
-          ))}
-        </div>
+      <div className="flex gap-aa-px-3">
+        {Array.from({ length: 20 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex-1 h-2.5 rounded-aa-2xs transition-colors duration-500"
+            style={{
+              backgroundColor:
+                index < Math.round(percentage / 5)
+                  ? presentation.fill
+                  : "var(--aa-neutral-200)"
+            }}
+          />
+        ))}
       </div>
 
       {summary && (
