@@ -390,23 +390,34 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   }
 
   /**
-   * Gates on `hasKeptWork` exactly as before, but resolves through the app's
-   * own focus-trapped `ConfirmDialog` rather than `window.confirm` — which was
-   * the last native dialog of its kind in this feature.
+   * The checkable sections a regeneration of THIS round would rewrite — the
+   * same split `runTopics` patches. Listed once so the two cannot drift: a
+   * warning about the other sheet's sections would be asking the user to
+   * approve losing work that regenerating never touches, and the reverse
+   * would let real work go without a word.
    */
-  const genTopics = async (regen = false, research?: string) => {
-    if (
-      regen &&
-      hasKeptWork(
+  const regeneratedSections = technical
+    ? [
         prep.likelyTopics,
-        prep.talkingPoints,
         prep.questionsToAsk,
-        prep.gapDefenses,
-        prep.starStories,
         prep.techExercises,
         prep.techQuestions
-      )
-    ) {
+      ]
+    : [
+        prep.likelyTopics,
+        prep.questionsToAsk,
+        prep.talkingPoints,
+        prep.gapDefenses,
+        prep.starStories
+      ]
+
+  /**
+   * Gates on `hasKeptWork`, resolved through the app's own focus-trapped
+   * `ConfirmDialog` rather than `window.confirm` — which was the last native
+   * dialog of its kind in this feature.
+   */
+  const genTopics = async (regen = false, research?: string) => {
+    if (regen && hasKeptWork(...regeneratedSections)) {
       setPendingRegen({ research })
       return
     }
