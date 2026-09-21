@@ -6,6 +6,8 @@ interface Props {
   companyName: string
   info: CompanyInfo | null
   isLoading: boolean
+  /** Why research produced nothing, shown in place of the card's contents. */
+  error: string
   projectsExpanded: boolean
   onToggleProjects: () => void
 }
@@ -14,6 +16,7 @@ export function CompanyResearchCard({
   companyName,
   info,
   isLoading,
+  error,
   projectsExpanded,
   onToggleProjects
 }: Props) {
@@ -26,6 +29,8 @@ export function CompanyResearchCard({
             Researching {companyName}...
           </span>
         </div>
+      ) : error ? (
+        <p className="aa-section-error">{error}</p>
       ) : (
         info && (
           <>

@@ -33,7 +33,7 @@ export const researchCacheKey = (company: string) =>
 
 /**
  * One storage key per company. Independent keys mean a write for company A
- * (e.g. the side-panel match flow seeding) and a write for company B (the Prep
+ * (e.g. the side panel's match flow) and a write for company B (the Prep
  * engine fetching) touch disjoint storage — no read-modify-write of a shared
  * cache object, so concurrent writes across contexts can't drop each other.
  */
@@ -85,23 +85,4 @@ export function companyInfoToMarkdown(info: CompanyInfo): string {
   if (ratingParts.length) lines.push(`**Ratings** — ${ratingParts.join(" · ")}`)
 
   return lines.join("\n").trim()
-}
-
-/**
- * Called from the side-panel match flow after it fetches company info, so the
- * Prep engine usually doesn't have to hit Perplexity again. Overwrites — the
- * match flow's data is at least as fresh as anything already cached.
- */
-export async function seedCompanyResearch(
-  company: string,
-  info: CompanyInfo
-): Promise<void> {
-  const text = companyInfoToMarkdown(info)
-  if (!text) return
-  await writeCompanyResearch(company, {
-    text,
-    parsed: info,
-    generatedAt: new Date().toISOString(),
-    source: "perplexity"
-  })
 }

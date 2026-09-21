@@ -188,8 +188,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       // A pinned preference governs the cache too: reusing an entry from a
       // different source would quietly serve what the user just excluded —
       // "web search only" answering from model knowledge, provenance line and
-      // all. Entries written before `source` existed, and those seeded by the
-      // side panel's match flow, all came from Perplexity.
+      // all. Entries written before `source` existed all came from Perplexity.
       const fromPinnedSource =
         routing === "auto" || (cached?.source ?? "perplexity") === routing
       if (cached && fromPinnedSource) {
