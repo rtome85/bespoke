@@ -33,5 +33,15 @@ dist/
 .tsbuildinfo
 tsconfig.tsbuildinfo
 
-# local planning docs
+# local docs — kept on this machine only, never pushed
+# (README.md and the GitHub Pages files in docs/*.html stay tracked)
 INTERVIEWS_IMPLEMENTATION_PLAN.md
+PDF_IMPLEMENTATION_PLAN.md
+ROADMAP_FEATURES.md
+POST_MATCH_TRIAGE_SPEC.md
+REDESIGN_PLAN.md
+docs/tutorials/
+
+# local tool output
+.impeccable/
+.playwright-mcp/
