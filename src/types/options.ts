@@ -79,7 +79,10 @@ export type PromptDialogState = {
   promptKey: keyof CustomPrompts | null
 }
 
-export type PerplexityPromptType = "research" | "preparation"
+export type PerplexityPromptType =
+  | "research"
+  | "preparation"
+  | "technicalPreparation"
 
 export type PerplexityDialogState = {
   isOpen: boolean

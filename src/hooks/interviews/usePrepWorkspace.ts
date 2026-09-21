@@ -10,10 +10,13 @@ import {
   hasKeptWork,
   mergeGapDefenses,
   mergePrepItems,
-  mergeStarStories
+  mergeStarStories,
+  mergeTechExercises,
+  mergeTechQuestions
 } from "~lib/interviews/prepMerge"
 import {
   countdownLabel,
+  isTechnicalRound,
   minutesUntilRound,
   prepReady,
   priorRounds,
@@ -62,13 +65,25 @@ export interface SectionCount {
   total: number
 }
 
-/** Ticked-vs-total across the five checkable sections. */
+/**
+ * Ticked-vs-total per section, plus the roll-up.
+ *
+ * Both run sheets are covered: `points` / `stories` are the behavioural pair,
+ * `exercises` / `drills` the technical one. A round only ever generates one
+ * pair, so the other reads 0/0 — and the roll-up sums all of them, because a
+ * section is rendered whenever it has content (a round whose type changed
+ * after a generation keeps showing, and counting, what it already had).
+ */
 export interface Readiness extends SectionCount {
   topics: SectionCount
   points: SectionCount
   questions: SectionCount
   gaps: SectionCount
   stories: SectionCount
+  /** Technical rounds: exercises to work through. */
+  exercises: SectionCount
+  /** Technical rounds: the question-and-answer drill. */
+  drills: SectionCount
 }
 
 export interface Countdown {
@@ -202,6 +217,13 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   const app = found?.app
   const round = found?.round
   const prep: RoundPrep = round?.prep ?? {}
+  /**
+   * A technical round is prepped as a study plan — stack review, exercises, a
+   * Q&A drill — where every other round type gets the behavioural sheet built
+   * on talking points and STAR stories. One flag drives both which prompt the
+   * background handler runs and which sections the workspace writes back.
+   */
+  const technical = round ? isTechnicalRound(round) : false
 
   const save = (patch: Partial<RoundPrep>) =>
     app && round ? setRoundPrep(app.id, round.id, patch) : Promise.resolve()
@@ -322,19 +344,39 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
           questionsAsked: r.debrief?.questionsAsked,
           outcome: r.debrief?.outcome
         })),
-        userNotes: notes
+        userNotes: notes,
+        technical
       }
     })
     if (r?.success) {
-      await save({
+      // Only the sections this round type actually generates are patched. The
+      // other sheet's sections are left out entirely rather than merged
+      // against an empty response, so prep written before a round's type was
+      // changed stays on the sheet instead of being quietly emptied.
+      const patch: Partial<RoundPrep> = {
         logistics: r.logistics || prep.logistics,
         likelyTopics: mergePrepItems(prep.likelyTopics, r.likelyTopics),
-        talkingPoints: mergePrepItems(prep.talkingPoints, r.talkingPoints),
         questionsToAsk: mergePrepItems(prep.questionsToAsk, r.questionsToAsk),
-        gapDefenses: mergeGapDefenses(prep.gapDefenses, r.gapDefenses),
-        starStories: mergeStarStories(prep.starStories, r.starStories),
         topicsPointsAt: new Date().toISOString()
-      })
+      }
+      if (technical) {
+        patch.techExercises = mergeTechExercises(
+          prep.techExercises,
+          r.techExercises
+        )
+        patch.techQuestions = mergeTechQuestions(
+          prep.techQuestions,
+          r.techQuestions
+        )
+      } else {
+        patch.gapDefenses = mergeGapDefenses(prep.gapDefenses, r.gapDefenses)
+        patch.talkingPoints = mergePrepItems(
+          prep.talkingPoints,
+          r.talkingPoints
+        )
+        patch.starStories = mergeStarStories(prep.starStories, r.starStories)
+      }
+      await save(patch)
       const reasons: string[] = r.thinReasons ?? []
       if (reasons.length) {
         setHint(
@@ -360,7 +402,9 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
         prep.talkingPoints,
         prep.questionsToAsk,
         prep.gapDefenses,
-        prep.starStories
+        prep.starStories,
+        prep.techExercises,
+        prep.techQuestions
       )
     ) {
       setPendingRegen({ research })
@@ -399,7 +443,9 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     const questions = countChecked(prep.questionsToAsk)
     const gaps = countChecked(prep.gapDefenses)
     const stories = countChecked(prep.starStories)
-    const all = [topics, points, questions, gaps, stories]
+    const exercises = countChecked(prep.techExercises)
+    const drills = countChecked(prep.techQuestions)
+    const all = [topics, points, questions, gaps, stories, exercises, drills]
     return {
       done: all.reduce((n, s) => n + s.done, 0),
       total: all.reduce((n, s) => n + s.total, 0),
@@ -407,14 +453,18 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
       points,
       questions,
       gaps,
-      stories
+      stories,
+      exercises,
+      drills
     }
   }, [
     prep.likelyTopics,
     prep.talkingPoints,
     prep.questionsToAsk,
     prep.gapDefenses,
-    prep.starStories
+    prep.starStories,
+    prep.techExercises,
+    prep.techQuestions
   ])
 
   const countdown: Countdown | undefined = useMemo(() => {
@@ -439,6 +489,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     app,
     round,
     prep,
+    technical,
     ready: round ? prepReady(round) : false,
     readiness,
     countdown,

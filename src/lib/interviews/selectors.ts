@@ -189,8 +189,24 @@ export function prepReady(round: InterviewRound): boolean {
       p.talkingPoints?.length ||
       p.questionsToAsk?.length ||
       p.gapDefenses?.length ||
-      p.starStories?.length)
+      p.starStories?.length ||
+      p.techQuestions?.length ||
+      p.techExercises?.length)
   )
+}
+
+/**
+ * Does this round get the technical run sheet — stack review, exercises and a
+ * Q&A drill — instead of the behavioural one built on talking points and STAR
+ * stories?
+ *
+ * Only the explicit `Technical` type. A `Custom` round is whatever the user
+ * typed in the label, and guessing "technical" from words in free text would
+ * silently hand someone a structure they never chose; they can pick the
+ * Technical type when that is what they want.
+ */
+export function isTechnicalRound(round: InterviewRound): boolean {
+  return round.type === "Technical"
 }
 
 /**

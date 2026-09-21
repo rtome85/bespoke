@@ -1,4 +1,4 @@
-import { roundLabel } from "~lib/interviews/selectors"
+import { isTechnicalRound, roundLabel } from "~lib/interviews/selectors"
 import type {
   InterviewRound,
   PrepItem,
@@ -36,9 +36,50 @@ export function prepCheatSheet(
     lines.push("## What to expect", "", prep.logistics.trim(), "")
   }
 
+  const technical = isTechnicalRound(round)
+
   lines.push(
-    ...section("Likely topics", (prep.likelyTopics ?? []).map(bullet)),
-    ...section("My talking points", (prep.talkingPoints ?? []).map(bullet)),
+    ...section(
+      technical ? "Stack to review" : "Likely topics",
+      (prep.likelyTopics ?? []).map(bullet)
+    ),
+    ...section("My talking points", (prep.talkingPoints ?? []).map(bullet))
+  )
+
+  const exercises = prep.techExercises ?? []
+  if (exercises.length) {
+    lines.push("## Exercises to work through", "")
+    for (const e of exercises) {
+      lines.push(
+        `### ${e.checked ? "[x] " : ""}${e.pinned ? "★ " : ""}${e.title}${
+          e.topic ? ` — ${e.topic}` : ""
+        }`,
+        "",
+        e.prompt,
+        ...(e.approach
+          ? ["", `**A strong answer shows** — ${e.approach}`]
+          : []),
+        ""
+      )
+    }
+  }
+
+  const drills = prep.techQuestions ?? []
+  if (drills.length) {
+    lines.push("## Question drill", "")
+    for (const q of drills) {
+      lines.push(
+        `**${q.checked ? "[x] " : ""}${q.pinned ? "★ " : ""}${q.question}**${
+          q.topic ? ` _(${q.topic})_` : ""
+        }`,
+        "",
+        q.answer,
+        ""
+      )
+    }
+  }
+
+  lines.push(
     ...section("Questions to ask them", (prep.questionsToAsk ?? []).map(bullet))
   )
 

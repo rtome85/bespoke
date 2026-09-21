@@ -16,6 +16,7 @@ import { useHashRoute } from "~lib/router"
 import { useSavedApplications } from "~lib/useSavedApplications"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
+  DEFAULT_TECHNICAL_PREP_PROMPT,
   type LLMProviderId,
   type PerplexityConfig,
   type ProviderConfig,
@@ -221,7 +222,11 @@ export function useOptionsController() {
       ? perplexityConfig.customPrompt
       : promptConfiguration.perplexityDialogState.promptType === "preparation"
         ? perplexityConfig.interviewPrepPrompt ?? DEFAULT_INTERVIEW_PREP_PROMPT
-        : ""
+        : promptConfiguration.perplexityDialogState.promptType ===
+            "technicalPreparation"
+          ? perplexityConfig.technicalPrepPrompt ??
+            DEFAULT_TECHNICAL_PREP_PROMPT
+          : ""
 
   return {
     navigation: {

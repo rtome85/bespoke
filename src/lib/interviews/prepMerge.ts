@@ -1,4 +1,10 @@
-import type { GapDefense, PrepItem, StarStory } from "~types/userProfile"
+import type {
+  GapDefense,
+  PrepItem,
+  StarStory,
+  TechExercise,
+  TechQuestion
+} from "~types/userProfile"
 
 /**
  * Merging a regenerated section into the one on screen.
@@ -76,6 +82,30 @@ export function mergeStarStories(
     next,
     (s) => s.title,
     (s) => (s.userAdded ? s : { ...s, userAdded: true })
+  )
+}
+
+export function mergeTechQuestions(
+  prev: TechQuestion[] = [],
+  next: TechQuestion[] = []
+): TechQuestion[] {
+  return merge<TechQuestion>(
+    prev,
+    next,
+    (q) => q.question,
+    (q) => (q.userAdded ? q : { ...q, userAdded: true })
+  )
+}
+
+export function mergeTechExercises(
+  prev: TechExercise[] = [],
+  next: TechExercise[] = []
+): TechExercise[] {
+  return merge<TechExercise>(
+    prev,
+    next,
+    (e) => e.title,
+    (e) => (e.userAdded ? e : { ...e, userAdded: true })
   )
 }
 

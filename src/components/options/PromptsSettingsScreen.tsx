@@ -2,6 +2,7 @@ import { PromptEditorField } from "~components/options/PromptEditorField"
 import { PromptTemplateCard } from "~components/options/PromptTemplateCard"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
+  DEFAULT_TECHNICAL_PREP_PROMPT,
   PROMPT_TEMPLATES,
   type CustomPrompts,
   type PerplexityConfig,
@@ -133,7 +134,8 @@ export function PromptsSettingsScreen({
       <div className="aa-card">
         <h2 className="aa-section-heading">Interview prep</h2>
         <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
-          Feeds the per-round Prep workspace (Interviews → Prep). Runs on your
+          Feeds the per-round Prep workspace (Interviews → Prep) for every round
+          type except Technical, which has its own prompt below. Runs on your
           Interview&nbsp;prep model and must return JSON with{" "}
           <code className="text-aa-caption">likelyTopics</code>,{" "}
           <code className="text-aa-caption">talkingPoints</code>,{" "}
@@ -158,6 +160,40 @@ export function PromptsSettingsScreen({
           }
           onExpand={() =>
             onOpenPerplexityPrompt("Interview prep prompt", "preparation")
+          }
+        />
+      </div>
+
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Technical interview prep</h2>
+        <p className="text-sm text-aa-text-secondary -mt-1 mb-4">
+          Replaces the prompt above on rounds typed <strong>Technical</strong>.
+          A technical round is prepped as a study plan, so it returns{" "}
+          <code className="text-aa-caption">likelyTopics</code> (the stack to
+          review), <code className="text-aa-caption">techExercises</code>,{" "}
+          <code className="text-aa-caption">techQuestions</code>,{" "}
+          <code className="text-aa-caption">questionsToAsk</code> and{" "}
+          <code className="text-aa-caption">logistics</code> — no talking
+          points, STAR stories or gap answers.
+        </p>
+        <hr className="aa-divider" />
+        <PromptEditorField
+          id="technical-prep-prompt"
+          label="Technical prep prompt"
+          hint="Same placeholders as the prep prompt: {{roundType}}, {{companyName}}, {{jobTitle}}, {{jobDescription}}, {{userProfile}}, {{roundContext}}, {{companyResearch}}, {{matchAnalysis}}, {{priorRounds}}, {{userNotes}}."
+          value={
+            perplexityConfig.technicalPrepPrompt ??
+            DEFAULT_TECHNICAL_PREP_PROMPT
+          }
+          rows={8}
+          onChange={(technicalPrepPrompt) =>
+            onChangePerplexity({ ...perplexityConfig, technicalPrepPrompt })
+          }
+          onExpand={() =>
+            onOpenPerplexityPrompt(
+              "Technical prep prompt",
+              "technicalPreparation"
+            )
           }
         />
       </div>

@@ -29,6 +29,8 @@ import {
   type RailEntry
 } from "~components/interviews/prep/PrepSectionRail"
 import { StarStoryList } from "~components/interviews/StarStoryList"
+import { TechExerciseList } from "~components/interviews/TechExerciseList"
+import { TechQuestionList } from "~components/interviews/TechQuestionList"
 import { usePrepWorkspace } from "~hooks/interviews/usePrepWorkspace"
 import {
   formatLabel,
@@ -48,20 +50,30 @@ interface Props {
 /**
  * The prep run sheet.
  *
- * Laid out as one continuous document rather than as six equal cards. The six
- * sections were never peers — they are a sequence, and five of them come out
+ * Laid out as one continuous document rather than as equal cards. The
+ * sections were never peers — they are a sequence, and most of them come out
  * of a single model call, which is why exactly one "Regenerate prep" sits on
- * the boundary that encloses those five instead of four identical buttons that
- * each quietly rewrote all of them.
+ * the boundary that encloses them instead of identical buttons that each
+ * quietly rewrote all of them.
  *
  * Company research and notes keep a surface of their own because they are the
  * only two things here with an independent lifecycle.
+ *
+ * A Technical round gets a different set of sections inside that boundary —
+ * exercises and a question drill built on the job's stack, in place of the
+ * talking points, STAR stories and gap defenses a behavioural round needs.
+ * A missing technology there is something to revise rather than something to
+ * have an answer ready for, so that section goes too. Sections that
+ * belong to the other sheet still render when they hold content, so prep
+ * written before a round's type was changed never vanishes.
  */
 
 const SECTION = {
   expect: "prep-expect",
   research: "prep-research",
   topics: "prep-topics",
+  exercises: "prep-exercises",
+  drills: "prep-drills",
   points: "prep-points",
   questions: "prep-questions",
   gaps: "prep-gaps",
@@ -95,7 +107,7 @@ function Section({
   )
 }
 
-/** One of the five sections that share a single generation. */
+/** One of the sections that share a single generation. */
 function Subsection({
   id,
   title,
@@ -154,34 +166,61 @@ export function PrepWorkspace({
     ? `generated ${relativeTimeLabel(prep.topicsPointsAt)}`
     : undefined
 
+  // Each sheet owns a pair of sections; the other pair renders only when it
+  // already holds something, which is how a round that was generated under a
+  // different type keeps the work that came with it.
+  const showExercises = w.technical || readiness.exercises.total > 0
+  const showDrills = w.technical || readiness.drills.total > 0
+  const showPoints = !w.technical || readiness.points.total > 0
+  const showStories = !w.technical || readiness.stories.total > 0
+  const showGaps = !w.technical || readiness.gaps.total > 0
+  const topicsTitle = w.technical
+    ? "Stack to review"
+    : `Likely topics — ${name}`
+
   const rail: RailEntry[] = [
     prep.logistics && { id: SECTION.expect, label: "What to expect" },
     { id: SECTION.research, label: "Company research" },
     w.ready && {
       id: SECTION.topics,
-      label: "Likely topics",
+      label: w.technical ? "Stack to review" : "Likely topics",
       count: readiness.topics
     },
-    w.ready && {
-      id: SECTION.points,
-      label: "Talking points",
-      count: readiness.points
-    },
+    w.ready &&
+      showExercises && {
+        id: SECTION.exercises,
+        label: "Exercises",
+        count: readiness.exercises
+      },
+    w.ready &&
+      showDrills && {
+        id: SECTION.drills,
+        label: "Question drill",
+        count: readiness.drills
+      },
+    w.ready &&
+      showPoints && {
+        id: SECTION.points,
+        label: "Talking points",
+        count: readiness.points
+      },
     w.ready && {
       id: SECTION.questions,
       label: "Questions to ask",
       count: readiness.questions
     },
-    w.ready && {
-      id: SECTION.gaps,
-      label: "If they press on…",
-      count: readiness.gaps
-    },
-    w.ready && {
-      id: SECTION.stories,
-      label: "Stories",
-      count: readiness.stories
-    },
+    w.ready &&
+      showGaps && {
+        id: SECTION.gaps,
+        label: "If they press on…",
+        count: readiness.gaps
+      },
+    w.ready &&
+      showStories && {
+        id: SECTION.stories,
+        label: "Stories",
+        count: readiness.stories
+      },
     { id: SECTION.notes, label: "My notes" }
   ].filter(Boolean) as RailEntry[]
 
@@ -288,9 +327,9 @@ export function PrepWorkspace({
               No prep generated yet
             </p>
             <p className="text-aa-13 text-aa-text-secondary max-w-md mx-auto">
-              Company research, likely topics for a {name}, questions to ask
-              them, answers for your weak spots, and stories from your own
-              profile. Two model calls, usually under a minute.
+              {w.technical
+                ? "Company research, the stack this job runs on, exercises to work through, a drill of the questions they're likely to ask with answers, and technical questions to ask them. Two model calls, usually under a minute."
+                : `Company research, likely topics for a ${name}, questions to ask them, answers for your weak spots, and stories from your own profile. Two model calls, usually under a minute.`}
             </p>
             {w.errors.topics && (
               <SectionError
@@ -425,8 +464,8 @@ export function PrepWorkspace({
                       Written for this round
                     </p>
                     <p className="text-aa-11 text-aa-neutral-500 mt-aa-px-1">
-                      These five sections are one generation — regenerating
-                      rewrites them together.
+                      These sections are one generation — regenerating rewrites
+                      them together.
                     </p>
                   </div>
                   <div className="flex items-center gap-aa-3 shrink-0 aa-no-print">
@@ -465,25 +504,51 @@ export function PrepWorkspace({
 
                 <Subsection
                   id={SECTION.topics}
-                  title={`Likely topics — ${name}`}
+                  title={topicsTitle}
                   count={readiness.topics}>
                   <Checklist
                     items={prep.likelyTopics ?? []}
                     onChange={(next) => void w.save({ likelyTopics: next })}
-                    addLabel="Add a topic"
+                    addLabel={w.technical ? "Add a technology" : "Add a topic"}
                   />
                 </Subsection>
 
-                <Subsection
-                  id={SECTION.points}
-                  title="Your talking points"
-                  count={readiness.points}>
-                  <Checklist
-                    items={prep.talkingPoints ?? []}
-                    onChange={(next) => void w.save({ talkingPoints: next })}
-                    addLabel="Add a talking point"
-                  />
-                </Subsection>
+                {showExercises && (
+                  <Subsection
+                    id={SECTION.exercises}
+                    title="Exercises to work through"
+                    count={readiness.exercises}>
+                    <TechExerciseList
+                      items={prep.techExercises ?? []}
+                      onChange={(next) => void w.save({ techExercises: next })}
+                    />
+                  </Subsection>
+                )}
+
+                {showDrills && (
+                  <Subsection
+                    id={SECTION.drills}
+                    title="Question drill"
+                    count={readiness.drills}>
+                    <TechQuestionList
+                      items={prep.techQuestions ?? []}
+                      onChange={(next) => void w.save({ techQuestions: next })}
+                    />
+                  </Subsection>
+                )}
+
+                {showPoints && (
+                  <Subsection
+                    id={SECTION.points}
+                    title="Your talking points"
+                    count={readiness.points}>
+                    <Checklist
+                      items={prep.talkingPoints ?? []}
+                      onChange={(next) => void w.save({ talkingPoints: next })}
+                      addLabel="Add a talking point"
+                    />
+                  </Subsection>
+                )}
 
                 <Subsection
                   id={SECTION.questions}
@@ -496,25 +561,29 @@ export function PrepWorkspace({
                   />
                 </Subsection>
 
-                <Subsection
-                  id={SECTION.gaps}
-                  title="If they press on…"
-                  count={readiness.gaps}>
-                  <GapDefenseList
-                    items={prep.gapDefenses ?? []}
-                    onChange={(next) => void w.save({ gapDefenses: next })}
-                  />
-                </Subsection>
+                {showGaps && (
+                  <Subsection
+                    id={SECTION.gaps}
+                    title="If they press on…"
+                    count={readiness.gaps}>
+                    <GapDefenseList
+                      items={prep.gapDefenses ?? []}
+                      onChange={(next) => void w.save({ gapDefenses: next })}
+                    />
+                  </Subsection>
+                )}
 
-                <Subsection
-                  id={SECTION.stories}
-                  title="Stories to have ready"
-                  count={readiness.stories}>
-                  <StarStoryList
-                    items={prep.starStories ?? []}
-                    onChange={(next) => void w.save({ starStories: next })}
-                  />
-                </Subsection>
+                {showStories && (
+                  <Subsection
+                    id={SECTION.stories}
+                    title="Stories to have ready"
+                    count={readiness.stories}>
+                    <StarStoryList
+                      items={prep.starStories ?? []}
+                      onChange={(next) => void w.save({ starStories: next })}
+                    />
+                  </Subsection>
+                )}
               </div>
             ) : (
               /* Research (or a note) exists but the model sections don't. The
@@ -523,8 +592,9 @@ export function PrepWorkspace({
               <div className="aa-runsheet-panel">
                 <h2 className="aa-runsheet-title">Prep for this round</h2>
                 <p className="text-aa-13 text-aa-text-secondary">
-                  Topics, talking points, questions, gap answers and stories
-                  haven't been generated yet.
+                  {w.technical
+                    ? "The stack to review, exercises, the question drill and questions to ask haven't been generated yet."
+                    : "Topics, talking points, questions, gap answers and stories haven't been generated yet."}
                 </p>
                 {w.errors.topics && (
                   <SectionError
