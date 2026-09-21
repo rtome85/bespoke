@@ -21,7 +21,7 @@ export function CompanyResearchCard({
   onToggleProjects
 }: Props) {
   return (
-    <div className="rounded-aa-lg p-aa-4 flex flex-col gap-aa-3">
+    <div className="pt-4 border-t border-aa-border flex flex-col gap-aa-3">
       {isLoading ? (
         <div className="flex items-center gap-aa-2 animate-pulse">
           <Building2 className="w-4 h-4 text-aa-neutral-500" />
