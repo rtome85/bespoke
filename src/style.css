@@ -544,6 +544,55 @@ body {
   .aa-runsheet-panel {
     @apply scroll-mt-aa-appbar-offset space-y-aa-3 rounded-aa-lg border border-aa-border bg-aa-surface p-aa-5;
   }
+
+  /* Stories to have ready. A STAR story is a script said out loud, so the
+     four parts are set as one column of prose with their labels as margin
+     notes: right-aligned in a fixed gutter, they give the four answers a
+     single hard left edge in place of the ragged one a left-aligned label
+     column leaves. `covers` joins the same gutter under a label of its own,
+     because chips floating loose under the block never said what they were.
+     Below `sm` the gutter would leave the prose nothing, so labels stack. */
+  .aa-story + .aa-story {
+    @apply mt-aa-5 border-t border-aa-border-subtle pt-aa-5;
+  }
+  .aa-story-title {
+    @apply flex-1 text-aa-13 font-semibold leading-snug text-aa-text-primary transition-colors;
+  }
+  /* The 24px indent is the tick plus its gap: the story hangs under its own
+     title instead of restarting at the checkbox. The font size is set here
+     rather than only on the rows because the `ch` track below resolves
+     against *this* element — left at the inherited 16px it measured out a
+     617px column of 13px prose, which is the run-on line it exists to stop. */
+  .aa-story-body {
+    @apply mt-aa-2 grid gap-x-aa-3 gap-y-aa-1 pl-aa-6 text-aa-13;
+  }
+  /* Stacked, a label belongs to the prose under it, so the air goes above it
+     instead of around it. No first-child case to exclude: the opening label
+     has no prose before it and keeps the tighter gap to the title. */
+  .aa-story-body dd + dt {
+    @apply mt-aa-2;
+  }
+  /* The label voice the rail already uses. `pt` only once the labels are in
+     the gutter, where a 10px cap has to sit on a 13px baseline. */
+  .aa-story-label {
+    @apply text-aa-10 font-bold uppercase tracking-aa-wider-10 text-aa-text-secondary sm:pt-aa-1 sm:text-right;
+  }
+  .aa-story-text {
+    @apply text-aa-13 leading-relaxed text-aa-neutral-700 transition-colors;
+  }
+  /* Rehearsed. The "n of m ready" above the section counts exactly these
+     ticks, so a done story settles back; filling a 16px box was all that
+     moved before, on a sheet that runs several viewports deep. */
+  .aa-story-done .aa-story-title,
+  .aa-story-done .aa-story-text {
+    @apply text-aa-text-secondary;
+  }
+  /* The topics a story answers, and the topic an exercise drills — the same
+     class string in both files, on the aa-text-secondary over aa-neutral-100
+     pairing that .aa-pill-idle above already had to move off at 4.39:1. */
+  .aa-topic-chip {
+    @apply inline-block rounded-aa-pill bg-aa-neutral-100 px-aa-2 py-aa-px-3 text-aa-10 font-semibold text-aa-neutral-700;
+  }
 }
 
 /* The rail's track. Written as a plain property for the same reason as
@@ -552,6 +601,22 @@ body {
 @media (min-width: 1024px) {
   .aa-runsheet {
     grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
+
+/* The story gutter, as plain properties for the same reason as .aa-runsheet:
+   the label track is a drawn width, and the prose track is capped in `ch`
+   because this is the only long-form reading block on the sheet — across the
+   full panel a STAR line ran past a hundred characters. */
+@media (min-width: 640px) {
+  .aa-story-body {
+    grid-template-columns: 76px minmax(0, 62ch);
+    row-gap: var(--aa-space-2);
+  }
+  /* In the gutter the label sits beside its prose, so the row gap already
+     groups them and the stacked spacing above would only push rows apart. */
+  .aa-story-body dd + dt {
+    margin-top: 0;
   }
 }
 
@@ -574,7 +639,8 @@ body {
     padding: 0 !important;
   }
   .aa-runsheet-section,
-  .aa-runsheet-sub {
+  .aa-runsheet-sub,
+  .aa-story {
     break-inside: avoid;
   }
 }

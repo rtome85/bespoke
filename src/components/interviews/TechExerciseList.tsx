@@ -53,9 +53,7 @@ export function TechExerciseList({ items, onChange }: Props) {
                 {item.title}
               </p>
               {item.topic && (
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-aa-pill bg-aa-neutral-100 text-aa-10 font-semibold text-aa-text-secondary">
-                  {item.topic}
-                </span>
+                <span className="aa-topic-chip mt-1">{item.topic}</span>
               )}
             </div>
             <button
