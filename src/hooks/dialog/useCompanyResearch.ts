@@ -61,14 +61,14 @@ export function useCompanyResearch(
         // parsed form existed has nothing for it to draw.
         const entry = response.entry as CompanyResearchEntry | undefined
         setCompanyInfo(entry?.parsed ?? null)
-      } catch (error) {
+      } catch {
+        // A throw here is the message never reaching the worker, not research
+        // failing — transport text ("Receiving end does not exist") is not copy
+        // to put on the card. The worker's own failures arrive as `success:
+        // false` above, already worded for the user.
         if (active) {
           setCompanyInfo(null)
-          setCompanyInfoError(
-            error instanceof Error
-              ? error.message
-              : "Couldn't research this company."
-          )
+          setCompanyInfoError("Couldn't reach company research.")
         }
       } finally {
         if (active) setCompanyInfoLoading(false)
