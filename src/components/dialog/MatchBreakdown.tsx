@@ -45,22 +45,14 @@ export function MatchBreakdown({ match, openSection, onToggle }: Props) {
   if (visibleRows.length === 0) return null
 
   return (
-    <div className="bg-aa-surface rounded-aa-lg border border-aa-border overflow-hidden flex flex-col">
-      {visibleRows.map((row, index) => {
+    <div className="flex flex-col gap-aa-5">
+      {visibleRows.map((row) => {
         const open = openSection === row.key
         return (
-          <div
-            key={row.key}
-            className={index > 0 ? "border-t border-aa-border" : ""}>
+          <div key={row.key} className="flex flex-col gap-aa-3">
             <button
               onClick={() => onToggle(row.key)}
-              className="w-full flex items-center gap-aa-3 px-aa-4 py-aa-4 text-left">
-              <ChevronRight
-                className="w-aa-px-18 h-aa-px-18 text-aa-neutral-500 shrink-0 transition-transform duration-200"
-                style={{
-                  transform: open ? "rotate(90deg)" : "rotate(0deg)"
-                }}
-              />
+              className="w-full flex items-center gap-aa-2 text-left">
               <row.Icon
                 className="w-4 h-4 shrink-0"
                 style={{ color: row.color }}
@@ -71,9 +63,15 @@ export function MatchBreakdown({ match, openSection, onToggle }: Props) {
               <span className="text-aa-13 font-semibold text-aa-text-secondary tabular-nums">
                 {row.items.length}
               </span>
+              <ChevronRight
+                className="w-4 h-4 text-aa-text-secondary shrink-0 transition-transform duration-200"
+                style={{
+                  transform: open ? "rotate(90deg)" : "rotate(0deg)"
+                }}
+              />
             </button>
             {open && (
-              <ul className="flex flex-col gap-aa-3 px-aa-4 pb-aa-4 pl-aa-px-46">
+              <ul className="flex flex-col gap-2.5 pl-aa-6">
                 {row.items.map((item, itemIndex) => (
                   <li
                     key={itemIndex}

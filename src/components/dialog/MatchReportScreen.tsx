@@ -89,47 +89,61 @@ export function MatchReportScreen({
         }
       : null
 
+  const reportHidden = triageDecision === "apply"
+
   return (
     <div className="min-h-screen bg-aa-surface flex flex-col font-aa text-aa-text-primary">
-      <div className="flex-1 overflow-y-auto px-aa-6 pt-9 pb-aa-8 flex flex-col gap-aa-6">
-        <div className="flex items-center justify-between gap-aa-4">
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-aa-h2 font-bold leading-aa-1.2 tracking-aa-tighter-4 text-aa-text-primary">
-              {fullName || "Match report"}
-            </h1>
-            <p className="text-aa-13 leading-aa-1.4 text-aa-text-secondary">
-              {jobTitle || "This role"}
-              {companyName ? ` — ${companyName}` : ""}
-            </p>
+      <div className="flex-1 overflow-y-auto pb-aa-8 flex flex-col gap-aa-6">
+        <div className="bg-aa-surface-subtle px-aa-8 pt-aa-8 pb-aa-6 flex flex-col">
+          <div className="flex items-center justify-between gap-aa-4">
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-aa-h2 font-bold leading-aa-1.2 tracking-aa-tighter-4 text-aa-text-primary">
+                {fullName || "Match report"}
+              </h1>
+              <p className="text-aa-13 leading-aa-1.4 text-aa-text-secondary">
+                {jobTitle || "This role"}
+                {companyName ? ` — ${companyName}` : ""}
+              </p>
+            </div>
+            <div
+              className={`overflow-hidden shrink-0 transition-all duration-500 ease-in-out ${
+                reportHidden
+                  ? "w-aa-px-60 opacity-100 scale-100"
+                  : "w-0 opacity-0 scale-75"
+              }`}>
+              <ScoreGauge
+                percentage={percentage}
+                ringColor={score.fill}
+                textColor={score.ink}
+              />
+            </div>
           </div>
-          <div
-            className={`overflow-hidden shrink-0 transition-all duration-500 ease-in-out ${
-              triageDecision === "apply"
-                ? "w-aa-px-60 opacity-100 scale-100"
-                : "w-0 opacity-0 scale-75"
-            }`}>
-            <ScoreGauge
-              percentage={percentage}
-              ringColor={score.fill}
-              textColor={score.ink}
-            />
-          </div>
-        </div>
 
-        <div className="flex flex-col">
           <div
-            className={`flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out ${
-              triageDecision === "apply"
+            className={`overflow-hidden transition-all duration-500 ease-in-out ${
+              reportHidden
                 ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
-                : "max-h-aa-expanded opacity-100 translate-y-0"
+                : "max-h-aa-expanded opacity-100 translate-y-0 pt-aa-8"
             }`}
-            inert={triageDecision === "apply"}
-            aria-hidden={triageDecision === "apply"}>
+            inert={reportHidden}
+            aria-hidden={reportHidden}>
             <ScoreSummaryCard
               percentage={percentage}
               summary={result.match.summary}
               presentation={score}
             />
+          </div>
+        </div>
+
+        <div className="px-aa-8 flex flex-col">
+          <div
+            className={`flex flex-col gap-aa-6 overflow-hidden transition-all duration-500 ease-in-out ${
+              reportHidden
+                ? "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
+                : "max-h-aa-expanded opacity-100 translate-y-0"
+            }`}
+            inert={reportHidden}
+            aria-hidden={reportHidden}>
             <MatchBreakdown
               match={result.match}
               openSection={openMatchSection}
@@ -153,12 +167,12 @@ export function MatchReportScreen({
 
           <div
             className={`overflow-hidden transition-all duration-500 ease-in-out ${
-              triageDecision === "apply"
+              reportHidden
                 ? "max-h-aa-expanded opacity-100 translate-y-0"
                 : "max-h-0 opacity-0 -translate-y-2 pointer-events-none"
             }`}
-            inert={triageDecision !== "apply"}
-            aria-hidden={triageDecision !== "apply"}>
+            inert={!reportHidden}
+            aria-hidden={!reportHidden}>
             <div className="flex flex-col gap-aa-6">
               <BackLink label="Back to report" onClick={onBackToReport} />
               <StrengthenApplication

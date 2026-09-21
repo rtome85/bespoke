@@ -18,7 +18,7 @@ export function CompanyResearchCard({
   onToggleProjects
 }: Props) {
   return (
-    <div className="bg-aa-surface rounded-aa-lg border border-aa-border px-aa-4 py-aa-4 flex flex-col gap-aa-3">
+    <div className="rounded-aa-lg p-aa-4 flex flex-col gap-aa-3">
       {isLoading ? (
         <div className="flex items-center gap-aa-2 animate-pulse">
           <Building2 className="w-4 h-4 text-aa-neutral-500" />
@@ -37,11 +37,11 @@ export function CompanyResearchCard({
             </div>
 
             <div className="flex flex-wrap gap-aa-2">
-              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
+              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-surface px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
                 <Building2 className="w-3 h-3 text-aa-neutral-400" />
                 {info.industry}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
+              <span className="inline-flex items-center gap-1.5 rounded-aa-sm bg-aa-surface px-2.5 py-1.5 text-aa-11 text-aa-text-secondary">
                 <Users className="w-3 h-3 text-aa-neutral-400" />
                 {info.size}
               </span>
@@ -83,7 +83,7 @@ export function CompanyResearchCard({
               info.ratings.teamlyzer) && (
               <div className="flex flex-wrap gap-2">
                 {info.ratings.glassdoor && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-surface px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Glassdoor</span>
                     <span
                       className={
@@ -96,7 +96,7 @@ export function CompanyResearchCard({
                   </span>
                 )}
                 {info.ratings.indeed && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-surface px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Indeed</span>
                     <span
                       className={
@@ -109,7 +109,7 @@ export function CompanyResearchCard({
                   </span>
                 )}
                 {info.ratings.teamlyzer && (
-                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-neutral-100 border border-aa-border px-2.5 py-1.5 text-aa-11">
+                  <span className="inline-flex items-center gap-1 rounded-aa-sm bg-aa-surface px-2.5 py-1.5 text-aa-11">
                     <span className="text-aa-text-secondary">Teamlyzer</span>
                     <span
                       className={
