@@ -12,7 +12,7 @@ export function ScoreSummaryCard({ percentage, summary, presentation }: Props) {
       <div className="flex items-end justify-between">
         <div className="flex items-end gap-aa-px-1">
           <span
-            className="text-aa-56 font-bold leading-none tracking-aa-tighter-15"
+            className="font-aa-heading text-aa-56 font-bold leading-none tracking-aa-tighter-15"
             style={{ color: presentation.ink }}>
             {percentage}
           </span>

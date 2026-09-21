@@ -114,14 +114,8 @@ module.exports = {
         heading: ["Space Grotesk", "sans-serif"],
         body: ["Inter", "sans-serif"],
         base: "var(--font-family-base)",
-        aa: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "sans-serif"
-        ]
+        aa: "var(--aa-font)",
+        "aa-heading": "var(--aa-font-heading)"
       },
       spacing: {
         "aa-1": "var(--aa-space-1)",
