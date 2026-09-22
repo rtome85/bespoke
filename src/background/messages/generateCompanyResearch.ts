@@ -11,6 +11,7 @@ import {
   resolveJobRoute,
   type ResolvedRoute
 } from "~background/prepareGenerateRequest"
+import { DEFAULT_COMPANY_SYNTHESIS_PROMPT } from "~constants/prompts"
 import { parseCompanyInfo } from "~lib/companyResearchParser"
 import { hasHostPermission } from "~lib/hostPermissions"
 import {
@@ -25,7 +26,6 @@ import {
 } from "~lib/interviews/companySite"
 import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
 import {
-  DEFAULT_COMPANY_SYNTHESIS_PROMPT,
   DEFAULT_LLM_TUNING,
   normalizeModelRouting,
   RESEARCH_PREFERENCE_LABELS,

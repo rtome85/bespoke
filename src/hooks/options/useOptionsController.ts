@@ -1,6 +1,10 @@
 import { useState } from "react"
 
 import { NAV_GROUPS, SETTINGS_DEFAULT_TAB } from "~constants/options"
+import {
+  DEFAULT_INTERVIEW_PREP_PROMPT,
+  DEFAULT_TECHNICAL_PREP_PROMPT
+} from "~constants/prompts"
 import { ROUTES } from "~constants/routes"
 import { useApplicationActions } from "~hooks/options/useApplicationActions"
 import { useDataTransfer } from "~hooks/options/useDataTransfer"
@@ -16,8 +20,6 @@ import { useSyncConfig } from "~hooks/options/useSyncConfig"
 import { useHashRoute } from "~lib/router"
 import { useSavedApplications } from "~lib/useSavedApplications"
 import {
-  DEFAULT_INTERVIEW_PREP_PROMPT,
-  DEFAULT_TECHNICAL_PREP_PROMPT,
   type LLMProviderId,
   type PerplexityConfig,
   type ProviderConfig,

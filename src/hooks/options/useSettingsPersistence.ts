@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
+import { DEFAULT_PROMPTS } from "~constants/prompts"
 import { STORAGE_KEYS } from "~storage/keys"
 import {
-  DEFAULT_PROMPTS,
   type CustomPrompts,
   type LLMTuningConfig,
   type ModelRouting,

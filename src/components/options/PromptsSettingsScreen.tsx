@@ -3,7 +3,9 @@ import { PromptTemplateCard } from "~components/options/PromptTemplateCard"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_TECHNICAL_PREP_PROMPT,
-  PROMPT_TEMPLATES,
+  PROMPT_TEMPLATES
+} from "~constants/prompts"
+import {
   type CustomPrompts,
   type PerplexityConfig,
   type PromptTemplate

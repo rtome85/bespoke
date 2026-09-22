@@ -8,10 +8,12 @@ import {
 } from "~background/prepareGenerateRequest"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
-  DEFAULT_LLM_TUNING,
   DEFAULT_TECHNICAL_PREP_PROMPT,
   LEGACY_INTERVIEW_PREP_PROMPTS,
-  LEGACY_TECHNICAL_PREP_PROMPTS,
+  LEGACY_TECHNICAL_PREP_PROMPTS
+} from "~constants/prompts"
+import {
+  DEFAULT_LLM_TUNING,
   type LLMTuningConfig,
   type PerplexityConfig
 } from "~types/config"

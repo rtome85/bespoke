@@ -1,12 +1,9 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
+import { DEFAULT_PROMPTS, PROMPTS_VERSION } from "~constants/prompts"
 import { STORAGE_KEYS } from "~storage/keys"
-import {
-  DEFAULT_PROMPTS,
-  PROMPTS_VERSION,
-  type CustomPrompts
-} from "~types/config"
+import type { CustomPrompts } from "~types/config"
 
 export function usePromptVersionMigration(
   setCustomPrompts: Dispatch<SetStateAction<CustomPrompts>>

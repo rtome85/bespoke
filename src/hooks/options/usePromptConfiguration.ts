@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useState } from "react"
 
+import { PROMPT_TEMPLATES } from "~constants/prompts"
 import {
-  PROMPT_TEMPLATES,
   type CustomPrompts,
   type PerplexityConfig,
   type PromptTemplate
