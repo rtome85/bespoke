@@ -9,6 +9,11 @@ import {
 } from "lucide-react"
 
 import {
+  applicationFilterRoute,
+  interviewPrepRoute,
+  ROUTES
+} from "~constants/routes"
+import {
   formatLabel,
   relativeDayLabel,
   roundLabel
@@ -69,7 +74,7 @@ export function NeedsYouCard({
       label: `${work.debriefsOwed.length} ${plural(work.debriefsOwed.length, "debrief")} owed`,
       sub: "Rounds that happened with nothing logged",
       count: work.debriefsOwed.length,
-      hash: "#/interviews/debriefs"
+      hash: ROUTES.interviewDebriefs
     })
   }
 
@@ -81,7 +86,7 @@ export function NeedsYouCard({
       label: `${work.openFollowUps.length} open ${plural(work.openFollowUps.length, "follow-up")}`,
       sub: firstFollowUp(work.openFollowUps),
       count: work.openFollowUps.length,
-      hash: "#/interviews/debriefs"
+      hash: ROUTES.interviewDebriefs
     })
   }
 
@@ -93,7 +98,7 @@ export function NeedsYouCard({
       label: `${work.goneQuiet.length} gone quiet`,
       sub: `Applied ${QUIET_DAYS}+ days ago, still no reply`,
       count: work.goneQuiet.length,
-      hash: "#/applications/all/Applied"
+      hash: applicationFilterRoute("Applied")
     })
   }
 
@@ -105,7 +110,7 @@ export function NeedsYouCard({
       label: `${work.undecidedSaves.length} saved, never decided`,
       sub: `Matched ${UNDECIDED_DAYS}+ days ago, never applied or dropped`,
       count: work.undecidedSaves.length,
-      hash: "#/applications/all/Saved"
+      hash: applicationFilterRoute("Saved")
     })
   }
 
@@ -117,7 +122,7 @@ export function NeedsYouCard({
       label: `${work.interviewingWithoutRound.length} without a scheduled round`,
       sub: "Marked as interviewing, but nothing is in the calendar",
       count: work.interviewingWithoutRound.length,
-      hash: "#/interviews/schedule"
+      hash: ROUTES.interviewSchedule
     })
   }
 
@@ -158,7 +163,7 @@ export function NeedsYouCard({
           </span>
           <button
             type="button"
-            onClick={() => onNavigate(`#/interviews/prep/${next.round.id}`)}
+            onClick={() => onNavigate(interviewPrepRoute(next.round.id))}
             className="aa-btn-accent shrink-0">
             Open prep
           </button>

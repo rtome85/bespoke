@@ -1,3 +1,4 @@
+import { applicationFilterRoute, ROUTES } from "~constants/routes"
 import {
   rate,
   stageCounts,
@@ -51,14 +52,14 @@ export function StatStrip({
       label: "Tracked",
       value: String(counts.tracked),
       sub: trackedSub(volume, counts),
-      hash: "#/applications"
+      hash: ROUTES.applications
     },
     {
       label: "Reply rate",
       value: replyRate.value === null ? "—" : `${replyRate.value}%`,
       muted: replyRate.value === null,
       sub: rateHint(replyRate),
-      hash: "#/applications/all/replied"
+      hash: applicationFilterRoute("replied")
     },
     {
       label: "Interview rate",
@@ -68,7 +69,7 @@ export function StatStrip({
         interviewRate.value === null
           ? rateHint(interviewRate)
           : `${counts.interviewed} ever reached a round`,
-      hash: "#/applications/all/interviewed"
+      hash: applicationFilterRoute("interviewed")
     },
     {
       label: "Offers",
@@ -77,7 +78,7 @@ export function StatStrip({
         counts.interviewed > 0
           ? `from ${counts.interviewed} interviewed`
           : "no interviews yet",
-      hash: counts.offers > 0 ? "#/applications/all/Offer" : undefined
+      hash: counts.offers > 0 ? applicationFilterRoute("Offer") : undefined
     },
     {
       label: "Median reply",

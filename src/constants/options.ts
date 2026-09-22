@@ -162,11 +162,3 @@ export const SAMPLE_BULLETS: Record<
 }
 
 export const SETTINGS_DEFAULT_TAB = "providers"
-
-export const RAIL_HASH: Record<string, string> = {
-  all: "#/applications",
-  overview: "#/applications/overview",
-  schedule: "#/interviews/schedule",
-  prep: "#/interviews/prep",
-  debriefs: "#/interviews/debriefs"
-}

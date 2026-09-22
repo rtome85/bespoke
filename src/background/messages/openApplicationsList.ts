@@ -1,5 +1,7 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
+import { optionsPagePath, ROUTES } from "~constants/routes"
+
 /**
  * Close the side panel on the current tab, then open the tracked-applications
  * list in a new tab — in that order.
@@ -29,7 +31,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     }
 
     await chrome.tabs.create({
-      url: chrome.runtime.getURL("options.html#/applications")
+      url: chrome.runtime.getURL(optionsPagePath(ROUTES.applications))
     })
 
     res.send({ success: true })

@@ -1,5 +1,7 @@
 import { Briefcase, ChevronRight, Settings2 } from "lucide-react"
 
+import { optionsPagePath, ROUTES } from "~constants/routes"
+
 import icon from "../assets/icon.png"
 
 import "./style.css"
@@ -9,8 +11,8 @@ import "./style.css"
  * happens from the right-click context menu (see background/context-menu.ts).
  */
 function IndexPopup() {
-  const openShell = (params = "") => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("options.html" + params) })
+  const openShell = (route = "") => {
+    chrome.tabs.create({ url: chrome.runtime.getURL(optionsPagePath(route)) })
     window.close()
   }
 
@@ -44,12 +46,12 @@ function IndexPopup() {
             {
               label: "Applications",
               icon: Briefcase,
-              onClick: () => openShell("#/applications")
+              onClick: () => openShell(ROUTES.applications)
             },
             {
               label: "Settings & profile",
               icon: Settings2,
-              onClick: () => openShell("#/settings")
+              onClick: () => openShell(ROUTES.settings)
             }
           ].map(({ label, icon: Icon, onClick }) => (
             <button

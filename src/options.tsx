@@ -11,6 +11,7 @@ import { ProfileSettingsScreen } from "~components/options/ProfileSettingsScreen
 import { PromptsSettingsScreen } from "~components/options/PromptsSettingsScreen"
 import { ProvidersSettingsScreen } from "~components/options/ProvidersSettingsScreen"
 import { SettingsArea } from "~components/options/SettingsArea"
+import { settingsRoute } from "~constants/routes"
 import { useOptionsController } from "~hooks/options/useOptionsController"
 import { DEFAULT_LLM_TUNING } from "~types/config"
 
@@ -107,7 +108,7 @@ function Options() {
         onTestPerplexity={testPerplexity}
         onChangeSearch={setSearchConfig}
         onTestSearch={testSearch}
-        onOpenPrompts={() => navigate("#/settings/prompts")}
+        onOpenPrompts={() => navigate(settingsRoute("prompts"))}
       />
     ),
     "model-routing": (
@@ -119,7 +120,7 @@ function Options() {
         searchConfig={searchConfig}
         onChangeModelRouting={setModelRouting}
         onChangeTuning={setLlmTuning}
-        onOpenProviders={() => navigate("#/settings/providers")}
+        onOpenProviders={() => navigate(settingsRoute("providers"))}
       />
     ),
     "prompts": (
@@ -218,7 +219,7 @@ function Options() {
           <SettingsArea
             activeTab={activeTab}
             activeNav={activeNav}
-            onSelect={(value) => navigate(`#/settings/${value}`)}
+            onSelect={(value) => navigate(settingsRoute(value))}
             section={section}
             onSection={changeSection}
             email={syncConfig?.email}>

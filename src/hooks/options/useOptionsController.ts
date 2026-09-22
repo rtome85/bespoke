@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { NAV_GROUPS, SETTINGS_DEFAULT_TAB } from "~constants/options"
+import { ROUTES } from "~constants/routes"
 import { useApplicationActions } from "~hooks/options/useApplicationActions"
 import { useDataTransfer } from "~hooks/options/useDataTransfer"
 import { useDriveSync } from "~hooks/options/useDriveSync"
@@ -66,7 +67,7 @@ export function useOptionsController() {
   const activeNav = allNavItems.find((item) => item.value === activeTab)
 
   const changeSection = (next: AppSection) =>
-    navigate(next === "settings" ? "#/settings" : "#/applications")
+    navigate(next === "settings" ? ROUTES.settings : ROUTES.applications)
 
   const updateProvider = (id: LLMProviderId, patch: Partial<ProviderConfig>) =>
     setProviders((current) => ({
@@ -201,7 +202,7 @@ export function useOptionsController() {
     advanced: boolean
     appId: string
   }) => {
-    navigate("#/interviews/debriefs")
+    navigate(ROUTES.interviewDebriefs)
     if (advanced) setAdvanceFor(appId)
   }
   const addAdvancedRound = () => {

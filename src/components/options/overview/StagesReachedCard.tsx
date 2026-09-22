@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react"
 
+import { applicationFilterRoute, ROUTES } from "~constants/routes"
 import { rate, stageCounts, type Rate } from "~lib/overview/metrics"
 import type { SavedApplication } from "~types/userProfile"
 
@@ -38,7 +39,7 @@ export function StagesReachedCard({
       conversion: null,
       conversionLabel: "",
       tone: "bg-aa-neutral-400",
-      hash: "#/applications"
+      hash: ROUTES.applications
     },
     {
       label: "Applied",
@@ -46,7 +47,7 @@ export function StagesReachedCard({
       conversion: rate(counts.applied, counts.tracked),
       conversionLabel: "of saved",
       tone: "bg-aa-primary",
-      hash: "#/applications/all/sent"
+      hash: applicationFilterRoute("sent")
     },
     {
       label: "Interviewed",
@@ -54,7 +55,7 @@ export function StagesReachedCard({
       conversion: rate(counts.interviewed, counts.applied),
       conversionLabel: "of applied",
       tone: "bg-aa-primary",
-      hash: "#/applications/all/interviewed"
+      hash: applicationFilterRoute("interviewed")
     },
     {
       label: "Offer",
@@ -62,7 +63,7 @@ export function StagesReachedCard({
       conversion: rate(counts.offers, counts.interviewed),
       conversionLabel: "of interviewed",
       tone: "bg-aa-success-strong",
-      hash: counts.offers > 0 ? "#/applications/all/Offer" : undefined
+      hash: counts.offers > 0 ? applicationFilterRoute("Offer") : undefined
     }
   ]
 
@@ -73,7 +74,7 @@ export function StagesReachedCard({
       sub: "including rejections after an interview",
       valueClass: "text-aa-error-strong",
       wrapClass: "bg-aa-error-soft",
-      hash: "#/applications/all/Reject"
+      hash: applicationFilterRoute("Reject")
     },
     {
       label: "No reply yet",
@@ -81,7 +82,7 @@ export function StagesReachedCard({
       sub: "applied, still silent",
       valueClass: "text-aa-text-secondary",
       wrapClass: "bg-aa-neutral-100",
-      hash: "#/applications/all/Applied"
+      hash: applicationFilterRoute("Applied")
     }
   ].filter((o) => o.count > 0)
 

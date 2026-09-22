@@ -1,5 +1,7 @@
 import { useEffect } from "react"
 
+import { optionsPagePath, ROUTES } from "~constants/routes"
+
 import "../style.css"
 
 /**
@@ -11,7 +13,7 @@ import "../style.css"
 function AnalyticsPage() {
   useEffect(() => {
     window.location.replace(
-      chrome.runtime.getURL("options.html#/applications/overview")
+      chrome.runtime.getURL(optionsPagePath(ROUTES.applicationsOverview))
     )
   }, [])
 
