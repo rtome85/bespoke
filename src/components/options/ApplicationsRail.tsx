@@ -9,6 +9,7 @@ import {
 import { SettingsRail } from "~components/options/SettingsRail"
 import {
   needsDebrief,
+  needsPrep,
   roundsThisWeek,
   roundsWithApp
 } from "~lib/interviews/selectors"
@@ -38,6 +39,7 @@ export function ApplicationsRail({
 }) {
   const refs = roundsWithApp(apps)
   const weekCount = roundsThisWeek(refs).length
+  const prepCount = needsPrep(refs).length
   const debriefCount = needsDebrief(refs).length
 
   const groups: SettingsNavGroup[] = [
@@ -64,7 +66,13 @@ export function ApplicationsRail({
           icon: CalendarDays,
           badge: weekCount || undefined
         },
-        { label: "Prep", value: "prep", subtitle: "", icon: BookOpen },
+        {
+          label: "Prep",
+          value: "prep",
+          subtitle: "",
+          icon: BookOpen,
+          badge: prepCount || undefined
+        },
         {
           label: "Debriefs",
           value: "debriefs",
