@@ -196,8 +196,24 @@ const SUBSCRIPTS: Record<string, string> = {
   "9": "₉"
 }
 
-/** Fenced blocks and inline code spans — everything that passes through. */
-const CODE = /(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]*`)/g
+/**
+ * Fenced blocks and inline code spans — everything that passes through.
+ *
+ * The fence is matched the way CommonMark defines one, because the looser
+ * version silently corrupted code. It had taken any ``` as an opener, wherever
+ * it sat, and any ``` as its closer: so a four-backtick fence wrapping a
+ * three-backtick one — a lesson showing how to fence a snippet — closed on the
+ * inner opener, and everything after it fell into the prose bucket, where
+ * `name="${A}_${B}"` came out as `name="A_{B}"`.
+ *
+ * So: an opener is three or more backticks or tildes at the start of a line,
+ * `\1` pins both the character and the run length, and only a line holding
+ * that same run (or longer) and nothing else closes it. An unterminated block
+ * still runs to the end of the string — `(?![\s\S])` rather than `$`, which
+ * under the `m` flag would end the block at the first line break.
+ */
+const CODE =
+  /^[ \t]*(`{3,}|~{3,})[^\n]*(?:\n[\s\S]*?)?(?:^[ \t]*\1[`~]*[ \t]*$|(?![\s\S]))|`[^`\n]*`/gm
 
 /** Wrappers whose only job is a typeface: keep the argument, drop the call. */
 const FONT_COMMAND =
@@ -272,30 +288,33 @@ function math(inner: string): string {
  */
 const IS_MATH = /[\\^_{]/
 
+/** Everything between the code spans: the only text that may be rewritten. */
+function prose(part: string): string {
+  if (!part) return part
+  let out = part
+  out = out.replace(/\$\$([\s\S]+?)\$\$/g, (_m, inner: string) => math(inner))
+  out = out.replace(/\\\[([\s\S]+?)\\\]/g, (_m, inner: string) => math(inner))
+  out = out.replace(/\\\(([\s\S]+?)\\\)/g, (_m, inner: string) => math(inner))
+  out = out.replace(/\$([^$\n]+?)\$/g, (m, inner: string) =>
+    IS_MATH.test(inner) ? math(inner) : m
+  )
+  // Commands the model wrote without any delimiter around them at all.
+  return symbols(out, true)
+}
+
 export function lessonMathToText(markdown: string): string {
   if (!markdown || !/[\\$]/.test(markdown)) return markdown
 
-  return markdown
-    .split(CODE)
-    .map((part, i) => {
-      // Odd indices are the captured code spans — passed through untouched.
-      if (i % 2 === 1) return part
-
-      let out = part
-      out = out.replace(/\$\$([\s\S]+?)\$\$/g, (_m, inner: string) =>
-        math(inner)
-      )
-      out = out.replace(/\\\[([\s\S]+?)\\\]/g, (_m, inner: string) =>
-        math(inner)
-      )
-      out = out.replace(/\\\(([\s\S]+?)\\\)/g, (_m, inner: string) =>
-        math(inner)
-      )
-      out = out.replace(/\$([^$\n]+?)\$/g, (m, inner: string) =>
-        IS_MATH.test(inner) ? math(inner) : m
-      )
-      // Commands the model wrote without any delimiter around them at all.
-      return symbols(out, true)
-    })
-    .join("")
+  // Walked rather than `split`, because the fence pattern needs a capture
+  // group for its backreference and `split` would then interleave that group
+  // into the output alongside the matches, breaking the even/odd invariant
+  // the old version counted on.
+  let out = ""
+  let last = 0
+  for (const m of markdown.matchAll(CODE)) {
+    const at = m.index ?? 0
+    out += prose(markdown.slice(last, at)) + m[0]
+    last = at + m[0].length
+  }
+  return out + prose(markdown.slice(last))
 }
