@@ -75,14 +75,6 @@ export type ApplicationStatus =
   | "Offer"
   | "Reject"
 
-export const APPLICATION_STATUSES: ApplicationStatus[] = [
-  "Saved",
-  "Applied",
-  "Interviewing",
-  "Offer",
-  "Reject"
-]
-
 // ── Interview rounds ───────────────────────────────────────────────────────────
 
 export type RoundType = "HR" | "Technical" | "Final" | "Custom"

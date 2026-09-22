@@ -1,10 +1,8 @@
 import type { Dispatch, SetStateAction } from "react"
 
+import { APPLICATION_STATUSES } from "~constants/applications"
 import type { SaveApplicationFormData } from "~types/dialog"
-import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus
-} from "~types/userProfile"
+import type { ApplicationStatus } from "~types/userProfile"
 
 interface Props {
   formData: SaveApplicationFormData
