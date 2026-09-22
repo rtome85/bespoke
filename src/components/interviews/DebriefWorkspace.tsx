@@ -114,7 +114,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
       : "Save debrief"
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2 min-w-0">
           <BackLink label="Debriefs" onClick={onBack} />
