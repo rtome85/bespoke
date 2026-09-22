@@ -2,6 +2,14 @@ import { PROVIDER_META } from "~constants/providers"
 
 import type { ChatOptions, LLMClient } from "./types"
 
+interface OllamaChatResponse {
+  message?: { content?: string }
+}
+
+interface OllamaTagsResponse {
+  models?: { name?: string }[]
+}
+
 /**
  * Ollama — both the local server and the hosted cloud API speak the same
  * `/chat` shape used here.
@@ -45,7 +53,7 @@ export class OllamaAdapter implements LLMClient {
         `Ollama API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
-    const data = await res.json()
+    const data = (await res.json()) as OllamaChatResponse
     return data?.message?.content ?? ""
   }
 
@@ -53,10 +61,10 @@ export class OllamaAdapter implements LLMClient {
     try {
       const res = await fetch(`${this.base}/tags`, { headers: this.headers() })
       if (!res.ok) return PROVIDER_META.ollama.fallbackModels
-      const data = await res.json()
+      const data = (await res.json()) as OllamaTagsResponse
       const models = Array.isArray(data?.models) ? data.models : []
       const ids = models
-        .map((m: any) => m?.name)
+        .map((m) => m?.name)
         .filter((id: unknown): id is string => typeof id === "string")
       return ids.length ? ids : PROVIDER_META.ollama.fallbackModels
     } catch {

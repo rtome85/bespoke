@@ -4,6 +4,14 @@ import { splitSystem, type ChatOptions, type LLMClient } from "./types"
 
 const ANTHROPIC_VERSION = "2023-06-01"
 
+interface AnthropicMessagesResponse {
+  content?: { type?: string; text?: string }[]
+}
+
+interface AnthropicModelsResponse {
+  data?: { id?: string }[]
+}
+
 /** Anthropic Messages API. `system` is a top-level field, not a message. */
 export class AnthropicAdapter implements LLMClient {
   private base: string
@@ -50,11 +58,11 @@ export class AnthropicAdapter implements LLMClient {
         `Anthropic API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
-    const data = await res.json()
+    const data = (await res.json()) as AnthropicMessagesResponse
     const parts = Array.isArray(data?.content) ? data.content : []
     return parts
-      .filter((p: any) => p?.type === "text")
-      .map((p: any) => p.text)
+      .filter((p) => p?.type === "text")
+      .map((p) => p.text ?? "")
       .join("")
   }
 
@@ -62,9 +70,9 @@ export class AnthropicAdapter implements LLMClient {
     try {
       const res = await fetch(`${this.base}/models`, { headers: this.headers() })
       if (!res.ok) return PROVIDER_META.anthropic.fallbackModels
-      const data = await res.json()
+      const data = (await res.json()) as AnthropicModelsResponse
       const ids = (Array.isArray(data?.data) ? data.data : [])
-        .map((m: any) => m?.id)
+        .map((m) => m?.id)
         .filter((id: unknown): id is string => typeof id === "string")
       return ids.length ? ids : PROVIDER_META.anthropic.fallbackModels
     } catch {

@@ -11,6 +11,14 @@ export type OpenAICompatibleId = Extract<
 
 const NON_CHAT_MODEL = /embed|moderation|image|imagine|ocr|tts|whisper/i
 
+interface OpenAIChatCompletionResponse {
+  choices?: { message?: { content?: string } }[]
+}
+
+interface OpenAIModelsResponse {
+  data?: { id?: string }[]
+}
+
 /**
  * OpenAI Chat Completions, plus the providers that speak the same protocol.
  * They differ only in a few details, all keyed off `provider` below.
@@ -69,7 +77,7 @@ export class OpenAIAdapter implements LLMClient {
         `${this.meta.name} API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
-    const data = await res.json()
+    const data = (await res.json()) as OpenAIChatCompletionResponse
     return data?.choices?.[0]?.message?.content ?? ""
   }
 
@@ -80,9 +88,9 @@ export class OpenAIAdapter implements LLMClient {
         headers: this.headers()
       })
       if (!res.ok) return fallbackModels
-      const data = await res.json()
+      const data = (await res.json()) as OpenAIModelsResponse
       const ids = (Array.isArray(data?.data) ? data.data : [])
-        .map((m: any) => m?.id)
+        .map((m) => m?.id)
         .filter(
           (id: unknown): id is string =>
             typeof id === "string" &&
