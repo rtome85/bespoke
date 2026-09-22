@@ -10,21 +10,49 @@ export interface SearchResult {
 
 const TIMEOUT_MS = 20_000
 
+interface TavilyResponse {
+  results?: { title?: string; url?: string; content?: string }[]
+}
+
+interface BraveResponse {
+  web?: {
+    results?: {
+      title?: string
+      url?: string
+      description?: string
+      extra_snippets?: string[]
+    }[]
+  }
+}
+
+interface ExaResponse {
+  results?: {
+    title?: string
+    url?: string
+    text?: string
+    snippet?: string
+    summary?: string
+  }[]
+}
+
 /** Trim an engine's excerpt so a handful of results still fit one prompt. */
 const clip = (v: unknown, max = 1200): string =>
   typeof v === "string" ? v.trim().slice(0, max) : ""
 
-const asResults = (raw: unknown, pick: (r: any) => SearchResult) =>
+const asResults = <T>(
+  raw: T[] | undefined,
+  pick: (r: T) => SearchResult
+) =>
   (Array.isArray(raw) ? raw : [])
     .map(pick)
     .filter((r) => r.url && (r.title || r.snippet))
 
-async function request(
+async function request<T>(
   url: string,
   init: RequestInit,
   engineName: string,
   signal?: AbortSignal
-): Promise<any> {
+): Promise<T> {
   // Each engine gets its own timeout even when the caller passed no signal,
   // so a hung search cannot hold the research chain open indefinitely.
   const controller = new AbortController()
@@ -39,7 +67,7 @@ async function request(
         `${engineName} API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
-    return await res.json()
+    return (await res.json()) as T
   } finally {
     clearTimeout(timeout)
     signal?.removeEventListener("abort", onAbort)
@@ -52,7 +80,7 @@ async function tavily(
   max: number,
   signal?: AbortSignal
 ): Promise<SearchResult[]> {
-  const data = await request(
+  const data = await request<TavilyResponse>(
     "https://api.tavily.com/search",
     {
       method: "POST",
@@ -83,7 +111,7 @@ async function brave(
   signal?: AbortSignal
 ): Promise<SearchResult[]> {
   const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${max}`
-  const data = await request(
+  const data = await request<BraveResponse>(
     url,
     {
       method: "GET",
@@ -99,7 +127,12 @@ async function brave(
     title: clip(r?.title, 200),
     url: clip(r?.url, 500),
     snippet: clip(
-      [r?.description, ...(r?.extra_snippets ?? [])].filter(Boolean).join(" ")
+      [
+        r?.description,
+        ...(Array.isArray(r?.extra_snippets) ? r.extra_snippets : [])
+      ]
+        .filter(Boolean)
+        .join(" ")
     )
   }))
 }
@@ -110,7 +143,7 @@ async function exa(
   max: number,
   signal?: AbortSignal
 ): Promise<SearchResult[]> {
-  const data = await request(
+  const data = await request<ExaResponse>(
     "https://api.exa.ai/search",
     {
       method: "POST",

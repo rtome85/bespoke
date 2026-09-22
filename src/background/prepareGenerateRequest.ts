@@ -8,6 +8,7 @@ import {
 } from "~constants/providers"
 import { STORAGE_KEYS } from "~storage/keys"
 import type {
+  CustomPrompts,
   GenerateRequest,
   LLMProviderId,
   LLMTuningConfig,
@@ -17,6 +18,7 @@ import type {
   RoutableJob,
   RouteTarget
 } from "~types/config"
+import type { PendingJobData } from "~types/dialog"
 import type { UserProfile } from "~types/userProfile"
 
 interface MessageBody {
@@ -24,6 +26,26 @@ interface MessageBody {
   jobTitle: string
   userProfile?: UserProfile
   jobDescription?: string
+}
+
+/** The pre-multi-provider shape `ollamaConfig` was saved under. */
+interface LegacyOllamaConfig {
+  apiKey?: string
+  baseUrl?: string
+  enabled?: boolean
+}
+
+interface RoutingStorageRecord {
+  providers?: ProvidersConfig
+  modelRouting?: ModelRouting
+  ollamaConfig?: LegacyOllamaConfig
+  lastSelectedModel?: string
+}
+
+interface GenerateRequestStorageRecord {
+  customPrompts?: CustomPrompts
+  pendingJobData?: PendingJobData
+  llmTuning?: Partial<LLMTuningConfig>
 }
 
 export interface ResolvedRoute {
@@ -46,7 +68,7 @@ type PrepareResult =
  * lastSelectedModel, so existing users keep working with no visible change.
  */
 function migrate(
-  ollamaConfig: any,
+  ollamaConfig: LegacyOllamaConfig | undefined,
   lastSelectedModel: string | undefined
 ): { providers: ProvidersConfig; routing: ModelRouting } {
   const model = lastSelectedModel || DEFAULT_MODEL_ROUTING.scoring.model
@@ -113,7 +135,7 @@ async function loadProvidersAndRouting(): Promise<{
   providers: ProvidersConfig
   routing: ModelRouting
 }> {
-  const s = await new Promise<any>((res) => {
+  const s = await new Promise<RoutingStorageRecord>((res) => {
     chrome.storage.local.get(
       [
         STORAGE_KEYS.PROVIDERS,
@@ -121,21 +143,18 @@ async function loadProvidersAndRouting(): Promise<{
         STORAGE_KEYS.OLLAMA_CONFIG,
         STORAGE_KEYS.LAST_SELECTED_MODEL
       ],
-      res
+      (items) => res(items as RoutingStorageRecord)
     )
   })
-  const storedProviders = s[STORAGE_KEYS.PROVIDERS] as ProvidersConfig | undefined
-  const storedRouting = s[STORAGE_KEYS.MODEL_ROUTING] as ModelRouting | undefined
+  const storedProviders = s.providers
+  const storedRouting = s.modelRouting
   if (storedProviders && storedRouting) {
     return {
       providers: storedProviders,
       routing: normalizeModelRouting(storedRouting)
     }
   }
-  const m = migrate(
-    s[STORAGE_KEYS.OLLAMA_CONFIG],
-    s[STORAGE_KEYS.LAST_SELECTED_MODEL]
-  )
+  const m = migrate(s.ollamaConfig, s.lastSelectedModel)
   return {
     providers: { ...m.providers, ...(storedProviders ?? {}) },
     routing: normalizeModelRouting(storedRouting ?? m.routing)
@@ -175,26 +194,28 @@ export async function prepareGenerateRequest(
   body: MessageBody,
   job: RoutableJob
 ): Promise<PrepareResult> {
-  const storage = await new Promise<any>((resolve) => {
-    chrome.storage.local.get(
-      [
-        STORAGE_KEYS.CUSTOM_PROMPTS,
-        STORAGE_KEYS.PENDING_JOB_DATA,
-        STORAGE_KEYS.LLM_TUNING
-      ],
-      resolve
-    )
-  })
+  const storage = await new Promise<GenerateRequestStorageRecord>(
+    (resolve) => {
+      chrome.storage.local.get(
+        [
+          STORAGE_KEYS.CUSTOM_PROMPTS,
+          STORAGE_KEYS.PENDING_JOB_DATA,
+          STORAGE_KEYS.LLM_TUNING
+        ],
+        (items) => resolve(items as GenerateRequestStorageRecord)
+      )
+    }
+  )
 
-  const customPrompts = storage[STORAGE_KEYS.CUSTOM_PROMPTS] || DEFAULT_PROMPTS
+  const customPrompts = storage.customPrompts || DEFAULT_PROMPTS
   // Spread over the defaults rather than picking one or the other: a tuning
   // object saved before a setting existed (outputLanguage, say) is otherwise
   // missing that key entirely.
   const llmTuning: LLMTuningConfig = {
     ...DEFAULT_LLM_TUNING,
-    ...(storage[STORAGE_KEYS.LLM_TUNING] ?? {})
+    ...(storage.llmTuning ?? {})
   }
-  const jobData = storage[STORAGE_KEYS.PENDING_JOB_DATA]
+  const jobData = storage.pendingJobData
 
   const { providers, routing } = await loadProvidersAndRouting()
 

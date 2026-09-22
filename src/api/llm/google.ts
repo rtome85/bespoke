@@ -2,6 +2,19 @@ import { PROVIDER_META } from "~constants/providers"
 
 import { splitSystem, type ChatOptions, type LLMClient } from "./types"
 
+interface GoogleGenerateContentResponse {
+  candidates?: { content?: { parts?: { text?: string }[] } }[]
+}
+
+interface GoogleModel {
+  name?: string
+  supportedGenerationMethods?: string[]
+}
+
+interface GoogleModelsResponse {
+  models?: GoogleModel[]
+}
+
 /** Google Gemini (Generative Language API). Key goes in the query string. */
 export class GoogleAdapter implements LLMClient {
   private base: string
@@ -43,10 +56,10 @@ export class GoogleAdapter implements LLMClient {
         `Google API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
       )
     }
-    const data = await res.json()
+    const data = (await res.json()) as GoogleGenerateContentResponse
     const parts = data?.candidates?.[0]?.content?.parts
     return Array.isArray(parts)
-      ? parts.map((p: any) => p?.text ?? "").join("")
+      ? parts.map((p) => p?.text ?? "").join("")
       : ""
   }
 
@@ -56,14 +69,15 @@ export class GoogleAdapter implements LLMClient {
         `${this.base}/models?key=${encodeURIComponent(this.apiKey)}`
       )
       if (!res.ok) return PROVIDER_META.google.fallbackModels
-      const data = await res.json()
-      const ids = (Array.isArray(data?.models) ? data.models : [])
-        .map((m: any) => String(m?.name ?? "").replace(/^models\//, ""))
+      const data = (await res.json()) as GoogleModelsResponse
+      const models = Array.isArray(data?.models) ? data.models : []
+      const ids = models
+        .map((m) => String(m?.name ?? "").replace(/^models\//, ""))
         .filter(
           (id: string) =>
             id.startsWith("gemini-") &&
-            (data.models.find(
-              (m: any) => String(m?.name).endsWith(id)
+            (models.find(
+              (m) => String(m?.name).endsWith(id)
             )?.supportedGenerationMethods?.includes("generateContent") ??
               true)
         )
