@@ -1,3 +1,4 @@
+import { DEBRIEF_OUTCOME_ORDER, ROUND_TYPE_ORDER } from "~constants/interviews"
 import {
   daysUntil,
   roundsWithApp,
@@ -455,15 +456,6 @@ export interface DebriefStats {
   outcomes: { outcome: DebriefOutcome; count: number }[]
 }
 
-const OUTCOME_ORDER: DebriefOutcome[] = [
-  "advance",
-  "offer",
-  "reject",
-  "waiting"
-]
-
-const ROUND_TYPE_ORDER: RoundType[] = ["HR", "Technical", "Final", "Custom"]
-
 const ROUND_TYPE_LABEL: Record<RoundType, string> = {
   HR: "HR screen",
   Technical: "Technical",
@@ -511,7 +503,7 @@ export function debriefStats(apps: SavedApplication[]): DebriefStats {
     }
   }).filter((t) => t.rounds > 0)
 
-  const outcomes = OUTCOME_ORDER.map((outcome) => ({
+  const outcomes = DEBRIEF_OUTCOME_ORDER.map((outcome) => ({
     outcome,
     count: refs.filter((r) => r.round.debrief?.outcome === outcome).length
   })).filter((o) => o.count > 0)

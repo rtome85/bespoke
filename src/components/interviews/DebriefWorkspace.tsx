@@ -5,6 +5,7 @@ import { BackLink } from "~components/common/BackLink"
 import { Checklist } from "~components/interviews/Checklist"
 import { RatingInput } from "~components/interviews/RatingInput"
 import { RoundStrip } from "~components/interviews/RoundStrip"
+import { DEBRIEF_OUTCOME_OPTIONS } from "~constants/interviews"
 import { relativeDayLabel, roundLabel } from "~lib/interviews/selectors"
 import { setRoundDebrief } from "~storage/savedApplications"
 import type {
@@ -34,13 +35,6 @@ export function debriefFormValues(d: Debrief | undefined) {
     outcome: (d?.outcome ?? "") as DebriefOutcome | ""
   }
 }
-
-const OUTCOMES: { value: DebriefOutcome; label: string }[] = [
-  { value: "advance", label: "Advance to the next round" },
-  { value: "offer", label: "Offer" },
-  { value: "reject", label: "Reject" },
-  { value: "waiting", label: "Still waiting" }
-]
 
 export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
   const found = useMemo(() => {
@@ -222,7 +216,7 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
                   Choose an outcome…
                 </option>
               )}
-              {OUTCOMES.map((o) => (
+              {DEBRIEF_OUTCOME_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
