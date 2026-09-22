@@ -10,59 +10,64 @@ export interface PerplexityConfig {
   apiKey: string
   enabled: boolean
   customPrompt: string
-  preparationPlanEnabled: boolean
-  preparationPlanPrompt: string
+  /**
+   * Prompt for the per-round Prep engine (Interviews → Prep). Runs on the
+   * `drafting` LLM route and must return JSON `{ likelyTopics, talkingPoints }`.
+   * Optional in storage — consumers fall back to `DEFAULT_INTERVIEW_PREP_PROMPT`.
+   */
+  interviewPrepPrompt?: string
+  /**
+   * Prompt used instead of `interviewPrepPrompt` when the round is a Technical
+   * one (see `isTechnicalRound`). A technical round is prepped as a study plan
+   * — stack review, exercises, a Q&A drill — so it returns a different set of
+   * sections. Optional in storage; consumers fall back to
+   * `DEFAULT_TECHNICAL_PREP_PROMPT`.
+   */
+  technicalPrepPrompt?: string
+  /**
+   * Verdict of the last connection test, mirroring `ProviderConfig`. Voided
+   * whenever `apiKey` changes — a verdict belongs to the key that earned it.
+   */
+  lastTested?: { ok: boolean; at: string; message: string }
 }
 
-export const DEFAULT_PERPLEXITY_PROMPT = `Research the company {{companyName}} and return ONLY a raw JSON object. No markdown, no code fences, no explanation — just the JSON.
+/** Web-search back ends that can feed company research. */
+export type SearchEngineId = "tavily" | "brave" | "exa"
 
-Use EXACTLY these field names (no variations):
-{"industry":"...","size":"...","description":"...","notableProjects":["..."],"ratings":{"glassdoor":null,"indeed":null,"teamlyzer":null}}
+export interface SearchEngineMeta {
+  id: SearchEngineId
+  name: string
+  keyPlaceholder: string
+  keyUrl: string
+  /** Free-tier line shown on the settings card. */
+  access: string
+}
 
-Field rules:
-- industry: the sector/industry as a short string
-- size: employee count or range as a string
-- description: 2-3 sentence summary of the company
-- notableProjects: array of up to 6 strings, each naming a distinct product, project, or service
-- ratings: number 0.0–5.0 if found on that platform, otherwise null
-- No citation brackets like [1] anywhere`
 
-export const DEFAULT_PREPARATION_PLAN_PROMPT = `Create a focused technical interview preparation guide for a {{interviewType}} for the {{jobTitle}} position at {{companyName}}.
+/**
+ * A web-search account for company research. One engine at a time — research
+ * needs a handful of snippets, not a federated search, and a second key would
+ * only add a setting nobody tunes.
+ */
+export interface SearchConfig {
+  engine: SearchEngineId
+  apiKey: string
+  enabled: boolean
+  /** Mirrors `ProviderConfig`; voided whenever `apiKey` or `engine` changes. */
+  lastTested?: { ok: boolean; at: string; message: string }
+}
 
-Job description for context:
-{{jobDescription}}
 
-Generate a technical preparation document in Markdown format with the following structure:
+/** Where a company-research entry came from, for the provenance line. */
+export type ResearchSource = "perplexity" | "search" | "site" | "model"
 
-# Technical Interview Preparation - {{jobTitle}}
+/**
+ * Which source runs company research. `auto` tries every configured source in
+ * descending order of how well-grounded it is; naming one pins research to it
+ * and reports a clear error instead of quietly answering from a weaker source.
+ */
+export type ResearchPreference = ResearchSource | "auto"
 
-## 1. Key Technologies & Skills
-List the main technologies, frameworks, and tools mentioned in the job description that will likely be covered in the interview. Include expected proficiency levels.
-
-## 2. Technical Questions
-Prepare 8-12 specific technical questions covering:
-- Core programming concepts relevant to the role
-- Framework-specific questions (based on technologies in the job description)
-- System design and architecture (for senior roles)
-- Database and data structure questions
-- Problem-solving scenarios with expected solution approaches
-- Code review and debugging scenarios
-
-For each question, provide:
-- The question itself
-- Key points the interviewer expects in the answer
-- Example answer outline or code snippet where applicable
-
-## 3. Coding Challenges
-List 3-5 practical coding problems or algorithms commonly asked for this type of role, including:
-- Problem statement
-- Expected time/space complexity
-- Hints for approaching the solution
-
-## 4. Technical Deep Dive Topics
-Identify 2-3 advanced topics specific to {{companyName}}'s tech stack or industry that might be discussed. Provide key concepts to review.
-
-IMPORTANT: Respond ONLY with the Markdown content. No introductory text, no explanations outside the document. Focus strictly on technical preparation content.`
 
 export interface ModelConfig {
   id: string
@@ -70,50 +75,35 @@ export interface ModelConfig {
   description: string
   size: string
   recommended: boolean
+  /** Relative token cost per match-analysis call — some models spend a lot of hidden reasoning tokens before answering. */
+  costProfile: "low" | "medium" | "high"
+  /** Relative response latency. */
+  speedProfile: "fast" | "medium" | "slow"
+  /** How the model tends to score a profile-vs-job match: strict penalizes missing skills hard, generous gives more benefit of the doubt. */
+  scoringProfile: "strict" | "balanced" | "generous"
 }
 
-export const AVAILABLE_MODELS: ModelConfig[] = [
-  {
-    id: "gpt-oss:20b-cloud",
-    name: "GPT-OSS 20B",
-    description:
-      "Fast, cost-effective. Best for quick turnaround on CV workflows.",
-    size: "20B",
-    recommended: true
-  },
-  {
-    id: "gpt-oss:120b-cloud",
-    name: "GPT-OSS 120B",
-    description:
-      "Higher quality than 20B, same family. Good balance of speed and depth.",
-    size: "120B",
-    recommended: false
-  },
-  {
-    id: "gemma4:31b-cloud",
-    name: "Gemma 4 31B",
-    description:
-      "Google's latest frontier model. Strong instruction following and writing quality.",
-    size: "31B",
-    recommended: false
-  },
-  {
-    id: "minimax-m3:cloud",
-    name: "MiniMax M3",
-    description:
-      "MoE model, fast and reliable for structured generation and CV tailoring.",
-    size: "MoE",
-    recommended: false
-  },
-  {
-    id: "nemotron-3-nano:30b-cloud",
-    name: "Nemotron 3 Nano",
-    description:
-      "MoE model, fast and reliable for structured generation and CV tailoring.",
-    size: "MoE",
-    recommended: false
-  },
-]
+
+/**
+ * Language the generated CV and cover letter are written in. `"auto"` (the
+ * default) follows the job posting — a Portuguese posting gets a Portuguese
+ * CV — anything else forces that language regardless of the posting.
+ */
+export type OutputLanguage =
+  | "auto"
+  | "en"
+  | "pt"
+  | "pt-BR"
+  | "es"
+  | "fr"
+  | "de"
+  | "it"
+  | "nl"
+
+/**
+ * `label` is the settings dropdown entry; `name` is how the language is named
+ * to the model, so it must stay unambiguous ("European Portuguese", not "pt").
+ */
 
 export interface LLMTuningConfig {
   /** Creativity / randomness (0.1 = deterministic, 1.5 = very creative). Default 0.7 */
@@ -128,72 +118,24 @@ export interface LLMTuningConfig {
   writingTone: "formal" | "professional" | "conversational"
   /** Which profile section the resume should lead with */
   resumeFocus: "skills" | "experience" | "balanced"
+  /** How much detail and evidence each bullet carries */
+  bulletDensity: "concise" | "standard" | "detailed"
+  /** Vocabulary and sentence complexity target */
+  readingLevel: "simple" | "standard" | "advanced"
+  /**
+   * Language the CV and cover letter are written in. Optional in storage —
+   * configs saved before this setting existed have no value, and every reader
+   * falls back to `DEFAULT_LLM_TUNING.outputLanguage`.
+   */
+  outputLanguage?: OutputLanguage
 }
 
-export const DEFAULT_LLM_TUNING: LLMTuningConfig = {
-  temperature: 0.7,
-  topP: 0.9,
-  maxTokens: 4096,
-  matchStrictness: "balanced",
-  writingTone: "professional",
-  resumeFocus: "balanced"
-}
 
 export interface CustomPrompts {
   resumeSystemPrompt: string
   resumeUserPromptTemplate: string
   coverLetterSystemPrompt: string
   coverLetterUserPromptTemplate: string
-}
-
-export const PROMPTS_VERSION = "4"
-
-export const DEFAULT_PROMPTS: CustomPrompts = {
-  resumeSystemPrompt: `You are an expert resume writer and career coach. Your task is to create a professional, tailored resume based on a job description.
-
-STRICT FORMATTING RULES — follow exactly:
-- Output ONLY raw Markdown. Never include frontmatter (no ---, no YAML, no metadata blocks at the start).
-- Start the document with a single H1 containing the candidate's full name (e.g. # Jane Doe).
-- Follow the H1 with a contact line using bold labels and inline links, e.g.:
-  **Email:** foo@bar.com
-  **Location:** City, Country
-  **Portfolio:** [url](url) | **LinkedIn:** [url](url) | **GitHub:** [url](url)
-- Separate major sections with a horizontal rule (---).
-- Use H2 (##) for section headings: Professional Summary, Core Skills, Professional Experience, Featured Projects, Education, Languages.
-- Under Professional Experience use H3 (###) for each role in the format "Title – Company", followed by an italic line for dates and location, then bullet points.
-- Under Featured Projects use H3 (###) for each project, a short description line, then inline links (Live App, Code, etc.).
-- Under Core Skills, group related skills into compact thematic lines (4–8 items per line), e.g.: "- React & React Native" or "- Testing (Jest, Vitest, React Testing Library)". Each line should be a bullet point. Do NOT list every skill on its own line.
-- Use bullet points (- ) for achievements. Bold key technologies inline.
-- Do NOT output any preamble, explanation, or text outside the resume itself.
-
-STRICT CONTENT RULES — never violate:
-- ONLY use skills that appear verbatim in the candidate's provided Skills list. Never infer, add, or invent skills, technologies, or tools not explicitly listed. You may group and combine them but cannot introduce new ones.
-- ONLY describe experiences, projects, education, and languages exactly as provided. Do not embellish, invent dates, or add details not in the profile.`,
-  resumeUserPromptTemplate: `Create a tailored resume for the following position:
-
-  **Company:** {{companyName}}
-  **Job Title:** {{jobTitle}}
-
-  **Job Description:**
-  {{jobDescription}}
-
-  **Candidate's Profile:**
-  {{userProfile}}
-
-  Generate the resume now. Remember: raw Markdown only, no frontmatter, start with # CandidateName.`,
-  coverLetterSystemPrompt: `You are an expert cover letter writer and career advisor. Your task is to create a compelling, personalized cover letter that demonstrates fit for a specific role. The letter should be professional, engaging, and address the company's needs.`,
-  coverLetterUserPromptTemplate: `Write a compelling cover letter for the following position:
-
-  **Company:** {{companyName}}
-  **Job Title:** {{jobTitle}}
-
-  **Job Description:**
-  {{jobDescription}}
-
-  **Candidate's Profile:**
-  {{userProfile}}
-
-  Please generate a professional cover letter in Markdown format that demonstrates strong fit for this role.`
 }
 
 export interface PromptTemplate {
@@ -204,91 +146,6 @@ export interface PromptTemplate {
   prompts: CustomPrompts
 }
 
-export const PROMPT_TEMPLATES: PromptTemplate[] = [
-  {
-    id: "standard",
-    name: "Standard",
-    tagLine: "General-purpose professional resume.",
-    bullets: [
-      "Professional tone",
-      "Balanced skills & experience",
-      "Suitable for all industries"
-    ],
-    prompts: DEFAULT_PROMPTS
-  },
-  {
-    id: "tech-engineering",
-    name: "Tech / Engineering",
-    tagLine: "Optimised for software engineering roles.",
-    bullets: [
-      "GitHub, projects & technical depth",
-      "Quantified achievements",
-      "Skills-forward structure"
-    ],
-    prompts: {
-      resumeSystemPrompt: `You are an expert technical resume writer specialising in software engineering roles. Your task is to create a precise, achievement-driven resume.
-
-STRICT FORMATTING RULES — follow exactly:
-- Output ONLY raw Markdown. Never include frontmatter.
-- Start with a single H1 containing the candidate's full name.
-- Follow with a contact line using bold labels and inline links.
-- Separate major sections with a horizontal rule (---).
-- Use H2 (##) for sections: Professional Summary, Core Skills, Professional Experience, Featured Projects, Education, Languages.
-- Under Professional Experience use H3 (###) for each role "Title – Company", italic date line, then bullet points.
-- Under Featured Projects use H3 (###) with inline links (Live App, GitHub).
-- Under Core Skills, group related skills into compact thematic lines (4–8 items) as bullet points.
-- Bold key technologies inline in achievement bullets.
-- Do NOT include preamble, explanation, or text outside the resume.
-
-STRICT CONTENT RULES — never violate:
-- ONLY use skills verbatim from the candidate's Skills list. Never invent technologies not listed.
-- Quantify achievements wherever possible: percentages, team sizes, scale metrics.
-- Lead with impactful technical achievements. Deprioritise soft-skill descriptions.
-- Include GitHub and live demo links for projects when available.
-- ONLY describe experiences and education exactly as provided.`,
-      resumeUserPromptTemplate: DEFAULT_PROMPTS.resumeUserPromptTemplate,
-      coverLetterSystemPrompt: `You are an expert cover letter writer for software engineering roles. Write a direct, confident cover letter that leads with technical impact and concrete achievements. Avoid generic phrases. Reference specific technologies and projects from the candidate's profile. Mention GitHub/portfolio if available.`,
-      coverLetterUserPromptTemplate:
-        DEFAULT_PROMPTS.coverLetterUserPromptTemplate
-    }
-  },
-  {
-    id: "creative-portfolio",
-    name: "Creative / Portfolio",
-    tagLine: "For designers, PMs and creative professionals.",
-    bullets: [
-      "Portfolio & projects front-and-centre",
-      "Warm narrative tone",
-      "Culture-fit focused cover letter"
-    ],
-    prompts: {
-      resumeSystemPrompt: `You are an expert resume writer specialising in creative and product roles (UX/UI designers, product managers, creative directors, content strategists). Your task is to create a compelling, narrative-driven resume.
-
-STRICT FORMATTING RULES — follow exactly:
-- Output ONLY raw Markdown. Never include frontmatter.
-- Start with a single H1 containing the candidate's full name.
-- Follow with a contact line with portfolio and LinkedIn links prominently placed.
-- Separate major sections with a horizontal rule (---).
-- Use H2 (##) for sections: Professional Summary, Core Competencies, Professional Experience, Featured Projects, Education, Languages.
-- Under Professional Experience use H3 (###) for each role "Title – Company", italic date line, then bullet points.
-- Under Featured Projects use H3 (###) with a vivid one-line description and inline links (Portfolio, Live App, GitHub).
-- Under Core Competencies, group tools and skills into thematic lines as bullet points.
-- Use active, impact-oriented language. Lead bullets with verbs (Designed, Led, Launched, Shaped).
-- Do NOT output preamble, explanation, or text outside the resume.
-
-STRICT CONTENT RULES — never violate:
-- ONLY use skills verbatim from the candidate's Skills list.
-- Emphasise projects and portfolio work prominently.
-- Highlight cross-functional collaboration, stakeholder communication and user research.
-- ONLY describe experiences and education exactly as provided.`,
-      resumeUserPromptTemplate: DEFAULT_PROMPTS.resumeUserPromptTemplate,
-      coverLetterSystemPrompt: `You are an expert cover letter writer for creative and product roles. Write a warm, engaging cover letter that conveys the candidate's creative vision and passion for the role. Use a conversational-yet-professional tone. Show cultural fit and enthusiasm. Reference specific projects or portfolio work where relevant.`,
-      coverLetterUserPromptTemplate:
-        DEFAULT_PROMPTS.coverLetterUserPromptTemplate
-    }
-  }
-]
-
 export interface GenerateRequest {
   jobDescription: string
   companyName: string
@@ -298,3 +155,87 @@ export interface GenerateRequest {
   userProfile?: UserProfile
   llmTuning?: LLMTuningConfig
 }
+
+// ── Multi-provider ───────────────────────────────────────────────────────────
+
+export type LLMProviderId =
+  | "ollama"
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "openrouter"
+  | "deepseek"
+  | "mistral"
+  | "custom"
+
+/** Per-provider account: credentials, endpoint override, cached model list. */
+export interface ProviderConfig {
+  apiKey: string
+  /** Endpoint override. Ollama: local URL or the cloud API; others rarely set. */
+  baseUrl?: string
+  enabled: boolean
+  /** Model ids last fetched from the provider. */
+  models?: string[]
+  lastTested?: { ok: boolean; at: string; message: string }
+}
+
+export type ProvidersConfig = Partial<Record<LLMProviderId, ProviderConfig>>
+
+/**
+ * Whether an account has what `PROVIDER_META[id].credential` asks for. The
+ * single gate for "can this provider be routed to / tested", shared by the
+ * settings UI and the background handlers.
+ */
+
+/** An AI job routed to a specific provider + model. */
+export type RoutableJob = "scoring" | "drafting" | "prep"
+
+export interface RouteTarget {
+  provider: LLMProviderId
+  model: string
+}
+
+export interface ModelRouting {
+  scoring: RouteTarget
+  drafting: RouteTarget
+  /**
+   * Interview prep and company-research synthesis. Optional in storage —
+   * routing tables written before this job existed have no `prep` key, so
+   * readers normalize through `normalizeModelRouting` and inherit
+   * `drafting`, which is where prep used to run.
+   */
+  prep?: RouteTarget
+  /**
+   * Which source answers company research. Optional in storage — tables
+   * written before it existed normalize to `auto`.
+   */
+  research?: ResearchPreference
+  fallback: { enabled: boolean; target: RouteTarget }
+}
+
+export interface ProviderMeta {
+  id: LLMProviderId
+  name: string
+  /** true = runs locally and free; false = usage-based paid API. */
+  local: boolean
+  /**
+   * What an account needs before it can be routed to: an API key, a base URL
+   * (a self-hosted or proxy endpoint, where the key is optional), or nothing.
+   */
+  credential: "apiKey" | "baseUrl" | "none"
+  /** Where the user gets an API key. */
+  keyUrl?: string
+  /** Hint in the empty API key field, usually the key's vendor prefix. */
+  keyPlaceholder: string
+  /** Default endpoint. Empty for providers with a fixed URL. */
+  defaultBaseUrl?: string
+  /** Fallback model list when the provider has no list endpoint / it fails. */
+  fallbackModels: string[]
+}
+
+
+/**
+ * Fill in a routing table read from storage. `prep` was added after the table
+ * shipped, so an older stored value has no entry for it — inherit `drafting`,
+ * which is the route prep ran on before it had its own.
+ */

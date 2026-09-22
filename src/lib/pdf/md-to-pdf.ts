@@ -84,7 +84,7 @@ export async function exportCvToPdf(
 
     const pm = pdfMake as {
       addVirtualFileSystem: (vfs: Record<string, string>) => void
-      addFonts: (fonts: typeof fonts) => void
+      addFonts: (fonts: Record<string, unknown>) => void
     }
     pm.addVirtualFileSystem(vfs)
     pm.addFonts(fonts)

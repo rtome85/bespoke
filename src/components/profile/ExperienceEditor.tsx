@@ -1,0 +1,276 @@
+import { Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
+
+import { ConfirmDialog } from "~components/common/ConfirmDialog"
+import type { WorkExperience } from "~types/userProfile"
+
+import { ArrayInput } from "./ArrayInput"
+import { DatePicker } from "./DatePicker"
+import { ProfileEntryModal } from "./ProfileEntryModal"
+
+interface ExperienceEditorProps {
+  experiences: WorkExperience[]
+  onChange: (experiences: WorkExperience[]) => void
+}
+
+const validateExperience = (exp: WorkExperience): string[] => {
+  const errors = []
+  if (!exp.jobTitle.trim()) errors.push("Job title is required")
+  if (!exp.company.trim()) errors.push("Company is required")
+  if (!exp.startDate) errors.push("Start date is required")
+  if (exp.endDate && exp.endDate <= exp.startDate)
+    errors.push("End date must be after start date")
+  if (exp.achievements.length === 0)
+    errors.push("At least one achievement is required")
+  return errors
+}
+
+export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProps) {
+  const [editingExperience, setEditingExperience] = useState<WorkExperience | null>(null)
+  // Index of the row being edited; null while the dialog adds a new entry.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  // Index of the row awaiting delete confirmation.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
+
+  const addExperience = () => {
+    setEditingIndex(null)
+    setEditingExperience({
+      id: crypto.randomUUID(),
+      jobTitle: "",
+      company: "",
+      startDate: "",
+      endDate: null,
+      achievements: [""]
+    })
+  }
+
+  const editExperience = (index: number) => {
+    const experience = experiences[index]
+    setEditingIndex(index)
+    setEditingExperience({ ...experience, achievements: [...experience.achievements] })
+  }
+
+  const closeEditingExperience = () => {
+    setEditingExperience(null)
+    setEditingIndex(null)
+  }
+
+  const confirmRemoveExperience = () => {
+    if (pendingDeleteIndex === null) return
+    onChange(experiences.filter((_, i) => i !== pendingDeleteIndex))
+    setPendingDeleteIndex(null)
+  }
+
+  const pendingDeleteExperience =
+    pendingDeleteIndex === null ? null : experiences[pendingDeleteIndex]
+
+  const saveEditingExperience = () => {
+    if (editingExperience) {
+      const errors = validateExperience(editingExperience)
+      if (errors.length === 0) {
+        onChange(
+          editingIndex === null
+            ? [...experiences, editingExperience]
+            : experiences.map((exp, i) => (i === editingIndex ? editingExperience : exp))
+        )
+        closeEditingExperience()
+      } else {
+        alert(errors.join("\n"))
+      }
+    }
+  }
+
+  const renderExperienceItem = (
+    experience: WorkExperience,
+    index: number,
+    onUpdate: (exp: WorkExperience) => void
+  ) => {
+    const errors = validateExperience(experience)
+    // An untouched draft is not yet wrong: hold the required-field errors
+    // back until something has been entered, so the add dialog doesn't open
+    // already flagging four problems.
+    const isBlank =
+      !experience.jobTitle.trim() &&
+      !experience.company.trim() &&
+      !experience.startDate &&
+      !experience.endDate &&
+      experience.achievements.every((achievement) => !achievement.trim())
+    const hasErrors = errors.length > 0 && !isBlank
+    const isCurrentPosition = experience.endDate === null
+
+    const updateAchievement = (achievementIndex: number, value: string) => {
+      const newAchievements = [...experience.achievements]
+      newAchievements[achievementIndex] = value
+      onUpdate({ ...experience, achievements: newAchievements })
+    }
+
+    const addAchievement = () => {
+      onUpdate({ ...experience, achievements: [...experience.achievements, ""] })
+    }
+
+    const removeAchievement = (achievementIndex: number) => {
+      onUpdate({
+        ...experience,
+        achievements: experience.achievements.filter((_, i) => i !== achievementIndex)
+      })
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="aa-label">Job Title *</label>
+            <input
+              type="text"
+              value={experience.jobTitle}
+              onChange={(e) => onUpdate({ ...experience, jobTitle: e.target.value })}
+              placeholder="e.g., Senior Frontend Developer"
+              className={hasErrors && !experience.jobTitle ? "aa-input-error" : "aa-input"}
+            />
+          </div>
+          <div>
+            <label className="aa-label">Company *</label>
+            <input
+              type="text"
+              value={experience.company}
+              onChange={(e) => onUpdate({ ...experience, company: e.target.value })}
+              placeholder="e.g., Tech Corp"
+              className={hasErrors && !experience.company ? "aa-input-error" : "aa-input"}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DatePicker
+            label="Start Date"
+            value={experience.startDate}
+            onChange={(date) => onUpdate({ ...experience, startDate: date || "" })}
+            required
+          />
+          <DatePicker
+            label="End Date"
+            value={experience.endDate}
+            onChange={(date) => onUpdate({ ...experience, endDate: date })}
+            showCurrentPosition
+            currentPosition={isCurrentPosition}
+            onCurrentPositionChange={(isCurrent) =>
+              onUpdate({ ...experience, endDate: isCurrent ? null : "" })
+            }
+          />
+        </div>
+
+        <div>
+          <label className="aa-label">Achievements *</label>
+          <div className="space-y-2">
+            {experience.achievements.map((achievement, achievementIndex) => (
+              <div key={achievementIndex} className="flex gap-2">
+                <input
+                  type="text"
+                  value={achievement}
+                  onChange={(e) => updateAchievement(achievementIndex, e.target.value)}
+                  placeholder="e.g., Led redesign of main product UI"
+                  className={hasErrors && !achievement ? "aa-input-error" : "aa-input"}
+                />
+                {experience.achievements.length > 1 && (
+                  <button
+                    onClick={() => removeAchievement(achievementIndex)}
+                    className="shrink-0 px-2.5 text-aa-neutral-400 hover:text-aa-error-strong transition-colors"
+                    title="Remove achievement">
+                    <Trash2 className="w-aa-px-15 h-aa-px-15" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={addAchievement}
+            className="mt-2 text-aa-13 font-semibold text-aa-primary hover:text-aa-primary-hover transition-colors">
+            + Add achievement
+          </button>
+        </div>
+
+        {hasErrors && (
+          <div className="aa-message-error">
+            {errors.map((error, i) => (
+              <p key={i} className="text-sm">• {error}</p>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <section className="space-y-2.5">
+      <div className="aa-list-section-header">
+        <h2 className="aa-card-heading tracking-aa-tighter-2">
+          Roles &amp; positions
+        </h2>
+        <button
+          onClick={addExperience}
+          className="aa-btn-outline inline-flex items-center gap-aa-2">
+          <Plus className="w-aa-px-15 h-aa-px-15" />
+          Add experience
+        </button>
+      </div>
+
+      {editingExperience && (
+        <ProfileEntryModal
+          title={editingIndex === null ? "Add new work experience" : "Edit work experience"}
+          saveLabel="Save experience"
+          onSave={saveEditingExperience}
+          onCancel={closeEditingExperience}>
+          {renderExperienceItem(editingExperience, 0, setEditingExperience)}
+        </ProfileEntryModal>
+      )}
+
+      {pendingDeleteExperience && (
+        <ConfirmDialog
+          title="Delete work experience?"
+          message={`${pendingDeleteExperience.jobTitle || "This role"}${pendingDeleteExperience.company ? ` at ${pendingDeleteExperience.company}` : ""} will be removed from your profile. This can't be undone.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={confirmRemoveExperience}
+          onCancel={() => setPendingDeleteIndex(null)}
+        />
+      )}
+
+      <div className="aa-card-base">
+        <ArrayInput
+          items={experiences}
+          getItemKey={(experience) => experience.id}
+          onAdd={addExperience}
+          onEdit={editExperience}
+          onRemove={setPendingDeleteIndex}
+          renderSummary={(exp) => {
+            const fmt = (iso: string | null) => {
+              if (!iso) return "Present"
+              const [y, m] = iso.split("-")
+              return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m - 1]} ${y}`
+            }
+            return (
+              <div className="flex flex-1 items-center justify-between min-w-0 gap-aa-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-aa-text-primary truncate">
+                    {exp.jobTitle || <span className="italic text-aa-text-secondary">Untitled role</span>}
+                  </p>
+                  <p className="text-xs text-aa-text-secondary truncate mt-0.5">
+                    {exp.company || "—"}
+                  </p>
+                </div>
+                {exp.startDate && (
+                  <span className="shrink-0 text-aa-caption font-medium text-aa-neutral-500">
+                    {fmt(exp.startDate)} – {fmt(exp.endDate)}
+                  </span>
+                )}
+              </div>
+            )
+          }}
+          emptyMessage="No work experience added yet. Add your first position to get started!"
+          addButtonText="Work Experience"
+          flush
+        />
+      </div>
+    </section>
+  )
+}

@@ -1,160 +1,81 @@
-import { useState } from "react"
-import { BarChart3, Briefcase, ChevronRight, Settings2 } from "lucide-react"
+import { Briefcase, ChevronRight, Settings2 } from "lucide-react"
+
+import { optionsPagePath, ROUTES } from "~constants/routes"
 
 import icon from "../assets/icon.png"
 
 import "./style.css"
 
+/**
+ * Toolbar popup — a thin launcher into the app shell. Running a match
+ * happens from the right-click context menu (see background/context-menu.ts).
+ */
 function IndexPopup() {
-  const [status, setStatus] = useState("")
-  const [loading, setLoading] = useState(false)
-
-  const handleGenerate = async () => {
-    setLoading(true)
-    setStatus("Scraping job data...")
-
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
-      if (!tabs || tabs.length === 0) {
-        setStatus("No active tab found")
-        setLoading(false)
-        return
-      }
-
-      const tab = tabs[0]
-
-      if (
-        !tab.url ||
-        tab.url.startsWith("chrome://") ||
-        tab.url.startsWith("edge://")
-      ) {
-        setStatus("Cannot access this page")
-        setLoading(false)
-        return
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: "getSource"
-      })
-
-      if (!response?.data) {
-        setStatus("No job description found on this page")
-        setLoading(false)
-        return
-      }
-
-      chrome.storage.local.set({
-        pendingJobData: {
-          selectedText: response.data,
-          tabUrl: tab.url,
-          tabId: tab.id,
-          companyName: response.companyName || "",
-          jobTitle: response.jobTitle || ""
-        }
-      })
-
-      chrome.windows.create({
-        url: chrome.runtime.getURL("tabs/dialog.html"),
-        type: "popup",
-        width: 500,
-        height: 440,
-        focused: true
-      })
-
-      window.close()
-    } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : "Error scraping job data"
-      )
-      setLoading(false)
-    }
-  }
-
-  const openAnalytics = () => {
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/analytics.html"),
-      type: "popup",
-      width: 900,
-      height: 600,
-      focused: true
-    })
-    window.close()
-  }
-
-  const openOptions = () => {
-    chrome.runtime.openOptionsPage()
-  }
-
-  const openApplications = () => {
-    chrome.windows.create({
-      url: chrome.runtime.getURL("tabs/dialog.html") + "?view=applicationsList",
-      type: "popup",
-      width: 700,
-      height: 520,
-      focused: true
-    })
+  const openShell = (route = "") => {
+    chrome.tabs.create({ url: chrome.runtime.getURL(optionsPagePath(route)) })
     window.close()
   }
 
   return (
-    <div className="w-80 bg-canvas border-2 border-sidebar font-body">
-      {/* Header */}
-      <div className="bg-sidebar px-5 py-4 flex items-center gap-3">
-        <img src={icon} alt="Bespoke" className="w-10 h-10 rounded shrink-0" />
+    <div className="w-80 bg-aa-surface font-aa text-aa-text-primary">
+      <div className="bg-aa-neutral-900 px-5 py-4 flex items-center gap-3">
+        <img
+          src={icon}
+          alt=""
+          className="w-9 h-9 rounded-aa-sm shrink-0"
+        />
         <div className="flex flex-col gap-0.5">
-          <h1 className="font-heading text-[15px] font-bold text-canvas leading-tight">
+          <span className="text-aa-sm font-bold text-aa-surface leading-tight">
             Bespoke
-          </h1>
-          <p className="font-body text-[11px] text-[#9B9490] leading-tight">
+          </span>
+          <span className="text-aa-11 text-aa-neutral-400 leading-tight">
             Tailor your CV to every job
-          </p>
+          </span>
         </div>
       </div>
 
-      {/* Menu rows */}
-      <div className="bg-surface divide-y divide-canvas-divide">
+      <div className="p-4">
         <button
-          onClick={openApplications}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
-          <span className="flex items-center gap-3">
-            <Briefcase className="w-[18px] h-[18px] text-sidebar-label" />
-            <span className="font-heading text-[13px] font-semibold text-ink">
-              My Applications
-            </span>
-          </span>
-          <ChevronRight className="w-4 h-4 text-ink-muted" />
+          onClick={() => openShell()}
+          className="w-full px-4 py-2.5 bg-aa-primary text-aa-text-on-primary rounded-aa-md text-aa-13 font-semibold hover:bg-aa-primary-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary focus-visible:ring-offset-2">
+          Open Bespoke
         </button>
-        <button
-          onClick={openAnalytics}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
-          <span className="flex items-center gap-3">
-            <BarChart3 className="w-[18px] h-[18px] text-sidebar-label" />
-            <span className="font-heading text-[13px] font-semibold text-ink">
-              Analytics
-            </span>
-          </span>
-          <ChevronRight className="w-4 h-4 text-ink-muted" />
-        </button>
-        <button
-          onClick={openOptions}
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-canvas transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent focus-visible:ring-inset">
-          <span className="flex items-center gap-3">
-            <Settings2 className="w-[18px] h-[18px] text-sidebar-label" />
-            <span className="font-heading text-[13px] font-semibold text-ink">
-              Settings & Profile
-            </span>
-          </span>
-          <ChevronRight className="w-4 h-4 text-ink-muted" />
-        </button>
+
+        <div className="mt-2 -mx-1">
+          {[
+            {
+              label: "Applications",
+              icon: Briefcase,
+              onClick: () => openShell(ROUTES.applications)
+            },
+            {
+              label: "Settings & profile",
+              icon: Settings2,
+              onClick: () => openShell(ROUTES.settings)
+            }
+          ].map(({ label, icon: Icon, onClick }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-aa-md hover:bg-aa-neutral-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-aa-primary focus-visible:ring-inset">
+              <span className="flex items-center gap-2.5">
+                <Icon className="w-aa-px-17 h-aa-px-17 text-aa-text-secondary" />
+                <span className="text-aa-13 font-medium text-aa-text-primary">
+                  {label}
+                </span>
+              </span>
+              <ChevronRight className="w-4 h-4 text-aa-neutral-400" />
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-[#F0EDE8] border-t border-canvas-divide px-5 py-3">
-        <p className="font-body text-[11px] text-ink-secondary leading-relaxed">
-          Tip: Right-click any job posting →{" "}
-          <span className="font-medium text-ink">Generate CV for this job</span>
+      <div className="bg-aa-neutral-50 border-t border-aa-border px-5 py-3">
+        <p className="text-aa-11 text-aa-text-secondary leading-relaxed">
+          Tip: right-click any job posting →{" "}
+          <span className="font-semibold text-aa-text-primary">
+            Check my match for this job
+          </span>
         </p>
       </div>
     </div>

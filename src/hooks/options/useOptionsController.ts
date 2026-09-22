@@ -1,0 +1,301 @@
+import { useState } from "react"
+
+import { NAV_GROUPS, SETTINGS_DEFAULT_TAB } from "~constants/options"
+import {
+  DEFAULT_INTERVIEW_PREP_PROMPT,
+  DEFAULT_TECHNICAL_PREP_PROMPT
+} from "~constants/prompts"
+import { ROUTES } from "~constants/routes"
+import { useApplicationActions } from "~hooks/options/useApplicationActions"
+import { useDataTransfer } from "~hooks/options/useDataTransfer"
+import { useDriveSync } from "~hooks/options/useDriveSync"
+import { useInterviewReminders } from "~hooks/options/useInterviewReminders"
+import { useOptionsStoredState } from "~hooks/options/useOptionsStoredState"
+import { usePerplexityConnectionTest } from "~hooks/options/usePerplexityConnectionTest"
+import { usePromptConfiguration } from "~hooks/options/usePromptConfiguration"
+import { useProviderTesting } from "~hooks/options/useProviderTesting"
+import { useSearchConnectionTest } from "~hooks/options/useSearchConnectionTest"
+import { useSettingsPersistence } from "~hooks/options/useSettingsPersistence"
+import { useSyncConfig } from "~hooks/options/useSyncConfig"
+import { useHashRoute } from "~lib/router"
+import { useSavedApplications } from "~lib/useSavedApplications"
+import {
+  type LLMProviderId,
+  type PerplexityConfig,
+  type ProviderConfig,
+  type SearchConfig
+} from "~types/config"
+import type {
+  AddRoundEditRef,
+  AppSection,
+  RoundDrawerState
+} from "~types/options"
+
+export function useOptionsController() {
+  const { route, navigate } = useHashRoute()
+  const apps = useSavedApplications()
+  const [roundDrawer, setRoundDrawer] = useState<RoundDrawerState>(null)
+  const [advanceFor, setAdvanceFor] = useState<string | null>(null)
+  const [openProvider, setOpenProvider] = useState<string | null>(null)
+
+  const stored = useOptionsStoredState()
+  const {
+    userProfile,
+    setUserProfile,
+    ollamaConfig,
+    setOllamaConfig,
+    perplexityConfig,
+    setPerplexityConfig,
+    searchConfig,
+    setSearchConfig,
+    customPrompts,
+    setCustomPrompts,
+    llmTuning,
+    setLlmTuning,
+    matchModel,
+    setMatchModel,
+    providers,
+    setProviders,
+    modelRouting,
+    setModelRouting
+  } = stored
+
+  const section: AppSection =
+    route.area === "settings" ? "settings" : "applications"
+  const allNavItems = NAV_GROUPS.flatMap((group) => group.items)
+  const activeTab = allNavItems.some((item) => item.value === route.view)
+    ? route.view
+    : SETTINGS_DEFAULT_TAB
+  const activeNav = allNavItems.find((item) => item.value === activeTab)
+
+  const changeSection = (next: AppSection) =>
+    navigate(next === "settings" ? ROUTES.settings : ROUTES.applications)
+
+  const updateProvider = (id: LLMProviderId, patch: Partial<ProviderConfig>) =>
+    setProviders((current) => ({
+      ...current,
+      [id]: {
+        apiKey: "",
+        enabled: true,
+        ...current[id],
+        ...patch
+      }
+    }))
+
+  const {
+    providerTest,
+    testProvider,
+    refreshProviderModels,
+    cancelProviderOperations
+  } = useProviderTesting({ providers, updateProvider })
+  const {
+    status: perplexityTestStatus,
+    testConnection: testPerplexity,
+    resetStatus: resetPerplexityStatus
+  } = usePerplexityConnectionTest(perplexityConfig, setPerplexityConfig)
+  const {
+    status: searchTestStatus,
+    testConnection: testSearch,
+    resetStatus: resetSearchStatus
+  } = useSearchConnectionTest(searchConfig, setSearchConfig)
+
+  /**
+   * A verdict belongs to the key that earned it: editing the key voids both
+   * the stored verdict and the banner, so a new key cannot inherit the
+   * previous one's pass. Other edits (prompts, the enable flag) pass through.
+   */
+  const changePerplexityConfig = (next: PerplexityConfig) => {
+    if (next.apiKey === perplexityConfig.apiKey) {
+      setPerplexityConfig(next)
+      return
+    }
+    setPerplexityConfig({ ...next, lastTested: undefined })
+    resetPerplexityStatus()
+  }
+
+  /**
+   * A verdict belongs to the key that earned it — and, for search, to the
+   * engine too: pointing the same key at a different back end says nothing
+   * about whether that one accepts it.
+   */
+  const changeSearchConfig = (next: SearchConfig) => {
+    if (
+      next.apiKey === searchConfig.apiKey &&
+      next.engine === searchConfig.engine
+    ) {
+      setSearchConfig(next)
+      return
+    }
+    setSearchConfig({ ...next, lastTested: undefined })
+    resetSearchStatus()
+  }
+
+  /**
+   * Abandons a provider's in-flight test or model refresh, so a completion
+   * that lands after the dialog was cancelled cannot write to the config
+   * that cancelling restored.
+   */
+  const cancelPendingProviderWork = (provider: string) => {
+    if (provider === "perplexity") resetPerplexityStatus()
+    else if (provider === "websearch") resetSearchStatus()
+    else cancelProviderOperations(provider as LLMProviderId)
+  }
+  const {
+    remindersOn,
+    toggleReminders,
+    reminderSettings,
+    changeReminderSettings,
+    testReminderStatus,
+    testReminder
+  } = useInterviewReminders(apps)
+  const syncConfig = useSyncConfig()
+  const { syncStatus, connectDrive, forcePull, disconnectDrive } =
+    useDriveSync(syncConfig)
+  const { saveStatus, showStatus, saveSettings, resetPrompts } =
+    useSettingsPersistence({
+      ollamaConfig,
+      perplexityConfig,
+      searchConfig,
+      customPrompts,
+      userProfile,
+      llmTuning,
+      matchModel,
+      providers,
+      modelRouting,
+      setCustomPrompts
+    })
+  const promptConfiguration = usePromptConfiguration({
+    customPrompts,
+    perplexityConfig,
+    setCustomPrompts,
+    setPerplexityConfig
+  })
+  const { exportData, importData } = useDataTransfer({
+    ollamaConfig,
+    perplexityConfig,
+    searchConfig,
+    providers,
+    modelRouting,
+    customPrompts,
+    userProfile,
+    llmTuning,
+    matchModel,
+    setOllamaConfig,
+    setPerplexityConfig,
+    setSearchConfig,
+    setProviders,
+    setModelRouting,
+    setCustomPrompts,
+    setUserProfile,
+    setLlmTuning,
+    setMatchModel,
+    showStatus
+  })
+  const { updateApplication, deleteApplication } = useApplicationActions()
+
+  const openCreateRound = () => setRoundDrawer({ mode: "create" })
+  const openEditRound = (editRef: AddRoundEditRef) =>
+    setRoundDrawer({ mode: "edit", editRef })
+  const closeRoundDrawer = () => setRoundDrawer(null)
+  const handleDebriefSaved = ({
+    advanced,
+    appId
+  }: {
+    advanced: boolean
+    appId: string
+  }) => {
+    navigate(ROUTES.interviewDebriefs)
+    if (advanced) setAdvanceFor(appId)
+  }
+  const addAdvancedRound = () => {
+    if (!advanceFor) return
+    setRoundDrawer({
+      mode: "create",
+      presetAppId: advanceFor,
+      presetType: ""
+    })
+    setAdvanceFor(null)
+  }
+
+  const dialogPrompt = promptConfiguration.dialogState.promptKey
+    ? customPrompts[promptConfiguration.dialogState.promptKey]
+    : ""
+  const perplexityDialogPrompt =
+    promptConfiguration.perplexityDialogState.promptType === "research"
+      ? perplexityConfig.customPrompt
+      : promptConfiguration.perplexityDialogState.promptType === "preparation"
+        ? perplexityConfig.interviewPrepPrompt ?? DEFAULT_INTERVIEW_PREP_PROMPT
+        : promptConfiguration.perplexityDialogState.promptType ===
+            "technicalPreparation"
+          ? perplexityConfig.technicalPrepPrompt ??
+            DEFAULT_TECHNICAL_PREP_PROMPT
+          : ""
+
+  return {
+    navigation: {
+      route,
+      navigate,
+      section,
+      activeTab,
+      activeNav,
+      changeSection
+    },
+    applications: {
+      apps,
+      roundDrawer,
+      advanceFor,
+      openCreateRound,
+      openEditRound,
+      closeRoundDrawer,
+      handleDebriefSaved,
+      addAdvancedRound,
+      dismissAdvance: () => setAdvanceFor(null),
+      updateApplication,
+      deleteApplication
+    },
+    settings: {
+      userProfile,
+      setUserProfile,
+      perplexityConfig,
+      setPerplexityConfig: changePerplexityConfig,
+      searchConfig,
+      setSearchConfig: changeSearchConfig,
+      customPrompts,
+      llmTuning,
+      setLlmTuning,
+      providers,
+      modelRouting,
+      setModelRouting,
+      openProvider,
+      setOpenProvider,
+      updateProvider,
+      providerTest,
+      testProvider,
+      refreshProviderModels,
+      cancelPendingProviderWork,
+      perplexityTestStatus,
+      testPerplexity,
+      searchTestStatus,
+      testSearch,
+      remindersOn,
+      toggleReminders,
+      reminderSettings,
+      changeReminderSettings,
+      testReminderStatus,
+      testReminder,
+      syncConfig,
+      syncStatus,
+      connectDrive,
+      forcePull,
+      disconnectDrive,
+      saveStatus,
+      saveSettings,
+      resetPrompts,
+      exportData,
+      importData,
+      dialogPrompt,
+      perplexityDialogPrompt,
+      ...promptConfiguration
+    }
+  }
+}

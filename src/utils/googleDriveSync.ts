@@ -1,33 +1,131 @@
 import { SYNC_KEYS, type SyncKey } from "~storage/keys"
+import type { SyncConfig } from "~types/sync"
 
+/**
+ * OAuth client of type "Web application". Its authorized redirect URIs must
+ * include `chrome.identity.getRedirectURL()` for every build that signs in
+ * (`https://<extension-id>.chromiumapp.org/` on Chrome).
+ */
+const CLIENT_ID =
+  "110025309401-unmk3hvf8ijv8ht2p74as08v9tnhifns.apps.googleusercontent.com"
+const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 const SCOPES = ["https://www.googleapis.com/auth/drive.appdata"]
 const FILE_NAME = "bespoke-data.json"
 const DRIVE_API = "https://www.googleapis.com/drive/v3"
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3"
+/** Refresh a little before Google's expiry so a push never races it. */
+const TOKEN_EXPIRY_MARGIN_MS = 60_000
 
-export interface SyncConfig {
+export interface AuthResult {
   token: string
-  lastSynced: string | null
-  error?: string
+  expiresAt: number
 }
 
-async function authorize(): Promise<string> {
+function launchWebAuthFlow(url: string, interactive: boolean): Promise<string> {
   return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken(
-      { interactive: true, scopes: SCOPES },
-      (token) => {
-        if (chrome.runtime.lastError || !token) {
-          reject(
-            new Error(
-              chrome.runtime.lastError?.message ?? "Authorization failed"
-            )
-          )
-          return
-        }
-        resolve(token)
+    chrome.identity.launchWebAuthFlow({ url, interactive }, (responseUrl) => {
+      if (chrome.runtime.lastError || !responseUrl) {
+        reject(
+          new Error(chrome.runtime.lastError?.message ?? "Authorization failed")
+        )
+        return
       }
-    )
+      resolve(responseUrl)
+    })
   })
+}
+
+/**
+ * Implicit-grant OAuth through `chrome.identity.launchWebAuthFlow`. With
+ * `interactive: false` it uses `prompt=none`, so it only succeeds while the
+ * user still has a Google session that already granted the scope.
+ */
+async function authorize({
+  interactive = true,
+  loginHint
+}: { interactive?: boolean; loginHint?: string } = {}): Promise<AuthResult> {
+  const state = crypto.randomUUID()
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: "token",
+    redirect_uri: chrome.identity.getRedirectURL(),
+    scope: SCOPES.join(" "),
+    state,
+    include_granted_scopes: "true",
+    prompt: interactive ? "select_account" : "none"
+  })
+  if (loginHint) params.set("login_hint", loginHint)
+
+  const responseUrl = await launchWebAuthFlow(
+    `${AUTH_ENDPOINT}?${params}`,
+    interactive
+  )
+  const result = new URLSearchParams(new URL(responseUrl).hash.slice(1))
+
+  const error = result.get("error")
+  if (error) throw new Error(`Google authorization failed: ${error}`)
+  if (result.get("state") !== state) {
+    throw new Error("Google authorization failed: state mismatch")
+  }
+  const token = result.get("access_token")
+  if (!token) throw new Error("Google authorization returned no token")
+
+  const expiresIn = Number(result.get("expires_in")) || 3_600
+  return { token, expiresAt: Date.now() + expiresIn * 1_000 }
+}
+
+/** Whether `connectionId` is still the stored Drive connection. */
+async function isCurrentConnection(
+  connectionId: string | undefined
+): Promise<boolean> {
+  const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+  return !!current?.token && current.connectionId === connectionId
+}
+
+/**
+ * A usable access token for `config`. Implicit-grant tokens can't be
+ * refreshed, so an expired one is replaced by a silent re-authorization and
+ * written back. Throws if the connection was disconnected or replaced while
+ * re-authorizing, so a token is never handed out for a stale connection.
+ */
+async function getFreshToken(config: SyncConfig): Promise<string> {
+  if (
+    config.expiresAt &&
+    config.expiresAt - TOKEN_EXPIRY_MARGIN_MS > Date.now()
+  ) {
+    return config.token
+  }
+
+  let auth: AuthResult
+  try {
+    auth = await authorize({ interactive: false, loginHint: config.email })
+  } catch {
+    throw new Error("Google session expired — reconnect Google Drive")
+  }
+
+  const { syncConfig: current } = await chrome.storage.local.get("syncConfig")
+  if (!current?.token || current.connectionId !== config.connectionId) {
+    throw new Error("Google Drive connection changed")
+  }
+  if (current.token === config.token) {
+    await chrome.storage.local.set({
+      syncConfig: { ...current, token: auth.token, expiresAt: auth.expiresAt }
+    })
+  }
+  return auth.token
+}
+
+/**
+ * Email of the Google account behind the token. Drive's about endpoint accepts
+ * the drive.appdata scope, so no extra OAuth scope or permission is needed.
+ */
+async function fetchAccountEmail(token: string): Promise<string | undefined> {
+  const res = await fetch(`${DRIVE_API}/about?fields=user(emailAddress)`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!res.ok) throw new Error(`Drive about failed: ${res.status}`)
+  const json = await res.json()
+  return json.user?.emailAddress || undefined
 }
 
 async function findFile(token: string): Promise<string | null> {
@@ -89,9 +187,17 @@ async function push(token: string): Promise<void> {
   }
 }
 
-async function pull(token: string): Promise<void> {
+/**
+ * Restore the synced keys from the Drive backup.
+ *
+ * Returns the subset that was actually present in the backup, so the caller can
+ * distinguish "the payload carried this key" from "the payload omitted it and
+ * the local value survived" — the interviews migration needs exactly that
+ * distinction to tell a pre-versioning backup from a current one.
+ */
+async function pull(token: string): Promise<Partial<Record<SyncKey, unknown>>> {
   const fileId = await findFile(token)
-  if (!fileId) return // Nothing to restore yet
+  if (!fileId) return {} // Nothing to restore yet
   const res = await fetch(`${DRIVE_API}/files/${fileId}?alt=media`, {
     headers: { Authorization: `Bearer ${token}` }
   })
@@ -104,7 +210,7 @@ async function pull(token: string): Promise<void> {
   }
 
   // Only restore known sync keys to avoid importing garbage
-  const toRestore: Record<string, unknown> = {}
+  const toRestore: Partial<Record<SyncKey, unknown>> = {}
   for (const key of SYNC_KEYS) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       toRestore[key] = (data as Record<SyncKey, unknown>)[key]
@@ -113,6 +219,7 @@ async function pull(token: string): Promise<void> {
   if (Object.keys(toRestore).length > 0) {
     await chrome.storage.local.set(toRestore)
   }
+  return toRestore
 }
 
 async function revoke(token: string): Promise<void> {
@@ -124,7 +231,14 @@ async function revoke(token: string): Promise<void> {
   } catch {
     // Ignore network errors during revoke
   }
-  chrome.identity.removeCachedAuthToken({ token }, () => {})
 }
 
-export { authorize, push, pull, revoke }
+export {
+  authorize,
+  fetchAccountEmail,
+  getFreshToken,
+  isCurrentConnection,
+  push,
+  pull,
+  revoke
+}

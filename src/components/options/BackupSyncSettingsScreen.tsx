@@ -1,0 +1,147 @@
+import type { OperationStatus } from "~types/options"
+import type { SyncConfig } from "~types/sync"
+
+interface Props {
+  syncConfig: SyncConfig | null
+  syncStatus: OperationStatus
+  onConnectDrive: () => void
+  onForcePull: () => void
+  onDisconnectDrive: () => void
+  onExportData: () => void
+  onImportData: () => void
+}
+
+export function BackupSyncSettingsScreen({
+  syncConfig,
+  syncStatus,
+  onConnectDrive,
+  onForcePull,
+  onDisconnectDrive,
+  onExportData,
+  onImportData
+}: Props) {
+  return (
+    <div className="space-y-6">
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Google Drive Sync</h2>
+        <p className="text-sm text-aa-text-secondary mb-6">
+          Sync your profile, settings, and saved applications across computers.
+          Data is stored privately in your Google Drive app folder — only
+          Bespoke can access it.
+        </p>
+        <hr className="aa-divider" />
+
+        {!syncConfig?.token ? (
+          <div className="flex flex-col gap-4">
+            <div className="aa-message-info">
+              <p className="font-semibold text-aa-11 uppercase tracking-widest mb-2">
+                How it works
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>Connect once per device with your Google account</li>
+                <li>Changes sync automatically after 2 seconds</li>
+                <li>On a new device, connect and use Force Pull to restore</li>
+                <li>
+                  Your data is stored in a private app folder, not visible in
+                  Drive
+                </li>
+              </ul>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={onConnectDrive}
+                disabled={syncStatus.type === "loading"}
+                className="px-6 py-3 bg-aa-secondary text-aa-text-on-primary border-0 text-aa-11 font-bold uppercase tracking-widest cursor-pointer disabled:opacity-50 hover:opacity-90 transition-colors">
+                {syncStatus.type === "loading"
+                  ? "Connecting..."
+                  : "Connect Google Drive"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="bg-aa-success-soft border border-aa-success-strong p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-aa-success" />
+                <span className="text-aa-11 font-bold uppercase tracking-widest text-aa-success-strong">
+                  Connected
+                </span>
+              </div>
+              {syncConfig.lastSynced && (
+                <p className="text-xs text-aa-success-strong">
+                  Last synced:{" "}
+                  {new Date(syncConfig.lastSynced).toLocaleString()}
+                </p>
+              )}
+              {!syncConfig.lastSynced && (
+                <p className="text-xs text-aa-success-strong">
+                  Sync will happen automatically when you make changes.
+                </p>
+              )}
+              {syncConfig.error && (
+                <p className="text-xs text-aa-error-strong mt-1">
+                  Last sync error: {syncConfig.error}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={onForcePull}
+                disabled={syncStatus.type === "loading"}
+                className="aa-btn-accent">
+                {syncStatus.type === "loading"
+                  ? "Restoring..."
+                  : "Force Pull from Drive"}
+              </button>
+              <button
+                type="button"
+                onClick={onDisconnectDrive}
+                disabled={syncStatus.type === "loading"}
+                className="aa-btn-secondary">
+                Disconnect
+              </button>
+            </div>
+          </div>
+        )}
+
+        {syncStatus.type === "success" && (
+          <div className={`mt-4 aa-message-success`}>
+            {syncStatus.message}
+          </div>
+        )}
+        {syncStatus.type === "error" && (
+          <div className={`mt-4 aa-message-error`}>
+            {syncStatus.message}
+          </div>
+        )}
+      </div>
+
+      <div className="aa-card">
+        <h2 className="aa-section-heading">Manual Export / Import</h2>
+        <p className="text-sm text-aa-text-secondary mb-6">
+          Download a full backup or restore from a previously exported file.
+          Includes profile, settings, and all saved applications with generated
+          CVs and cover letters.
+        </p>
+        <hr className="aa-divider" />
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onExportData}
+            className="px-5 py-2.5 bg-aa-success-strong text-aa-text-on-primary border-0 text-aa-11 font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-colors">
+            Export Data
+          </button>
+          <button
+            type="button"
+            onClick={onImportData}
+            className="px-5 py-2.5 bg-aa-secondary text-aa-text-on-primary border-0 text-aa-11 font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-colors">
+            Import Data
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

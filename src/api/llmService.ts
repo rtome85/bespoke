@@ -1,0 +1,619 @@
+import { DEFAULT_LLM_TUNING, OUTPUT_LANGUAGE_META } from "~constants/generation"
+import type { GenerateRequest, LLMTuningConfig } from "~types/config"
+import type { MatchResult } from "~types/match"
+import type { UserProfile } from "~types/userProfile"
+
+import type { LLMClient } from "./llm/types"
+
+export type { GenerateRequest }
+
+const EMPTY_MATCH: MatchResult = {
+  percentage: 0,
+  summary: "Match analysis unavailable.",
+  strengths: [],
+  weaknesses: [],
+  improvements: []
+}
+
+/**
+ * Render a UserProfile to the markdown block prompts interpolate as
+ * `{{userProfile}}`. Pure — shared by LLMService and the per-round Prep engine.
+ */
+export function formatUserProfile(
+  profile: UserProfile,
+  includeYears = false
+): string {
+  if (!profile) return ""
+
+  const p = profile.personalInfo
+  const contactParts: string[] = []
+  if (p?.fullName) contactParts.push(`Name: ${p.fullName}`)
+  if (p?.email) contactParts.push(`Email: ${p.email}`)
+  if (p?.phone) contactParts.push(`Phone: ${p.phone}`)
+  if (p?.location) contactParts.push(`Location: ${p.location}`)
+  if (p?.website) contactParts.push(`Website: ${p.website}`)
+  if (p?.linkedin) contactParts.push(`LinkedIn: ${p.linkedin}`)
+  if (p?.github) contactParts.push(`GitHub: ${p.github}`)
+  const personalInfo =
+    contactParts.length > 0
+      ? `**Personal Information:**\n${contactParts.join("\n")}${p?.summary ? `\n\nSummary: ${p.summary}` : ""}`
+      : ""
+
+  const education =
+    (profile.education?.length ?? 0) > 0
+      ? `**Education:**\n${profile.education
+          .map((e) => {
+            const dates = e.endDate
+              ? `${e.startDate} – ${e.endDate}`
+              : `${e.startDate} – Present`
+            const field = e.fieldOfStudy ? `, ${e.fieldOfStudy}` : ""
+            return `- ${e.degree}${field} at ${e.institution} (${dates})`
+          })
+          .join("\n")}`
+      : ""
+
+  const skills =
+    (profile.skills?.length ?? 0) > 0
+      ? profile.skills
+          .map((s) =>
+            includeYears
+              ? `- ${s.name} (${s.yearsOfExperience} years)`
+              : `- ${s.name}`
+          )
+          .join("\n")
+      : "No skills specified"
+
+  const experience =
+    (profile.workExperience?.length ?? 0) > 0
+      ? profile.workExperience
+          .map((exp) => {
+            const dateRange = exp.endDate
+              ? `${exp.startDate} - ${exp.endDate}`
+              : `${exp.startDate} - Present`
+            const achievements =
+              (exp.achievements?.length ?? 0) > 0
+                ? exp.achievements.map((a) => `  - ${a}`).join("\n")
+                : "  - No achievements specified"
+            return `**${exp.jobTitle}** at ${exp.company} (${dateRange})\n${achievements}`
+          })
+          .join("\n\n")
+      : "No work experience specified"
+
+  const projects =
+    (profile.personalProjects?.length ?? 0) > 0
+      ? profile.personalProjects
+          .map((project) => {
+            const links = []
+            if (project.liveDemoUrl) links.push(`Demo: ${project.liveDemoUrl}`)
+            if (project.githubRepoUrl)
+              links.push(`GitHub: ${project.githubRepoUrl}`)
+            const linkStr = links.length > 0 ? `\n  ${links.join("\n  ")}` : ""
+            return `**${project.title}**\n  ${project.description}${linkStr}`
+          })
+          .join("\n\n")
+      : "No personal projects specified"
+
+  const languages =
+    (profile.languages?.length ?? 0) > 0
+      ? `**Languages:**\n${profile.languages.map((l) => `- ${l.name}: ${l.level}`).join("\n")}`
+      : ""
+
+  return [
+    personalInfo,
+    education,
+    `**Skills:**\n${skills}`,
+    `**Work Experience:**\n${experience}`,
+    `**Personal Projects:**\n${projects}`,
+    languages
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+}
+
+interface LanguageRequirement {
+  language: string
+  level: string
+}
+
+/**
+ * Endonyms for the languages postings most often ask for, so a profile that
+ * writes "Français" still matches a requirement reported as "French". Only
+ * ever used to recognise a language the candidate DOES list — a name missing
+ * from the table can still block the score, never the other way round.
+ */
+const LANGUAGE_ALIASES: Record<string, string[]> = {
+  english: ["ingles", "inglese", "englisch", "anglais", "engels"],
+  french: ["francais", "frances", "francese", "franzosisch", "frans"],
+  german: ["deutsch", "alemao", "aleman", "allemand", "tedesco", "duits"],
+  spanish: ["espanol", "espanhol", "espagnol", "spagnolo", "spanisch"],
+  portuguese: ["portugues", "portugais", "portoghese", "portugiesisch"],
+  italian: ["italiano", "italien", "italienisch", "italiaans"],
+  dutch: ["nederlands", "hollands", "neerlandais", "niederlandisch"],
+  chinese: ["mandarin", "mandarim", "chinois", "chinesisch", "putonghua"]
+}
+
+/** Strip case, accents and anything a level suffix may have left behind. */
+function normalizeLanguageName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "")
+}
+
+function canonicalLanguageName(name: string): string {
+  const normalized = normalizeLanguageName(name)
+  if (!normalized) return ""
+  for (const [canonical, aliases] of Object.entries(LANGUAGE_ALIASES)) {
+    if (
+      normalized.includes(canonical) ||
+      aliases.some((alias) => normalized.includes(alias))
+    ) {
+      return canonical
+    }
+  }
+  return normalized
+}
+
+function profileListsLanguage(
+  profile: UserProfile | undefined,
+  name: string
+): boolean {
+  const target = canonicalLanguageName(name)
+  if (!target) return false
+  return (profile?.languages ?? []).some((entry) => {
+    const listed = canonicalLanguageName(entry.name)
+    return (
+      listed.length > 0 && (listed.includes(target) || target.includes(listed))
+    )
+  })
+}
+
+/**
+ * Hard language requirements the candidate cannot meet. The model flags
+ * them, but a "missing" verdict only counts when the profile agrees — a
+ * language the candidate actually lists must never zero the score.
+ */
+function findBlockingLanguages(
+  raw: unknown,
+  profile: UserProfile | undefined
+): LanguageRequirement[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((entry) => {
+      const item = (entry ?? {}) as Record<string, unknown>
+      return {
+        language: String(item.language ?? "").trim(),
+        level: String(item.level ?? "").trim(),
+        required: item.required === true,
+        candidateMeets: item.candidateMeets === true
+      }
+    })
+    .filter(
+      (item) =>
+        item.language.length > 0 &&
+        item.required &&
+        !item.candidateMeets &&
+        !profileListsLanguage(profile, item.language)
+    )
+    .map(({ language, level }) => ({ language, level }))
+}
+
+function describeLanguage(requirement: LanguageRequirement): string {
+  return requirement.level
+    ? `${requirement.language} (${requirement.level})`
+    : requirement.language
+}
+
+function joinList(items: string[]): string {
+  if (items.length < 2) return items.join("")
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`
+}
+
+/**
+ * Provider-agnostic prompt building + response parsing. The only
+ * provider-specific piece is the injected LLMClient.
+ */
+export class LLMService {
+  constructor(protected client: LLMClient) {}
+
+  testConnection(): Promise<boolean> {
+    return this.client.testConnection()
+  }
+
+  listModels(): Promise<string[]> {
+    return this.client.listModels()
+  }
+
+  protected formatUserProfile(
+    profile: UserProfile,
+    includeYears = false
+  ): string {
+    return formatUserProfile(profile, includeYears)
+  }
+
+  /**
+   * The language block appended to every document system prompt. It has to
+   * outrank the prompt body, which is written in English and names English
+   * section headings — without the explicit override the model mirrors the
+   * prompt's language instead of the posting's.
+   */
+  private languageInstructions(tuning: LLMTuningConfig): string {
+    const shared = `- Translate the section headings and every fixed label too — the structure, heading order and Markdown formatting stay exactly as specified above, only the words change.
+- Leave proper nouns alone: company names, the job title as advertised, product and technology names, URLs, email addresses and phone numbers.
+- Never mix languages: no English headings, dates or boilerplate left behind in a document written in another language.`
+
+    const configured =
+      tuning.outputLanguage ?? DEFAULT_LLM_TUNING.outputLanguage
+    const target = OUTPUT_LANGUAGE_META[configured]?.name
+
+    if (!target) {
+      return `OUTPUT LANGUAGE — this overrides the language of every instruction above:
+- Write the ENTIRE document in the language the job description is written in, not the language of these instructions. A Portuguese posting gets a Portuguese document, a German posting a German one.
+- If the posting mixes languages, follow the language its responsibilities and requirements are written in.
+${shared}`
+    }
+
+    return `OUTPUT LANGUAGE — this overrides the language of every instruction above:
+- Write the ENTIRE document in ${target}, whatever language the job description is written in.
+${shared}`
+  }
+
+  private tuningInstructions(tuning: LLMTuningConfig): {
+    toneInstruction: string
+    focusInstruction: string
+    strictnessInstruction: string
+    densityInstruction: string
+    readingLevelInstruction: string
+  } {
+    const tone = {
+      formal: "Use formal, precise corporate language throughout.",
+      professional: "Use professional yet approachable language.",
+      conversational:
+        "Use warm, engaging language while remaining professional."
+    }[tuning.writingTone]
+
+    const focus = {
+      skills:
+        "Lead with and prominently feature the candidate's technical skills near the top of the resume.",
+      experience:
+        "Lead with and emphasise Work Experience and concrete achievements above all else.",
+      balanced: ""
+    }[tuning.resumeFocus]
+
+    const strictness = {
+      strict:
+        "Be rigorous and critical. Weight missing skills and experience gaps heavily in your assessment. Scores below 50% are expected for imperfect matches.",
+      balanced:
+        "Provide a balanced, fair assessment. Consider both explicit requirements and transferable skills equally.",
+      generous:
+        "Be optimistic and give credit for transferable skills and adjacent experience. Highlight how the candidate's background could apply even when not an exact match."
+    }[tuning.matchStrictness]
+
+    const density = {
+      concise:
+        "Keep each resume bullet to a single tight line — cut qualifiers and background context, state only the action and the result.",
+      standard: "",
+      detailed:
+        "Write fuller bullets that include the specific tools, scale, and context behind each achievement, not just the outcome."
+    }[tuning.bulletDensity]
+
+    const readingLevel = {
+      simple:
+        "Use plain, everyday words and short sentences — avoid jargon and complex sentence structures.",
+      standard: "",
+      advanced:
+        "Use precise, domain-specific vocabulary and more sophisticated sentence structures where appropriate."
+    }[tuning.readingLevel]
+
+    return {
+      toneInstruction: tone,
+      focusInstruction: focus,
+      strictnessInstruction: strictness,
+      densityInstruction: density,
+      readingLevelInstruction: readingLevel
+    }
+  }
+
+  private interpolatePrompt(
+    template: string,
+    companyName: string,
+    jobTitle: string,
+    jobDescription: string,
+    userProfile?: UserProfile
+  ): string {
+    let result = template
+      .replace(/\{\{companyName\}\}/g, companyName)
+      .replace(/\{\{jobTitle\}\}/g, jobTitle)
+      .replace(/\{\{jobDescription\}\}/g, jobDescription)
+
+    if (userProfile) {
+      const profileMarkdown = this.formatUserProfile(userProfile)
+      result = result.replace(/\{\{userProfile\}\}/g, profileMarkdown)
+    }
+
+    return result
+  }
+
+  async generate(request: GenerateRequest): Promise<string> {
+    const {
+      jobDescription,
+      companyName,
+      jobTitle,
+      model,
+      prompts,
+      userProfile,
+      llmTuning = DEFAULT_LLM_TUNING
+    } = request
+
+    const {
+      toneInstruction,
+      focusInstruction,
+      densityInstruction,
+      readingLevelInstruction
+    } = this.tuningInstructions(llmTuning)
+    const extraInstructions = [
+      toneInstruction,
+      focusInstruction,
+      densityInstruction,
+      readingLevelInstruction
+    ]
+      .filter(Boolean)
+      .join(" ")
+    const systemPrompt = [
+      prompts.resumeSystemPrompt,
+      extraInstructions
+        ? `ADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
+        : "",
+      this.languageInstructions(llmTuning)
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+
+    const interpolatedUserPrompt = this.interpolatePrompt(
+      prompts.resumeUserPromptTemplate,
+      companyName,
+      jobTitle,
+      jobDescription,
+      userProfile
+    )
+
+    const content = await this.client.chat({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: interpolatedUserPrompt }
+      ],
+      temperature: llmTuning.temperature,
+      topP: llmTuning.topP,
+      maxTokens: llmTuning.maxTokens
+    })
+    return content || "No content generated"
+  }
+
+  async generateCoverLetter(request: GenerateRequest): Promise<string> {
+    const {
+      jobDescription,
+      companyName,
+      jobTitle,
+      model,
+      prompts,
+      userProfile,
+      llmTuning = DEFAULT_LLM_TUNING
+    } = request
+
+    const { toneInstruction, readingLevelInstruction } =
+      this.tuningInstructions(llmTuning)
+    const extraInstructions = [toneInstruction, readingLevelInstruction]
+      .filter(Boolean)
+      .join(" ")
+    const systemPrompt = [
+      prompts.coverLetterSystemPrompt,
+      extraInstructions
+        ? `ADDITIONAL STYLE INSTRUCTIONS: ${extraInstructions}`
+        : "",
+      this.languageInstructions(llmTuning)
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+
+    const interpolatedUserPrompt = this.interpolatePrompt(
+      prompts.coverLetterUserPromptTemplate,
+      companyName,
+      jobTitle,
+      jobDescription,
+      userProfile
+    )
+
+    const content = await this.client.chat({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: interpolatedUserPrompt }
+      ],
+      temperature: llmTuning.temperature,
+      topP: llmTuning.topP,
+      maxTokens: llmTuning.maxTokens
+    })
+    return content || "No content generated"
+  }
+
+  async generateResumeAndCoverLetter(
+    request: GenerateRequest
+  ): Promise<{ resume: string; coverLetter: string }> {
+    const resume = await this.generate(request)
+    const coverLetter = await this.generateCoverLetter(request)
+    return { resume, coverLetter }
+  }
+
+  async extractJobDetails(
+    rawText: string,
+    model: string
+  ): Promise<{
+    companyName: string
+    jobTitle: string
+    jobDescription: string
+  }> {
+    const content = await this.client.chat({
+      model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a job posting parser. Extract structured data and return ONLY a valid JSON object with no markdown, no explanation."
+        },
+        {
+          role: "user",
+          content: `Extract the job details from this text and return ONLY this JSON shape:
+{"companyName":"...","jobTitle":"...","jobDescription":"..."}
+
+Text:
+${rawText.substring(0, 6000)}`
+        }
+      ],
+      temperature: 0,
+      topP: 1,
+      maxTokens: 512
+    })
+
+    const jsonMatch = (content || "{}").match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error("No JSON in response")
+
+    const parsed = JSON.parse(jsonMatch[0])
+    if (!parsed.companyName && !parsed.jobTitle && !parsed.jobDescription) {
+      throw new Error("Missing required fields")
+    }
+
+    return {
+      companyName: String(parsed.companyName || ""),
+      jobTitle: String(parsed.jobTitle || ""),
+      jobDescription: String(parsed.jobDescription || "")
+    }
+  }
+
+  async analyzeMatch(request: GenerateRequest): Promise<MatchResult> {
+    const llmTuning = request.llmTuning ?? DEFAULT_LLM_TUNING
+
+    const userPrompt = `You are a career advisor. Score this candidate on FOUR dimensions against the job posting, then provide qualitative analysis.
+
+DIMENSION SCORING — be literal, score only what is explicitly stated in the candidate profile:
+- "skillsCoverage" (0–100): what % of the job's REQUIRED skills/technologies the candidate explicitly lists. 100 = all required skills present, 50 = half present, 0 = none.
+- "experienceMatch" (0–100): how well the candidate's seniority and years of experience match the role. 100 = exact fit, 50 = somewhat under/over-qualified, 0 = completely mismatched.
+- "domainFit" (0–100): relevance of the candidate's industry/domain background. 100 = same domain, 50 = adjacent, 0 = unrelated.
+- "bonusSkills" (0–100): coverage of the job's nice-to-have/preferred (non-required) skills. 100 = all bonus skills present, 0 = none.
+
+HUMAN LANGUAGE REQUIREMENTS — report every spoken/written language the posting mentions in "languageRequirements" (never programming languages):
+- "required": true only when the posting states the language as a hard requirement — listed among the requirements/qualifications, or phrased as "must", "fluent in", "mandatory", or with a required level such as B2/C1. Use false when it is framed as nice to have, a plus, an asset, an advantage, preferred, desirable or optional.
+- "candidateMeets": true only when the candidate profile explicitly lists that language — in any spelling or language — at the requested level or above. Native or mother tongue meets any level. If the profile does not list the language at all, this is false.
+- Return an empty array when the posting mentions no human language requirement.
+- Score the four dimensions normally either way; the language rule is applied afterwards.
+
+Respond with ONLY a single valid JSON object — no prose, no markdown fences.
+
+Required shape:
+{
+  "skillsCoverage": <integer 0–100>,
+  "experienceMatch": <integer 0–100>,
+  "domainFit": <integer 0–100>,
+  "bonusSkills": <integer 0–100>,
+  "languageRequirements": [
+    {
+      "language": "<language name in English>",
+      "level": "<level the posting asks for, e.g. B2 or fluent — empty if unstated>",
+      "required": <true|false>,
+      "candidateMeets": <true|false>
+    }
+  ],
+  "summary": "<2 concise sentences summarising overall fit>",
+  "strengths": ["<specific strength>", ...],
+  "weaknesses": ["<specific gap>", ...],
+  "improvements": ["<actionable step>", ...]
+}
+
+strengths, weaknesses, and improvements must each have 3–5 items.
+
+---
+Job Title: ${request.jobTitle} at ${request.companyName}
+
+Job Description:
+${request.jobDescription.substring(0, 2500)}
+
+Candidate Profile:
+${this.formatUserProfile(request.userProfile, true)}`
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30_000)
+    let content: string
+    try {
+      content = await this.client.chat({
+        model: request.model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a career advisor. Return only valid JSON, no markdown."
+          },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: Math.min(llmTuning.temperature, 0.4),
+        topP: llmTuning.topP,
+        maxTokens: 1024,
+        signal: controller.signal
+      })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+
+    try {
+      const jsonMatch = (content || "{}").match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error("No JSON object found in response")
+      const parsed = JSON.parse(jsonMatch[0])
+
+      const clamp = (n: unknown) => Math.min(100, Math.max(0, Number(n) || 0))
+      const skills = clamp(parsed.skillsCoverage)
+      const exp = clamp(parsed.experienceMatch)
+      const domain = clamp(parsed.domainFit)
+      const bonus = clamp(parsed.bonusSkills)
+      const percentage = Math.round(
+        0.4 * skills + 0.3 * exp + 0.2 * domain + 0.1 * bonus
+      )
+
+      // A language the posting requires outright and the candidate does not
+      // speak is a hard filter, not a deduction — the score goes to 0 however
+      // well the rest of the profile fits. Nice-to-have languages score as usual.
+      const blocking = findBlockingLanguages(
+        parsed.languageRequirements,
+        request.userProfile
+      )
+      const summary = String(parsed.summary || "")
+      const weaknesses = Array.isArray(parsed.weaknesses)
+        ? parsed.weaknesses.map(String)
+        : []
+
+      return {
+        percentage: blocking.length > 0 ? 0 : percentage,
+        summary:
+          blocking.length > 0
+            ? `This role requires ${joinList(blocking.map(describeLanguage))}, which the candidate does not speak or write. ${summary}`.trim()
+            : summary,
+        strengths: Array.isArray(parsed.strengths)
+          ? parsed.strengths.map(String)
+          : [],
+        weaknesses: [
+          ...blocking.map(
+            (requirement) =>
+              `Does not speak or write ${describeLanguage(requirement)}, which the posting lists as a requirement.`
+          ),
+          ...weaknesses
+        ],
+        improvements: Array.isArray(parsed.improvements)
+          ? parsed.improvements.map(String)
+          : []
+      }
+    } catch {
+      // The model responded but we couldn't parse it — surface an empty
+      // result rather than an error (matches the previous behaviour).
+      return EMPTY_MATCH
+    }
+  }
+}
