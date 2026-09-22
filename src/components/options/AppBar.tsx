@@ -1,4 +1,4 @@
-import { Triangle } from "lucide-react"
+import icon from "../../../assets/icon.png"
 
 /**
  * Persistent top-level nav for the app tab. Dark bar carrying the brand
@@ -16,11 +16,8 @@ export function AppBar({
 
   return (
     <header className="sticky top-0 z-30 h-aa-appbar shrink-0 bg-aa-neutral-900 flex items-center gap-4 sm:gap-8 px-4 sm:px-5">
-      <div className="flex items-center gap-2">
-        <div className="w-aa-px-22 h-aa-px-22 rounded-aa-sm bg-aa-primary flex items-center justify-center">
-          <Triangle size={11} className="text-aa-text-on-primary" fill="currentColor" />
-        </div>
-        <span className="text-aa-sm font-bold text-aa-surface">Bespoke</span>
+      <div className="flex items-baseline gap-2">
+        <span className="text-aa-17 font-bold text-aa-surface">Bespoke</span>
         <span className="hidden sm:inline text-aa-11 text-aa-neutral-500">
           v{version}
         </span>
