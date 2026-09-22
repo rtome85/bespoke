@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 
+import { APPLICATION_STATUSES, LIST_POPULATIONS } from "~constants/applications"
 import { ROUTES } from "~constants/routes"
 import { STORAGE_KEYS } from "~storage/keys"
-import { LIST_POPULATIONS, type ListFilter } from "~types/options"
-import { APPLICATION_STATUSES } from "~types/userProfile"
+import type { ListFilter } from "~types/options"
 
 // Hash routing for the app shell (`options.html`). No library — the shell has a
 // handful of screens and a flat structure.

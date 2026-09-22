@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { sendToBackground } from "@plasmohq/messaging"
 import {
   Check,
   ChevronDown,
@@ -15,11 +13,18 @@ import {
   Trash2,
   X
 } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+
+import { sendToBackground } from "@plasmohq/messaging"
 
 import { BackLink } from "~components/common/BackLink"
 import { DocumentGenerationControls } from "~components/dialog/DocumentGenerationControls"
 import { GeneratedDocumentsCard } from "~components/dialog/GeneratedDocumentsCard"
 import { StrengthenApplication } from "~components/dialog/StrengthenApplication"
+import {
+  APPLICATION_STATUSES,
+  LIST_POPULATIONS
+} from "~constants/applications"
 import { useDocumentGenerationProgress } from "~hooks/dialog/useSimulatedProgress"
 import {
   everApplied,
@@ -28,20 +33,15 @@ import {
 } from "~lib/overview/metrics"
 import { STORAGE_KEYS } from "~storage/keys"
 import type { AddedGapSkills } from "~types/dialog"
-import {
-  LIST_POPULATIONS,
-  type ListFilter,
-  type ListPopulation
-} from "~types/options"
 import type {
   DocumentPreviewDraft,
   DocumentPreviewTab
 } from "~types/documentPreview"
-import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus,
-  type SavedApplication,
-  type UserProfile
+import type { ListFilter, ListPopulation } from "~types/options"
+import type {
+  ApplicationStatus,
+  SavedApplication,
+  UserProfile
 } from "~types/userProfile"
 
 interface Props {
