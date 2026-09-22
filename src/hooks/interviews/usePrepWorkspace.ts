@@ -23,7 +23,7 @@ import {
   roundContextLine,
   roundLabel
 } from "~lib/interviews/selectors"
-import { setRoundPrep } from "~storage/savedApplications"
+import { setRoundPrep, type RoundPrepPatch } from "~storage/savedApplications"
 import { RESEARCH_SOURCE_LABELS, type ResearchSource } from "~types/config"
 import type {
   PrepLesson,
@@ -255,8 +255,11 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
 
   // A lesson takes up to 90 seconds to come back, and the sheet re-renders
   // several times in that window — from a tick, from a notes save, from a
-  // regeneration. The write-back has to see the prep as it stands when the
-  // response lands, not the snapshot that was current when the panel opened.
+  // regeneration. Opening the panel on an item has to read the prep as it
+  // stands then, not the snapshot that was current when the workspace
+  // mounted. (The write-back does not come through here: it derives its list
+  // inside the mutation queue, which is the only place a read and a write are
+  // atomic against each other.)
   //
   // Synced on commit rather than during render: a render React abandons never
   // happened, and assigning from inside one would leave the ref describing a
@@ -273,7 +276,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     prepRef.current = prep
   }, [prep])
 
-  const save = (patch: Partial<RoundPrep>) =>
+  const save = (patch: RoundPrepPatch) =>
     app && round ? setRoundPrep(app.id, round.id, patch) : Promise.resolve()
 
   const onNotesChange = (v: string) => {
@@ -535,33 +538,38 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * exercise. When the text no longer appears the write is dropped — the
    * panel still shows the lesson, it just isn't persisted onto an item that
    * no longer exists.
+   *
+   * The list is rebuilt from the prep as stored, inside the mutation queue,
+   * rather than from anything this render is holding. Closing the panel does
+   * not cancel the call behind it, so two lessons can be in flight at once:
+   * built from a snapshot, the second to land would write back an array that
+   * never had the first one's lesson in it, and a lesson the user paid for
+   * would disappear. Serializing the write alone cannot fix that — the stale
+   * array was already assembled by the time it reached the queue.
    */
-  const saveLesson = async (
-    kind: LessonKind,
-    title: string,
-    value: PrepLesson
-  ) => {
-    const cur = prepRef.current
-    if (kind === "exercise") {
-      const list = cur.techExercises ?? []
-      const i = list.findIndex((e) => e.title === title)
-      if (i < 0) return
-      await save({
-        techExercises: list.map((e, idx) =>
-          idx === i ? { ...e, lesson: value } : e
-        )
-      })
-      return
-    }
-    const list = cur.techQuestions ?? []
-    const i = list.findIndex((q) => q.question === title)
-    if (i < 0) return
-    await save({
-      techQuestions: list.map((q, idx) =>
-        idx === i ? { ...q, lesson: value } : q
-      )
+  const saveLesson = (kind: LessonKind, title: string, value: PrepLesson) =>
+    save((cur) => {
+      if (kind === "exercise") {
+        const list = cur.techExercises ?? []
+        const i = list.findIndex((e) => e.title === title)
+        return i < 0
+          ? {}
+          : {
+              techExercises: list.map((e, idx) =>
+                idx === i ? { ...e, lesson: value } : e
+              )
+            }
+      }
+      const list = cur.techQuestions ?? []
+      const i = list.findIndex((q) => q.question === title)
+      return i < 0
+        ? {}
+        : {
+            techQuestions: list.map((q, idx) =>
+              idx === i ? { ...q, lesson: value } : q
+            )
+          }
     })
-  }
 
   /**
    * Open the lesson panel for one exercise or drill question, generating the
