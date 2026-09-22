@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
+import { PROVIDER_META } from "~constants/providers"
 import { STORAGE_KEYS } from "~storage/keys"
-import { PROVIDER_META } from "~types/config"
 import type { ModelRouting, RouteTarget } from "~types/config"
 import type { PendingJobData, RoutingLabels } from "~types/dialog"
 import {

@@ -2,6 +2,11 @@ import type { ReactNode } from "react"
 
 import { Spectrum } from "~components/options/Spectrum"
 import {
+  DEFAULT_LLM_TUNING,
+  OUTPUT_LANGUAGE_META,
+  OUTPUT_LANGUAGES
+} from "~constants/generation"
+import {
   BULLET_DENSITY,
   COVER_LETTER_SAMPLE,
   FOCUS,
@@ -10,13 +15,7 @@ import {
   STRICTNESS,
   TONE
 } from "~constants/options"
-import {
-  DEFAULT_LLM_TUNING,
-  OUTPUT_LANGUAGE_META,
-  OUTPUT_LANGUAGES,
-  type LLMTuningConfig,
-  type OutputLanguage
-} from "~types/config"
+import { type LLMTuningConfig, type OutputLanguage } from "~types/config"
 
 interface Props {
   tuning: LLMTuningConfig

@@ -11,7 +11,10 @@ import {
   resolveJobRoute,
   type ResolvedRoute
 } from "~background/prepareGenerateRequest"
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import { DEFAULT_COMPANY_SYNTHESIS_PROMPT } from "~constants/prompts"
+import { normalizeModelRouting } from "~constants/providers"
+import { RESEARCH_PREFERENCE_LABELS } from "~constants/research"
 import { parseCompanyInfo } from "~lib/companyResearchParser"
 import { hasHostPermission } from "~lib/hostPermissions"
 import {
@@ -26,9 +29,6 @@ import {
 } from "~lib/interviews/companySite"
 import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
 import {
-  DEFAULT_LLM_TUNING,
-  normalizeModelRouting,
-  RESEARCH_PREFERENCE_LABELS,
   type LLMTuningConfig,
   type ModelRouting,
   type PerplexityConfig,

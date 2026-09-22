@@ -6,17 +6,14 @@ import {
   resolveJobRoute,
   type ResolvedRoute
 } from "~background/prepareGenerateRequest"
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_TECHNICAL_PREP_PROMPT,
   LEGACY_INTERVIEW_PREP_PROMPTS,
   LEGACY_TECHNICAL_PREP_PROMPTS
 } from "~constants/prompts"
-import {
-  DEFAULT_LLM_TUNING,
-  type LLMTuningConfig,
-  type PerplexityConfig
-} from "~types/config"
+import type { LLMTuningConfig, PerplexityConfig } from "~types/config"
 import type {
   GapDefense,
   StarStory,

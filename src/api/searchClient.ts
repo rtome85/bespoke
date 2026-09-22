@@ -1,8 +1,5 @@
-import {
-  SEARCH_ENGINE_META,
-  type SearchConfig,
-  type SearchEngineId
-} from "~types/config"
+import { SEARCH_ENGINE_META } from "~constants/research"
+import type { SearchConfig, SearchEngineId } from "~types/config"
 
 export interface SearchResult {
   title: string

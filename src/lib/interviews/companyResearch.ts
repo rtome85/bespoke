@@ -1,6 +1,6 @@
+import { RESEARCH_STALE_MS } from "~constants/research"
 import { STORAGE_KEYS } from "~storage/keys"
 import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
-import { RESEARCH_STALE_MS } from "~types/config"
 
 /** Past this age the Prep card offers a refresh instead of trusting the cache. */
 export function researchIsStale(

@@ -1,10 +1,12 @@
 import {
   RESEARCH_PREFERENCE_LABELS,
   RESEARCH_PREFERENCES,
-  SEARCH_ENGINE_META,
-  type PerplexityConfig,
-  type ResearchPreference,
-  type SearchConfig
+  SEARCH_ENGINE_META
+} from "~constants/research"
+import type {
+  PerplexityConfig,
+  ResearchPreference,
+  SearchConfig
 } from "~types/config"
 
 interface Props {

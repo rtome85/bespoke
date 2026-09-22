@@ -4,9 +4,9 @@ import { getLLMClient } from "~api/llm"
 import {
   hasProviderCredential,
   missingCredentialMessage,
-  PROVIDER_META,
-  type LLMProviderId
-} from "~types/config"
+  PROVIDER_META
+} from "~constants/providers"
+import { type LLMProviderId } from "~types/config"
 
 /**
  * Connection test for any provider. Kept under the old message name for

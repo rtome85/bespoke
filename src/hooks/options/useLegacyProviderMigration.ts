@@ -1,13 +1,9 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
+import { DEFAULT_MODEL_ROUTING, PROVIDER_META } from "~constants/providers"
 import { STORAGE_KEYS } from "~storage/keys"
-import {
-  DEFAULT_MODEL_ROUTING,
-  PROVIDER_META,
-  type ModelRouting,
-  type ProvidersConfig
-} from "~types/config"
+import type { ModelRouting, ProvidersConfig } from "~types/config"
 
 export function useLegacyProviderMigration(
   setProviders: Dispatch<SetStateAction<ProvidersConfig>>,

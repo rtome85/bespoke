@@ -1,9 +1,5 @@
-import {
-  SEARCH_ENGINE_IDS,
-  SEARCH_ENGINE_META,
-  type SearchConfig,
-  type SearchEngineId
-} from "~types/config"
+import { SEARCH_ENGINE_IDS, SEARCH_ENGINE_META } from "~constants/research"
+import type { SearchConfig, SearchEngineId } from "~types/config"
 import type { OperationStatus } from "~types/options"
 
 interface Props {

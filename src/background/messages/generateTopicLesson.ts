@@ -6,12 +6,10 @@ import {
   resolveJobRoute,
   type ResolvedRoute
 } from "~background/prepareGenerateRequest"
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import { DEFAULT_TOPIC_LESSON_PROMPT } from "~constants/prompts"
 import { lessonMathToText } from "~lib/interviews/lessonMath"
-import {
-  DEFAULT_LLM_TUNING,
-  type LLMTuningConfig
-} from "~types/config"
+import type { LLMTuningConfig } from "~types/config"
 import type { PrepLessonKind, UserProfile } from "~types/userProfile"
 
 interface Body {
