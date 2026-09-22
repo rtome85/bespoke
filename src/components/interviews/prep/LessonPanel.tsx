@@ -38,12 +38,26 @@ export function LessonPanel({ lesson, onClose, onRewrite, onCopy }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [copied, setCopied] = useState(false)
-  // Keyed on the message rather than on a boolean, so dismissing one failure
-  // doesn't swallow the next one when a rewrite fails the same way twice
-  // running — a new message is a new error.
+  /** The failure the user has waved away, held until the next attempt. */
   const [dismissed, setDismissed] = useState<string>()
 
   useModalFocusTrap(panelRef, onClose, closeRef)
+
+  /**
+   * A retry is a fresh attempt, so the dismissal that silenced the last
+   * failure ends with it.
+   *
+   * Without this the panel goes quiet on the failure most likely to repeat:
+   * an unreachable provider answers with the very same sentence every time,
+   * so a dismissal keyed on the message would swallow the retry's identical
+   * error and leave the spinner starting and stopping with nothing to say
+   * why. Both entry points — this footer button and the error row's own "Try
+   * again" — come through here.
+   */
+  const rewrite = () => {
+    setDismissed(undefined)
+    onRewrite()
+  }
 
   // `parseLesson` already does this to everything it stores, so for a lesson
   // written since that landed this is a no-op. It runs again here for the ones
@@ -115,7 +129,7 @@ export function LessonPanel({ lesson, onClose, onRewrite, onCopy }: Props) {
             <SectionError
               message={lesson.error!}
               retryLabel="Try again"
-              onRetry={onRewrite}
+              onRetry={rewrite}
               onDismiss={() => setDismissed(lesson.error)}
             />
           )}
@@ -167,7 +181,7 @@ export function LessonPanel({ lesson, onClose, onRewrite, onCopy }: Props) {
             )}
             <button
               type="button"
-              onClick={onRewrite}
+              onClick={rewrite}
               disabled={lesson.busy}
               className="aa-btn-secondary inline-flex items-center gap-aa-2">
               <RefreshCw
