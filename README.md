@@ -1,302 +1,188 @@
 # Bespoke
 
-> A browser extension that automatically tailors your CV and cover letter to any job posting using local LLMs.
+> A browser extension that turns a job posting and your profile into tailored
+> application materials, then keeps the application and interview work in one
+> place.
 
 [![Build](https://github.com/rtome85/bespoke/actions/workflows/submit.yml/badge.svg)](https://github.com/rtome85/bespoke/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Plasmo](https://img.shields.io/badge/built%20with-Plasmo-blueviolet)](https://docs.plasmo.com)
 
----
-
 ## What it does
 
-Bespoke is a Chrome/Edge extension that reads a job posting you're viewing, then uses an LLM to generate a tailored resume and cover letter based on your personal profile — in seconds.
+Bespoke reads a job posting, compares it with your saved profile, and produces
+a tailored CV and cover letter. It also provides an application tracker and
+round-by-round interview preparation and debrief workspaces.
 
-**Key features:**
-
-- **Smart job scraping** — Extracts job title, company, and description from LinkedIn and any other job board via LLM-powered parsing
-- **Editable job description** — Reviews and lets you correct the LLM-extracted JD before generating documents, so dropped or garbled content can be fixed in place
-- **LLM-powered tailoring** — Rewrites your CV to highlight the most relevant skills and experience for each role
-- **Cover letter generation** — Produces a customized cover letter matching the job requirements and your tone preferences
-- **PDF & Markdown export** — Download your resume and cover letter as PDF or raw Markdown
-- **Match analysis** — Scores your profile against the job on four dimensions (skills coverage, experience match, domain fit, bonus skills) with strengths, weaknesses, and actionable improvements
-- **Company research** — Fetches industry, size, description, notable products, and Glassdoor/Indeed/Teamlyzer ratings via Perplexity Sonar
-- **Interview preparation plan** — Generates a tailored technical interview prep guide (questions, coding challenges, deep-dive topics) via Perplexity
-- **Application tracker** — Tracks jobs you've applied to with status stages, tags, notes, and favourites
-- **Analytics dashboard** — Visualises your application pipeline with funnel charts and summary stats
-- **Google Drive sync** — Backs up your profile and settings across devices automatically
-- **Customizable prompts** — Edit the prompts sent to the LLM; includes Standard, Tech/Engineering, and Creative/Portfolio templates
-- **LLM fine-tuning** — Adjust temperature, top-P, max tokens, writing tone, resume focus, and match strictness
-
----
+- Extract job details from LinkedIn and other job boards, with an editable
+  review step before generation
+- Generate a tailored CV and cover letter, then preview, edit, and export them
+  as PDF or Markdown
+- Score the fit between a role and your profile, including strengths, gaps, and
+  suggested improvements
+- Configure separate model routes for scoring, drafting, and interview prep,
+  with an optional fallback route
+- Use Ollama, OpenAI, Anthropic, Google Gemini, OpenRouter, DeepSeek, Mistral,
+  or an OpenAI-compatible custom endpoint
+- Research a company through Perplexity, Tavily, Brave Search, Exa, the
+  company's own site, or clearly labelled model knowledge
+- Track applications from Saved through Applied, Interviewing, Offer, or Reject
+- Plan interview rounds with schedules, reminders, research, talking points,
+  STAR stories, technical drills, and on-demand lessons
+- Record debriefs, follow-ups, and outcomes after each interview
+- Back up synced settings and application data to Google Drive
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Plasmo](https://docs.plasmo.com/) (Manifest V3) |
-| UI | React 18, TypeScript 5, Tailwind CSS 3 |
-| Icons | Lucide React |
-| LLM | Ollama API (self-hosted or cloud) |
-| Company research | Perplexity Sonar API (optional) |
-| Cloud sync | Google Drive API (app data scope) |
-| Package manager | pnpm |
-| CI/CD | GitHub Actions + bpp (Browser Platform Publisher) |
-
----
+| Layer               | Technology                                                                  |
+| ------------------- | --------------------------------------------------------------------------- |
+| Extension framework | [Plasmo](https://docs.plasmo.com/) — Chrome MV3 and Firefox MV2             |
+| UI                  | React 18, TypeScript 5, Tailwind CSS 3                                      |
+| AI providers        | Ollama plus OpenAI-compatible and native provider adapters                  |
+| Company research    | Perplexity, Tavily, Brave Search, Exa, company sites, or the selected model |
+| Exports             | Markdown and PDF via pdfmake                                                |
+| Sync                | Google Drive app-data scope                                                 |
+| Package manager     | pnpm                                                                        |
 
 ## Prerequisites
 
-- **Node.js** 16+
-- **pnpm** — `npm install -g pnpm`
-- **Ollama** — a running Ollama instance (local or cloud endpoint)
-- **Chrome** or **Edge** browser
+- A current Node.js LTS release
+- pnpm (`npm install -g pnpm`)
+- Chrome, Edge, or Firefox
+- At least one configured LLM provider to generate or analyse documents
 
----
+All settings are configured in the extension and stored in browser local
+storage; the project does not use a `.env` file.
 
-## Installation
+## Install and run
 
 ```bash
-# Clone the repo
 git clone https://github.com/rtome85/bespoke.git
 cd bespoke
-
-# Install dependencies
 pnpm install
-```
 
-### Development
-
-```bash
+# Watch build for Chrome/Edge development
 pnpm dev
 ```
 
-Then load the unpacked extension in Chrome:
+Load `build/chrome-mv3-dev` as an unpacked extension:
 
-1. Go to `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked** and select `build/chrome-mv3-dev`
+1. Open `chrome://extensions` (or `edge://extensions`).
+2. Enable **Developer mode**.
+3. Select **Load unpacked** and choose `build/chrome-mv3-dev`.
 
-The extension hot-reloads as you edit source files.
+The development build updates as source files change. Open the extension's
+Options page to add your profile and provider credentials.
 
-### Production build
+### Production builds
 
 ```bash
+# Chrome / Edge (MV3)
 pnpm build
-```
-
-Outputs to `build/chrome-mv3-prod/`. To create a zip ready for store submission:
-
-```bash
 pnpm package
+
+# Firefox (MV2)
+pnpm build:firefox
+pnpm package:firefox
 ```
 
----
+Chrome's production build is written to `build/chrome-mv3-prod/`; `pnpm package`
+creates the store-submission archive.
 
-## Configuration
+## Configure providers and research
 
-All configuration is stored in Chrome's local storage — no `.env` file is needed. Set everything through the extension's **Options** page after loading it.
+In **Options → Settings → Providers**, enable one or more providers and test
+their connections. Bespoke supports:
 
-### Required
+| Provider                                                        | Credential                                                  |
+| --------------------------------------------------------------- | ----------------------------------------------------------- |
+| Ollama                                                          | Optional API key; local or cloud base URL                   |
+| OpenAI, Anthropic, Google Gemini, OpenRouter, DeepSeek, Mistral | API key                                                     |
+| Custom endpoint                                                 | Base URL for an OpenAI-compatible service; API key optional |
 
-| Setting | Description | Where to set |
-|---|---|---|
-| Ollama Base URL | URL of your Ollama API (e.g. `http://localhost:11434/api`) | Options → Settings |
-| Ollama API Key | API key if your endpoint requires authentication | Options → Settings |
+Choose the provider and model independently for match scoring, document drafting,
+and interview prep in **Model routing**. A fallback route can take over when a
+primary provider fails.
 
-### Optional
+Company research is optional. Connect Perplexity or one web-search provider
+(Tavily, Brave Search, or Exa), or allow the extension to use the company site
+when a saved posting URL makes it available. In automatic mode, Bespoke prefers
+the best configured source and identifies the source in the result.
 
-| Setting | Description | Default |
-|---|---|---|
-| LLM Model | Which Ollama model to use | `gpt-oss:20b-cloud` |
-| Temperature | Response randomness (0.1–1.5) | `0.7` |
-| Top-P | Nucleus sampling cutoff | `0.9` |
-| Max tokens | Maximum tokens per LLM call | `4096` |
-| Writing tone | Formal / Professional / Conversational | Professional |
-| Resume focus | Skills-led / Experience-led / Balanced | Balanced |
-| Match strictness | Strict / Balanced / Generous | Balanced |
-| Perplexity API Key | Enables company research and interview prep plans | Disabled |
-| Google Drive sync | Backup profile and settings to Drive | Disabled |
+## Typical workflow
 
-### Supported models
+1. Add your work history, skills, education, projects, languages, and contact
+   information on the Profile settings screen.
+2. Visit a job posting and use the extension icon or the **Generate CV for this
+   job** context-menu action.
+3. Check and amend the extracted company, role, and job description.
+4. Run the match analysis and generate your CV and cover letter.
+5. Preview, edit, download, or save the materials with the application record.
+6. In **Applications**, update the status and add interview rounds as you hear
+   back.
+7. Use each round's Prep workspace to prepare research, question drills, talking
+   points, STAR stories, and technical exercises; then log a debrief afterward.
 
-| Model ID | Name | Notes |
-|---|---|---|
-| `gpt-oss:20b-cloud` | GPT-OSS 20B | **Recommended** — fast, cost-effective |
-| `gpt-oss:120b-cloud` | GPT-OSS 120B | Higher quality, same family |
-| `gemma4:31b-cloud` | Gemma 4 31B | Google's latest; strong writing quality |
-| `minimax-m2.5:cloud` | MiniMax M2.5 | MoE, fast structured generation |
-| `devstral-small-2:24b-cloud` | DevStral Small 2 24B | MoE, reliable for CV tailoring |
-| `glm-4.7:cloud` | GLM-4.7 | MoE, fast structured generation |
-| *(any Ollama model)* | — | Enter the model ID manually |
+## Settings at a glance
 
----
-
-## Usage
-
-### Generate a tailored CV
-
-1. Navigate to a job posting on LinkedIn or any job board
-2. Right-click and select **Generate CV for this job** (or click the extension icon)
-3. Wait for the LLM to extract the job details — a loading spinner shows while extraction runs
-4. **Review the extracted job description** in the dialog and edit it if any information was dropped or garbled
-5. Confirm the company name, job title, and AI model, then click **Generate CV + Cover Letter**
-6. Download your tailored resume and cover letter as **PDF** or **Markdown**
-
-### Set up your profile
-
-Open the extension's **Options** page to enter:
-
-- Personal information (name, contact, summary)
-- Work experience
-- Skills
-- Education
-- Certifications
-- Projects
-- Languages
-
-Your profile is the source material the LLM uses to generate tailored documents.
-
-### Understand your match score
-
-After generation, the **Application Analysis** screen shows:
-
-- **Match score** — weighted composite across skills coverage (40%), experience match (30%), domain fit (20%), and bonus skills (10%)
-- **Strengths** — areas where your profile aligns well with the role
-- **Weaknesses** — gaps the LLM identified
-- **Improvements** — actionable steps to strengthen your application
-- **Company card** — industry, size, description, notable products, and employer ratings (requires Perplexity API key)
-
-### Track applications
-
-Save any application from the results screen. Each entry tracks:
-
-- Status: `Saved → Applied → HR Interview → 1st Technical → 2nd Technical → Offer / Reject`
-- Tags and favourites for filtering
-- Notes for interview contacts and reminders
-- Saved resume and cover letter (optional)
-- Match percentage
-
-The **Analytics** tab shows a pipeline funnel and summary statistics across all saved applications.
-
-### Interview preparation plan
-
-When an application reaches an interview stage, open it in the tracker and click **Generate Preparation Plan**. Perplexity generates a structured guide with:
-
-- Key technologies and expected proficiency levels
-- 8–12 technical questions with answer outlines
-- Coding challenge suggestions
-- Deep-dive topics specific to the company's stack
-
-Requires a Perplexity API key configured in Options → Settings.
-
-### Google Drive sync
-
-Enable Drive sync in Options → Settings to automatically back up your profile and settings across devices. Changes sync with a 2-second debounce after any update.
-
----
+- **Output style**: writing tone, CV emphasis, bullet density, reading level,
+  output language, temperature, top-p, and maximum tokens
+- **Prompts**: editable CV and cover-letter prompt templates
+- **Notifications**: interview reminder settings
+- **Backup & sync**: Google Drive authorisation, backup, and restore
+- **Storage**: local storage usage and data-transfer controls
 
 ## Project structure
 
 ```
 src/
-├── api/
-│   ├── ollamaClient.ts          # LLM client (generate, cover letter, match analysis, JD extraction)
-│   └── perplexityClient.ts      # Perplexity client (company research, interview prep plans)
-├── background/
-│   ├── index.ts                 # Service worker (auto-sync, context menu)
-│   ├── context-menu.ts          # Right-click menu handler + LLM job extraction
-│   └── messages/
-│       ├── generateDocuments.ts # Document generation message handler
-│       └── testOllamaConnection.ts
-├── components/                  # Reusable React UI components
-│   ├── PersonalInfo.tsx
-│   ├── ExperienceEditor.tsx
-│   ├── SkillEditor.tsx
-│   ├── Education.tsx
-│   ├── CertificateEditor.tsx
-│   ├── ProjectEditor.tsx
-│   ├── LanguageEditor.tsx
-│   ├── ModelSelector.tsx
-│   ├── PromptDialog.tsx
-│   ├── PreparationPlanModal.tsx
-│   ├── AnalyticsDashboard.tsx
-│   ├── ArrayInput.tsx
-│   ├── DatePicker.tsx
-│   └── Tabs.tsx
-├── contents/
-│   └── jobScrapper.ts           # Content script — extracts job data from pages
-├── storage/
-│   └── keys.ts                  # Chrome storage key constants
-├── tabs/
-│   ├── dialog.tsx               # CV generation dialog (form, loading, results, tracker)
-│   └── analytics.tsx            # Analytics dashboard tab
-├── types/
-│   ├── userProfile.ts           # UserProfile, SavedApplication types
-│   └── config.ts                # OllamaConfig, PerplexityConfig, LLMTuningConfig, CustomPrompts
-├── utils/
-│   ├── googleDriveSync.ts       # Drive push/pull/authorize/revoke
-│   └── documentFormatter.ts     # Output formatting utilities
-├── lib/
-│   └── pdf/                     # PDF export (markdown → PDF via pdfmake)
-├── popup.tsx                    # Extension popup
-└── options.tsx                  # Settings/options page
+├── api/llm/                 # Provider-agnostic LLM clients and adapters
+├── background/              # Service worker, context menu, message handlers
+├── components/
+│   ├── dialog/              # Job-match and document-generation flow
+│   ├── interviews/          # Schedule, prep, and debrief workspaces
+│   ├── options/             # Application and settings screens
+│   └── profile/             # Profile editors
+├── contents/jobScrapper.ts  # Job-posting content script
+├── hooks/                   # UI state and storage integration
+├── lib/                     # Routing, interview domain, PDF, selectors
+├── storage/                 # Storage keys and serialized application updates
+├── tabs/                    # Dialog, analytics, and document-preview entrypoints
+├── types/                   # Domain and configuration types
+├── options.tsx              # Full options-page shell
+└── popup.tsx                # Toolbar popup
 ```
 
----
+## Development checks
 
-## Chrome storage keys
+There is no automated test suite. Before submitting a change, run:
 
-| Key | Contents |
-|---|---|
-| `userProfile` | Full CV data (personal info, experience, skills, etc.) |
-| `ollamaConfig` | API URL, key, enabled flag |
-| `perplexityConfig` | Perplexity API key, enabled flag, custom prompts |
-| `customPrompts` | System and user prompt templates |
-| `llmTuning` | Temperature, top-P, max tokens, tone, focus, strictness |
-| `lastSelectedModel` | User's preferred LLM model |
-| `savedApplications` | Application tracker entries |
-| `syncConfig` | Google Drive OAuth token |
-| `promptsVersion` | Prompt template version for migration |
-
----
-
-## Deployment
-
-Releases are submitted automatically to the Chrome Web Store and Edge Add-ons via GitHub Actions.
-
-```yaml
-# .github/workflows/submit.yml
-# Trigger: manual workflow dispatch
-# Steps: install → build → package → publish via bpp
+```bash
+npx tsc --noEmit
+pnpm build
+pnpm build:firefox
 ```
 
-**To publish a new release:**
+## Publishing
 
-1. Merge changes to `main`
-2. Go to **Actions** → **Submit** → **Run workflow**
-
-Requires a `SUBMIT_KEYS` repository secret containing web store credentials (see [bpp docs](https://docs.plasmo.com/framework/workflows/submit)).
-
----
+The `Submit to Web Store` GitHub Actions workflow is manually triggered from
+`main`. It builds and packages the Chrome MV3 extension before publishing with
+[Browser Platform Publisher](https://docs.plasmo.com/framework/workflows/submit).
+The repository needs a `SUBMIT_KEYS` secret containing the store credentials.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Commit your changes following [Conventional Commits](https://www.conventionalcommits.org/)
-4. Open a pull request against `main`
+Use `dev` as the integration target: create a scoped branch, make the change,
+and open a pull request to `dev`. Keep commits in the Conventional Commits form,
+for example `feat(interviews): add prep reminders`.
 
-### Code style
-
-The project uses Prettier with import sorting. Format before committing:
+Prettier is the formatting gate. Avoid formatting unrelated pre-existing code;
+check changed files with:
 
 ```bash
-pnpm dlx prettier --write .
+npx prettier --check <file>
 ```
-
----
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
