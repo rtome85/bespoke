@@ -127,7 +127,12 @@ async function brave(
     title: clip(r?.title, 200),
     url: clip(r?.url, 500),
     snippet: clip(
-      [r?.description, ...(r?.extra_snippets ?? [])].filter(Boolean).join(" ")
+      [
+        r?.description,
+        ...(Array.isArray(r?.extra_snippets) ? r.extra_snippets : [])
+      ]
+        .filter(Boolean)
+        .join(" ")
     )
   }))
 }
