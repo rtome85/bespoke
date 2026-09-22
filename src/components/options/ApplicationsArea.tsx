@@ -6,7 +6,13 @@ import { SchedulePage } from "~components/interviews/SchedulePage"
 import { ApplicationsList } from "~components/options/ApplicationsList"
 import { ApplicationsOverview } from "~components/options/ApplicationsOverview"
 import { ApplicationsRail } from "~components/options/ApplicationsRail"
-import { RAIL_HASH } from "~constants/options"
+import {
+  APPLICATION_RAIL_ROUTES,
+  applicationFilterRoute,
+  interviewDebriefRoute,
+  interviewPrepRoute,
+  ROUTES
+} from "~constants/routes"
 import type { Route } from "~lib/router"
 import type { AddRoundEditRef, AppSection, ListFilter } from "~types/options"
 import type { SavedApplication } from "~types/userProfile"
@@ -50,7 +56,9 @@ export function ApplicationsArea({
       <ApplicationsRail
         active={railActive}
         apps={apps}
-        onSelect={(value) => onNavigate(RAIL_HASH[value] ?? "#/applications")}
+        onSelect={(value) =>
+          onNavigate(APPLICATION_RAIL_ROUTES[value] ?? ROUTES.applications)
+        }
         section={section}
         onSection={onSection}
         email={email}
@@ -78,8 +86,8 @@ export function ApplicationsArea({
                 onFilterChange={(filter) =>
                   onNavigate(
                     filter === "All"
-                      ? "#/applications"
-                      : `#/applications/all/${filter}`
+                      ? ROUTES.applications
+                      : applicationFilterRoute(filter)
                   )
                 }
               />
@@ -93,13 +101,13 @@ export function ApplicationsArea({
               key={route.param}
               apps={apps}
               roundId={route.param}
-              onBack={() => onNavigate("#/interviews/prep")}
-              onViewInSchedule={() => onNavigate("#/interviews/schedule")}
+              onBack={() => onNavigate(ROUTES.interviewPrep)}
+              onViewInSchedule={() => onNavigate(ROUTES.interviewSchedule)}
             />
           ) : (
             <PrepListPage
               apps={apps}
-              onOpen={(id) => onNavigate(`#/interviews/prep/${id}`)}
+              onOpen={(id) => onNavigate(interviewPrepRoute(id))}
             />
           )
         ) : route.param ? (
@@ -107,13 +115,13 @@ export function ApplicationsArea({
             key={route.param}
             apps={apps}
             roundId={route.param}
-            onBack={() => onNavigate("#/interviews/debriefs")}
+            onBack={() => onNavigate(ROUTES.interviewDebriefs)}
             onSaved={onDebriefSaved}
           />
         ) : (
           <DebriefsListPage
             apps={apps}
-            onOpen={(id) => onNavigate(`#/interviews/debriefs/${id}`)}
+            onOpen={(id) => onNavigate(interviewDebriefRoute(id))}
           />
         )}
       </div>

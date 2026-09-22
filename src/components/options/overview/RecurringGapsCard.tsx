@@ -1,3 +1,4 @@
+import { settingsRoute } from "~constants/routes"
 import { recurringGaps } from "~lib/overview/gaps"
 import type { SavedApplication } from "~types/userProfile"
 
@@ -61,7 +62,7 @@ export function RecurringGapsCard({
       <div className="mt-4 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => onNavigate("#/settings/skills")}
+          onClick={() => onNavigate(settingsRoute("skills"))}
           className="aa-btn-outline">
           Update skills
         </button>

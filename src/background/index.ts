@@ -2,6 +2,11 @@ import {
   createContextMenu,
   handleContextMenuClick
 } from "~background/context-menu"
+import {
+  interviewDebriefRoute,
+  optionsPagePath,
+  ROUTES
+} from "~constants/routes"
 import { migrateInterviewsSchema } from "~lib/interviews/migrate"
 import {
   DEBRIEF_NUDGE_KEY,
@@ -37,7 +42,7 @@ chrome.runtime.onStartup.addListener(async () => {
 
 // ── Interview reminders ──────────────────────────────────────────────────────
 
-const SCHEDULE_URL = "options.html#/interviews/schedule"
+const SCHEDULE_URL = optionsPagePath(ROUTES.interviewSchedule)
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   const parsed = parseReminderAlarm(alarm.name)
@@ -95,7 +100,7 @@ chrome.notifications.onClicked.addListener((id) => {
   if (!parsed) return
   const url =
     parsed.key === DEBRIEF_NUDGE_KEY
-      ? `options.html#/interviews/debriefs/${encodeURIComponent(parsed.roundId)}`
+      ? optionsPagePath(interviewDebriefRoute(parsed.roundId))
       : SCHEDULE_URL
   chrome.tabs.create({ url: chrome.runtime.getURL(url) })
   chrome.notifications.clear(id)

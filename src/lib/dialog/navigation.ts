@@ -1,5 +1,7 @@
 import { sendToBackground } from "@plasmohq/messaging"
 
+import { optionsPagePath, ROUTES } from "~constants/routes"
+
 // The report flow runs inside the side panel on Chrome, which has no window
 // to close. Firefox MV2 has no chrome.sidePanel, so close its popup window.
 export async function closeSidePanel() {
@@ -17,7 +19,7 @@ export async function closeSidePanel() {
 
 export function openApplicationsList() {
   chrome.tabs.create({
-    url: chrome.runtime.getURL("options.html#/applications")
+    url: chrome.runtime.getURL(optionsPagePath(ROUTES.applications))
   })
 }
 

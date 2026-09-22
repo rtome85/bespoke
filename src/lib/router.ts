@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 
+import { ROUTES } from "~constants/routes"
 import { STORAGE_KEYS } from "~storage/keys"
 import { LIST_POPULATIONS, type ListFilter } from "~types/options"
 import { APPLICATION_STATUSES } from "~types/userProfile"
@@ -30,7 +31,6 @@ export interface Route {
   hash: string
 }
 
-const DEFAULT_HASH = "#/applications"
 const INTERVIEW_VIEWS = ["schedule", "prep", "debriefs"]
 
 function buildHash(area: string, view: string, param: string): string {
@@ -95,11 +95,11 @@ function isListFilter(value: string): value is ListFilter {
 function legacySectionHash(): string | null {
   const q = new URLSearchParams(window.location.search)
   const section = q.get("section")
-  if (section === "settings") return "#/settings"
+  if (section === "settings") return ROUTES.settings
   if (section === "applications") {
     return q.get("view") === "overview"
-      ? "#/applications/overview"
-      : "#/applications"
+      ? ROUTES.applicationsOverview
+      : ROUTES.applications
   }
   return null
 }
@@ -165,7 +165,9 @@ export function useHashRoute(): {
     chrome.storage.local.get(STORAGE_KEYS.LAST_ROUTE, (res) => {
       const last = res[STORAGE_KEYS.LAST_ROUTE]
       apply(
-        typeof last === "string" && last.startsWith("#/") ? last : DEFAULT_HASH,
+        typeof last === "string" && last.startsWith("#/")
+          ? last
+          : ROUTES.applications,
         true
       )
     })
