@@ -155,10 +155,13 @@ function canonicalLanguageName(name: string): string {
   return normalized
 }
 
-function profileListsLanguage(profile: UserProfile, name: string): boolean {
+function profileListsLanguage(
+  profile: UserProfile | undefined,
+  name: string
+): boolean {
   const target = canonicalLanguageName(name)
   if (!target) return false
-  return (profile.languages ?? []).some((entry) => {
+  return (profile?.languages ?? []).some((entry) => {
     const listed = canonicalLanguageName(entry.name)
     return (
       listed.length > 0 && (listed.includes(target) || target.includes(listed))
@@ -173,7 +176,7 @@ function profileListsLanguage(profile: UserProfile, name: string): boolean {
  */
 function findBlockingLanguages(
   raw: unknown,
-  profile: UserProfile
+  profile: UserProfile | undefined
 ): LanguageRequirement[] {
   if (!Array.isArray(raw)) return []
   return raw

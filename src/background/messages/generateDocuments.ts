@@ -15,7 +15,7 @@ import {
 // Step 2 of the two-step flow: generates resume + cover letter after the
 // user has reviewed the match analysis (see analyzeMatch).
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { companyName, jobTitle } = req.body
+  const { companyName, jobTitle } = req.body ?? {}
 
   try {
     const prepared = await prepareGenerateRequest(req.body, "drafting")

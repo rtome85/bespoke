@@ -65,7 +65,7 @@ export class AnthropicAdapter implements LLMClient {
       const data = await res.json()
       const ids = (Array.isArray(data?.data) ? data.data : [])
         .map((m: any) => m?.id)
-        .filter(Boolean)
+        .filter((id: unknown): id is string => typeof id === "string")
       return ids.length ? ids : PROVIDER_META.anthropic.fallbackModels
     } catch {
       return PROVIDER_META.anthropic.fallbackModels

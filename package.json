@@ -12,7 +12,9 @@
     "build": "plasmo build",
     "build:firefox": "plasmo build --target=firefox-mv2",
     "package": "plasmo package",
-    "package:firefox": "plasmo package --target=firefox-mv2"
+    "package:firefox": "plasmo package --target=firefox-mv2",
+    "test": "vitest run --config vitest.config.mts",
+    "test:coverage": "vitest run --coverage --config vitest.config.mts"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.2",
@@ -31,9 +33,11 @@
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "@vitest/coverage-v8": "5.0.1",
     "postcss": "8.4.33",
     "prettier": "3.2.4",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "vitest": "^5.0.1"
   },
   "manifest": {
     "permissions": [

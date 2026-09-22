@@ -19,8 +19,7 @@ function normalizeText(text: string): string {
     .replace(/™/g, "(TM)") // Trademark
     .replace(/–/g, "-") // En dash
     .replace(/—/g, "-") // Em dash
-    .replace(/"/g, '"') // Smart quote left
-    .replace(/"/g, '"') // Smart quote right
+    .replace(/[\u201C\u201D]/g, '"') // Smart double quotes
     .replace(/'/g, "'") // Smart apostrophe
     .replace(/…/g, "...") // Ellipsis
     // Unicode spaces not supported by embedded Roboto font

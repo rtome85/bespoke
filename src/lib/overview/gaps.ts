@@ -133,7 +133,7 @@ const MIN_TERM_LENGTH = 3
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9+#./ -]+/g, " ")
+    .replace(/[^\p{L}\p{N}+#./ -]+/gu, " ")
     .split(/[\s/]+/)
     .map((t) => t.replace(/^[-.]+|[-.]+$/g, ""))
     .filter((t) => t.length >= MIN_TERM_LENGTH && !STOPWORDS.has(t))
@@ -150,7 +150,7 @@ function termsOf(text: string): string[] {
 }
 
 const titleCase = (term: string) =>
-  term.replace(/(^|[\s-])([a-z])/g, (_, lead, ch) => lead + ch.toUpperCase())
+  term.replace(/(^|[\s-])(\p{L})/gu, (_, lead, ch) => lead + ch.toUpperCase())
 
 /**
  * Rank the terms that show up across the most applications.

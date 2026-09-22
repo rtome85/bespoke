@@ -10,7 +10,7 @@ import { type LLMProviderId } from "~types/config"
 
 /** Fetches the selectable model ids for a provider account. */
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { provider, apiKey, baseUrl } = req.body as {
+  const { provider, apiKey, baseUrl } = (req.body ?? {}) as {
     provider: LLMProviderId
     apiKey?: string
     baseUrl?: string

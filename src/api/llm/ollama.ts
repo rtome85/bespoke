@@ -40,18 +40,28 @@ export class OllamaAdapter implements LLMClient {
       signal: opts.signal
     })
     if (!res.ok) {
-      throw new Error(`Ollama API error: ${res.status} ${res.statusText}`)
+      const body = await res.text().catch(() => "")
+      throw new Error(
+        `Ollama API error: ${res.status} ${res.statusText}${body ? ` — ${body.slice(0, 200)}` : ""}`
+      )
     }
     const data = await res.json()
     return data?.message?.content ?? ""
   }
 
   async listModels(): Promise<string[]> {
-    const res = await fetch(`${this.base}/tags`, { headers: this.headers() })
-    if (!res.ok) return []
-    const data = await res.json()
-    const models = Array.isArray(data?.models) ? data.models : []
-    return models.map((m: any) => m?.name).filter(Boolean)
+    try {
+      const res = await fetch(`${this.base}/tags`, { headers: this.headers() })
+      if (!res.ok) return PROVIDER_META.ollama.fallbackModels
+      const data = await res.json()
+      const models = Array.isArray(data?.models) ? data.models : []
+      const ids = models
+        .map((m: any) => m?.name)
+        .filter((id: unknown): id is string => typeof id === "string")
+      return ids.length ? ids : PROVIDER_META.ollama.fallbackModels
+    } catch {
+      return PROVIDER_META.ollama.fallbackModels
+    }
   }
 
   async testConnection(): Promise<boolean> {
