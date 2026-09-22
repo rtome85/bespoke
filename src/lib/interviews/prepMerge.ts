@@ -22,9 +22,18 @@ import type {
 
 const key = (s: string) => s.trim().toLowerCase()
 
-/** Did the user act on this entry? */
-const touched = (item: { checked?: boolean; pinned?: boolean }) =>
-  !!item.checked || !!item.pinned
+/**
+ * Did the user act on this entry?
+ *
+ * A generated lesson counts. It is not a tick, but it is the one thing on the
+ * sheet the user spent a model call of their own on — losing it to a
+ * regeneration would mean paying for it twice.
+ */
+const touched = (item: {
+  checked?: boolean
+  pinned?: boolean
+  lesson?: unknown
+}) => !!item.checked || !!item.pinned || !!item.lesson
 
 /**
  * Generic merge: keep everything the user added or touched, then append the
@@ -111,7 +120,10 @@ export function mergeTechExercises(
 
 /** Does this section hold anything the user would lose to a regeneration? */
 export function hasKeptWork(
-  ...sections: ({ checked?: boolean; pinned?: boolean }[] | undefined)[]
+  ...sections: (
+    | { checked?: boolean; pinned?: boolean; lesson?: unknown }[]
+    | undefined
+  )[]
 ): boolean {
   return sections.some((list) => (list ?? []).some(touched))
 }

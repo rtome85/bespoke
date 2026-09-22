@@ -26,6 +26,7 @@ import {
 import { setRoundPrep } from "~storage/savedApplications"
 import { RESEARCH_SOURCE_LABELS, type ResearchSource } from "~types/config"
 import type {
+  PrepLesson,
   RoundPrep,
   SavedApplication,
   UserProfile
@@ -94,6 +95,31 @@ export interface Countdown {
   past: boolean
 }
 
+/** Which of the two technical sections a lesson was opened from. */
+export type LessonKind = "exercise" | "question"
+
+/**
+ * The "Learn more" panel, as the workspace needs to render it.
+ *
+ * Identified by section and index, but carrying the item's own text as well:
+ * the write-back resolves the item by that text rather than by the index it
+ * was opened at, so a regeneration that reorders the list while the lesson is
+ * being written cannot attach it to a different exercise.
+ */
+export interface LessonView {
+  kind: LessonKind
+  index: number
+  /** The exercise's title, or the drill question itself. */
+  title: string
+  topic?: string
+  /** The item as it reads on the sheet — the task, or the stored answer. */
+  detail?: string
+  markdown?: string
+  generatedAt?: string
+  busy: boolean
+  error?: string
+}
+
 const URGENT_MINUTES = 120
 
 const countChecked = (items?: { checked?: boolean }[]): SectionCount => ({
@@ -150,6 +176,8 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   const [grantOrigin, setGrantOrigin] = useState("")
   /** Set while the destructive-regeneration dialog is open. */
   const [pendingRegen, setPendingRegen] = useState<{ research?: string }>()
+  /** The open "Learn more" lesson, or nothing when the panel is closed. */
+  const [lesson, setLesson] = useState<LessonView>()
 
   // Count up only while something is running. The old page showed a 14px
   // spinner for up to 105 seconds and said nothing else.
@@ -224,6 +252,13 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * background handler runs and which sections the workspace writes back.
    */
   const technical = round ? isTechnicalRound(round) : false
+
+  // A lesson takes up to 90 seconds to come back, and the sheet re-renders
+  // several times in that window — from a tick, from a notes save, from a
+  // regeneration. The write-back has to see the prep as it stands when the
+  // response lands, not the snapshot that was current when the panel opened.
+  const prepRef = useRef(prep)
+  prepRef.current = prep
 
   const save = (patch: Partial<RoundPrep>) =>
     app && round ? setRoundPrep(app.id, round.id, patch) : Promise.resolve()
@@ -448,6 +483,148 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     await genResearch(true)
   }
 
+  /**
+   * The item a lesson is about, read from the live prep rather than from a
+   * render-time snapshot.
+   */
+  const lessonItem = (kind: LessonKind, index: number) => {
+    const cur = prepRef.current
+    if (kind === "exercise") {
+      const it = (cur.techExercises ?? [])[index]
+      return it
+        ? {
+            title: it.title,
+            topic: it.topic,
+            detail: it.prompt,
+            approach: it.approach,
+            saved: it.lesson
+          }
+        : undefined
+    }
+    const it = (cur.techQuestions ?? [])[index]
+    return it
+      ? {
+          title: it.question,
+          topic: it.topic,
+          detail: it.answer,
+          approach: undefined,
+          saved: it.lesson
+        }
+      : undefined
+  }
+
+  /**
+   * Attach a finished lesson to its item, matched on the item's own text.
+   *
+   * The index the panel was opened at is only a hint here: a regeneration can
+   * land while the lesson is being written, and writing by index onto a
+   * reordered list would file a lesson on React hooks under a Postgres
+   * exercise. When the text no longer appears the write is dropped — the
+   * panel still shows the lesson, it just isn't persisted onto an item that
+   * no longer exists.
+   */
+  const saveLesson = async (
+    kind: LessonKind,
+    title: string,
+    value: PrepLesson
+  ) => {
+    const cur = prepRef.current
+    if (kind === "exercise") {
+      const list = cur.techExercises ?? []
+      const i = list.findIndex((e) => e.title === title)
+      if (i < 0) return
+      await save({
+        techExercises: list.map((e, idx) =>
+          idx === i ? { ...e, lesson: value } : e
+        )
+      })
+      return
+    }
+    const list = cur.techQuestions ?? []
+    const i = list.findIndex((q) => q.question === title)
+    if (i < 0) return
+    await save({
+      techQuestions: list.map((q, idx) =>
+        idx === i ? { ...q, lesson: value } : q
+      )
+    })
+  }
+
+  /**
+   * Open the lesson panel for one exercise or drill question, generating the
+   * lesson unless one is already stored against the item.
+   *
+   * `force` is the panel's own Rewrite: the stored lesson is kept on screen
+   * while the new one is written, so a failed rewrite leaves the user with
+   * what they had rather than with an empty panel.
+   */
+  const runLesson = async (kind: LessonKind, index: number, force: boolean) => {
+    const it = lessonItem(kind, index)
+    if (!it || !app || !round) return
+
+    const base: LessonView = {
+      kind,
+      index,
+      title: it.title,
+      topic: it.topic,
+      detail: it.detail,
+      markdown: it.saved?.markdown,
+      generatedAt: it.saved?.generatedAt,
+      busy: false
+    }
+
+    if (!force && it.saved?.markdown) {
+      setLesson(base)
+      return
+    }
+    setLesson({ ...base, busy: true, error: undefined })
+
+    const r = await sendToBackground({
+      name: "generateTopicLesson",
+      body: {
+        kind,
+        title: it.title,
+        topic: it.topic,
+        detail: it.detail,
+        approach: it.approach,
+        roundType: roundLabel(round),
+        companyName: app.company,
+        jobTitle: app.jobTitle,
+        jobDescription: app.jobDescription,
+        userProfile: profile
+      }
+    })
+
+    // The panel may have been closed, or moved to another item, during the
+    // call. Land the result only if it is still the one on screen — but
+    // persist it either way, since the user paid for it.
+    const stillOpen = (l: LessonView | undefined) =>
+      !!l && l.kind === kind && l.index === index && l.title === it.title
+
+    if (r?.success) {
+      const value: PrepLesson = {
+        markdown: r.markdown,
+        generatedAt: r.generatedAt
+      }
+      await saveLesson(kind, it.title, value)
+      setLesson((l) =>
+        stillOpen(l)
+          ? { ...(l as LessonView), ...value, busy: false, error: undefined }
+          : l
+      )
+      return
+    }
+    setLesson((l) =>
+      stillOpen(l)
+        ? {
+            ...(l as LessonView),
+            busy: false,
+            error: r?.message ?? "Couldn't write the lesson."
+          }
+        : l
+    )
+  }
+
   const readiness: Readiness = useMemo(() => {
     const topics = countChecked(prep.likelyTopics)
     const points = countChecked(prep.talkingPoints)
@@ -539,6 +716,12 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     regenPending: !!pendingRegen,
     confirmRegenerate,
     cancelRegenerate: () => setPendingRegen(undefined),
+    lesson,
+    openLesson: (kind: LessonKind, index: number) =>
+      runLesson(kind, index, false),
+    rewriteLesson: () =>
+      lesson ? runLesson(lesson.kind, lesson.index, true) : Promise.resolve(),
+    closeLesson: () => setLesson(undefined),
     save
   }
 }

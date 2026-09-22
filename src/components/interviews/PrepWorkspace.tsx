@@ -12,6 +12,7 @@ import { BackLink } from "~components/common/BackLink"
 import { MarkdownPreview } from "~components/documentPreview/MarkdownPreview"
 import { Checklist } from "~components/interviews/Checklist"
 import { GapDefenseList } from "~components/interviews/GapDefenseList"
+import { LessonPanel } from "~components/interviews/prep/LessonPanel"
 import {
   CountdownChip,
   GenerateProgress,
@@ -521,6 +522,7 @@ export function PrepWorkspace({
                     <TechExerciseList
                       items={prep.techExercises ?? []}
                       onChange={(next) => void w.save({ techExercises: next })}
+                      onLearnMore={(i) => void w.openLesson("exercise", i)}
                     />
                   </Subsection>
                 )}
@@ -533,6 +535,7 @@ export function PrepWorkspace({
                     <TechQuestionList
                       items={prep.techQuestions ?? []}
                       onChange={(next) => void w.save({ techQuestions: next })}
+                      onLearnMore={(i) => void w.openLesson("question", i)}
                     />
                   </Subsection>
                 )}
@@ -617,6 +620,15 @@ export function PrepWorkspace({
             {notesPanel}
           </div>
         </div>
+      )}
+
+      {w.lesson && (
+        <LessonPanel
+          lesson={w.lesson}
+          onClose={w.closeLesson}
+          onRewrite={() => void w.rewriteLesson()}
+          onCopy={(text) => w.copyText(text, "the lesson")}
+        />
       )}
 
       <RegenerateDialog
