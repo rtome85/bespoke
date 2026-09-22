@@ -1,14 +1,14 @@
 import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
-import { STORAGE_KEYS } from "~storage/keys"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_TECHNICAL_PREP_PROMPT,
   LEGACY_INTERVIEW_PREP_PROMPTS,
-  LEGACY_TECHNICAL_PREP_PROMPTS,
-  type PerplexityConfig
-} from "~types/config"
+  LEGACY_TECHNICAL_PREP_PROMPTS
+} from "~constants/prompts"
+import { STORAGE_KEYS } from "~storage/keys"
+import type { PerplexityConfig } from "~types/config"
 
 /** The two prep prompts, each with the defaults it has shipped as. */
 const PREP_PROMPTS = [

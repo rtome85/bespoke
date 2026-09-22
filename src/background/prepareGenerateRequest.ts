@@ -1,3 +1,4 @@
+import { DEFAULT_PROMPTS } from "~constants/prompts"
 import { STORAGE_KEYS } from "~storage/keys"
 import type {
   GenerateRequest,
@@ -12,7 +13,6 @@ import type {
 import {
   DEFAULT_LLM_TUNING,
   DEFAULT_MODEL_ROUTING,
-  DEFAULT_PROMPTS,
   hasProviderCredential,
   normalizeModelRouting,
   PROVIDER_META
