@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Chrome extension
+        run: pnpm build
+
+      - name: Build Firefox extension
+        run: pnpm build:firefox
+
       - name: Type check
         run: pnpm exec tsc --noEmit
 
@@ -48,9 +54,3 @@ jobs:
           path: coverage
           if-no-files-found: ignore
           retention-days: 14
-
-      - name: Build Chrome extension
-        run: pnpm build
-
-      - name: Build Firefox extension
-        run: pnpm build:firefox
