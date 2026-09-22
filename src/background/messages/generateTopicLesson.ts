@@ -12,13 +12,10 @@ import {
   DEFAULT_TOPIC_LESSON_PROMPT,
   type LLMTuningConfig
 } from "~types/config"
-import type { UserProfile } from "~types/userProfile"
-
-/** Which section of the technical sheet the lesson was opened from. */
-export type LessonKind = "exercise" | "question"
+import type { PrepLessonKind, UserProfile } from "~types/userProfile"
 
 interface Body {
-  kind: LessonKind
+  kind: PrepLessonKind
   /** The exercise's title, or the drill question itself. */
   title: string
   /** The technology the item drills, where the sheet recorded one. */

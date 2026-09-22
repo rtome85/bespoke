@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
@@ -8,11 +9,9 @@ import {
   type ProvidersConfig
 } from "~types/config"
 
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
-
 export function useLegacyProviderMigration(
-  setProviders: StorageSetter<ProvidersConfig>,
-  setModelRouting: StorageSetter<ModelRouting>
+  setProviders: Dispatch<SetStateAction<ProvidersConfig>>,
+  setModelRouting: Dispatch<SetStateAction<ModelRouting>>
 ) {
   useEffect(() => {
     chrome.storage.local.get(

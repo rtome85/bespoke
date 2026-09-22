@@ -2,8 +2,7 @@ import { useEffect, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
-import type { CompanyInfo } from "~api/perplexityClient"
-import type { CompanyResearchEntry } from "~lib/interviews/companyResearch"
+import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
 
 /**
  * Company research for the match report.

@@ -138,6 +138,9 @@ export interface PrepLesson {
   generatedAt: string // ISO
 }
 
+/** Which technical prep item an on-demand lesson expands. */
+export type PrepLessonKind = "exercise" | "question"
+
 /**
  * A technical question an interviewer is likely to ask, with an answer worth
  * rehearsing. `topic` is the technology or framework from the job description
@@ -209,11 +212,18 @@ export interface RoundPrep {
 
 export type DebriefOutcome = "advance" | "offer" | "reject" | "waiting"
 
+export type DebriefRating = 1 | 2 | 3 | 4 | 5
+
+export interface DebriefFollowUp {
+  text: string
+  done?: boolean
+}
+
 export interface Debrief {
-  rating?: 1 | 2 | 3 | 4 | 5
+  rating?: DebriefRating
   assessment?: string // the one-line "how it went" note
   questionsAsked?: string
-  followUps?: { text: string; done?: boolean }[]
+  followUps?: DebriefFollowUp[]
   outcome?: DebriefOutcome
   loggedAt?: string // ISO — presence === "logged"
   updatedAt?: string // ISO — last edit

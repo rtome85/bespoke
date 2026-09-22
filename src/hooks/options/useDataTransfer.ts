@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react"
+
 import { PROVIDER_IDS } from "~constants/options"
 import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import { STORAGE_KEYS } from "~storage/keys"
@@ -16,8 +18,6 @@ import type {
 } from "~types/config"
 import type { SavedApplication, UserProfile } from "~types/userProfile"
 
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
-
 interface Args {
   ollamaConfig: OllamaConfig
   perplexityConfig: PerplexityConfig
@@ -28,15 +28,15 @@ interface Args {
   userProfile: UserProfile
   llmTuning: LLMTuningConfig
   matchModel: string
-  setOllamaConfig: StorageSetter<OllamaConfig>
-  setPerplexityConfig: StorageSetter<PerplexityConfig>
-  setSearchConfig: StorageSetter<SearchConfig>
-  setProviders: StorageSetter<ProvidersConfig>
-  setModelRouting: StorageSetter<ModelRouting>
-  setCustomPrompts: StorageSetter<CustomPrompts>
-  setUserProfile: StorageSetter<UserProfile>
-  setLlmTuning: StorageSetter<LLMTuningConfig>
-  setMatchModel: StorageSetter<string>
+  setOllamaConfig: Dispatch<SetStateAction<OllamaConfig>>
+  setPerplexityConfig: Dispatch<SetStateAction<PerplexityConfig>>
+  setSearchConfig: Dispatch<SetStateAction<SearchConfig>>
+  setProviders: Dispatch<SetStateAction<ProvidersConfig>>
+  setModelRouting: Dispatch<SetStateAction<ModelRouting>>
+  setCustomPrompts: Dispatch<SetStateAction<CustomPrompts>>
+  setUserProfile: Dispatch<SetStateAction<UserProfile>>
+  setLlmTuning: Dispatch<SetStateAction<LLMTuningConfig>>
+  setMatchModel: Dispatch<SetStateAction<string>>
   showStatus: (message: string) => void
 }
 

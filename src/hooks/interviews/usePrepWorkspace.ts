@@ -28,6 +28,7 @@ import { setRoundPrep, type RoundPrepPatch } from "~storage/savedApplications"
 import { RESEARCH_SOURCE_LABELS, type ResearchSource } from "~types/config"
 import type {
   PrepLesson,
+  PrepLessonKind,
   RoundPrep,
   SavedApplication,
   UserProfile
@@ -96,9 +97,6 @@ export interface Countdown {
   past: boolean
 }
 
-/** Which of the two technical sections a lesson was opened from. */
-export type LessonKind = "exercise" | "question"
-
 /**
  * The "Learn more" panel, as the workspace needs to render it.
  *
@@ -108,7 +106,7 @@ export type LessonKind = "exercise" | "question"
  * being written cannot attach it to a different exercise.
  */
 export interface LessonView {
-  kind: LessonKind
+  kind: PrepLessonKind
   index: number
   /** The exercise's title, or the drill question itself. */
   title: string
@@ -504,7 +502,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * The item a lesson is about, read from the live prep rather than from a
    * render-time snapshot.
    */
-  const lessonItem = (kind: LessonKind, index: number) => {
+  const lessonItem = (kind: PrepLessonKind, index: number) => {
     const cur = prepRef.current
     if (kind === "exercise") {
       const it = (cur.techExercises ?? [])[index]
@@ -554,7 +552,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * array was already assembled by the time it reached the queue.
    */
   const saveLesson = (
-    kind: LessonKind,
+    kind: PrepLessonKind,
     index: number,
     title: string,
     value: PrepLesson
@@ -590,7 +588,11 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * while the new one is written, so a failed rewrite leaves the user with
    * what they had rather than with an empty panel.
    */
-  const runLesson = async (kind: LessonKind, index: number, force: boolean) => {
+  const runLesson = async (
+    kind: PrepLessonKind,
+    index: number,
+    force: boolean
+  ) => {
     const it = lessonItem(kind, index)
     if (!it || !app || !round) return
 
@@ -749,7 +751,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
     confirmRegenerate,
     cancelRegenerate: () => setPendingRegen(undefined),
     lesson,
-    openLesson: (kind: LessonKind, index: number) =>
+    openLesson: (kind: PrepLessonKind, index: number) =>
       runLesson(kind, index, false),
     rewriteLesson: () =>
       lesson ? runLesson(lesson.kind, lesson.index, true) : Promise.resolve(),

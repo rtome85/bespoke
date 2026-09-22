@@ -1,6 +1,6 @@
 import { Building2, ChevronRight, Users } from "lucide-react"
 
-import type { CompanyInfo } from "~api/perplexityClient"
+import type { CompanyInfo } from "~types/companyResearch"
 
 interface Props {
   companyName: string

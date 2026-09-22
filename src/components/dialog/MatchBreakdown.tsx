@@ -5,7 +5,8 @@ import {
   TrendingUp
 } from "lucide-react"
 
-import type { MatchAccordionSection, MatchResult } from "~types/dialog"
+import type { MatchAccordionSection } from "~types/dialog"
+import type { MatchResult } from "~types/match"
 
 interface Props {
   match: MatchResult

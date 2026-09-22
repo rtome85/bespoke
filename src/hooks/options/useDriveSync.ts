@@ -3,13 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import { STORAGE_KEYS } from "~storage/keys"
 import type { OperationStatus } from "~types/options"
+import type { SyncConfig } from "~types/sync"
 import {
   authorize,
   fetchAccountEmail,
   getFreshToken,
   pull,
-  revoke,
-  type SyncConfig
+  revoke
 } from "~utils/googleDriveSync"
 
 const STATUS_DURATION_MS = 5_000

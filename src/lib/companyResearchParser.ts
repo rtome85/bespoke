@@ -1,4 +1,4 @@
-import type { CompanyInfo } from "~api/perplexityClient"
+import type { CompanyInfo } from "~types/companyResearch"
 
 function getField(object: Record<string, unknown>, ...keys: string[]): unknown {
   for (const key of keys) {

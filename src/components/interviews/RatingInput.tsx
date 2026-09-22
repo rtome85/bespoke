@@ -1,14 +1,14 @@
 import { useId } from "react"
 
-type Rating = 1 | 2 | 3 | 4 | 5
+import type { DebriefRating } from "~types/userProfile"
 
 interface Props {
-  value?: Rating
-  onChange: (v: Rating) => void
+  value?: DebriefRating
+  onChange: (v: DebriefRating) => void
   label?: string
 }
 
-const DOTS: Rating[] = [1, 2, 3, 4, 5]
+const DOTS: DebriefRating[] = [1, 2, 3, 4, 5]
 
 /** ●●●○○ 1–5 picker with radiogroup semantics and arrow-key support. */
 export function RatingInput({ value, onChange, label = "Rating" }: Props) {
@@ -16,7 +16,7 @@ export function RatingInput({ value, onChange, label = "Rating" }: Props) {
 
   const move = (delta: number) => {
     const current = value ?? 0
-    const next = Math.min(5, Math.max(1, current + delta)) as Rating
+    const next = Math.min(5, Math.max(1, current + delta)) as DebriefRating
     onChange(next)
   }
 

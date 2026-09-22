@@ -1,16 +1,15 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useEffect, useRef, useState } from "react"
 
 import type { PerplexityConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
-
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
 
 const TEST_TIMEOUT_MS = 30_000
 const STATUS_RESET_MS = 5_000
 
 export function usePerplexityConnectionTest(
   config: PerplexityConfig,
-  setConfig: StorageSetter<PerplexityConfig>
+  setConfig: Dispatch<SetStateAction<PerplexityConfig>>
 ) {
   const [status, setStatus] = useState<OperationStatus>({
     type: "idle",

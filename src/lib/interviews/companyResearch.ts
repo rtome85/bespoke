@@ -1,22 +1,6 @@
-import type { CompanyInfo } from "~api/perplexityClient"
 import { STORAGE_KEYS } from "~storage/keys"
-import { RESEARCH_STALE_MS, type ResearchSource } from "~types/config"
-
-export interface CompanyResearchEntry {
-  /** Human-readable markdown. */
-  text: string
-  /** Structured form when it came from an "about the company" call. */
-  parsed?: CompanyInfo
-  /** ISO timestamp. */
-  generatedAt: string
-  /**
-   * Which strategy produced this entry. Absent on entries cached before
-   * research had more than one source — those all came from Perplexity.
-   */
-  source?: ResearchSource
-  /** Pages or results the synthesis read, for the provenance line. */
-  sourceUrls?: string[]
-}
+import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
+import { RESEARCH_STALE_MS } from "~types/config"
 
 /** Past this age the Prep card offers a refresh instead of trusting the cache. */
 export function researchIsStale(

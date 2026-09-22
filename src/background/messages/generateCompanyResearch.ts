@@ -1,7 +1,7 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 
 import { getLLMClient, type ChatMessage } from "~api/llm"
-import { PerplexityClient, type CompanyInfo } from "~api/perplexityClient"
+import { PerplexityClient } from "~api/perplexityClient"
 import {
   searchConfigured,
   searchWeb,
@@ -16,14 +16,14 @@ import { hasHostPermission } from "~lib/hostPermissions"
 import {
   companyInfoToMarkdown,
   readCompanyResearch,
-  writeCompanyResearch,
-  type CompanyResearchEntry
+  writeCompanyResearch
 } from "~lib/interviews/companyResearch"
 import {
   companyOriginFrom,
   fetchCompanyPages,
   type FetchedPage
 } from "~lib/interviews/companySite"
+import type { CompanyInfo, CompanyResearchEntry } from "~types/companyResearch"
 import {
   DEFAULT_COMPANY_SYNTHESIS_PROMPT,
   DEFAULT_LLM_TUNING,

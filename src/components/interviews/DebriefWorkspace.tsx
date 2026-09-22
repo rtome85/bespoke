@@ -9,7 +9,9 @@ import { relativeDayLabel, roundLabel } from "~lib/interviews/selectors"
 import { setRoundDebrief } from "~storage/savedApplications"
 import type {
   Debrief,
+  DebriefFollowUp,
   DebriefOutcome,
+  DebriefRating,
   SavedApplication
 } from "~types/userProfile"
 
@@ -20,18 +22,15 @@ interface Props {
   onSaved: (result: { advanced: boolean; appId: string }) => void
 }
 
-type Rating = 1 | 2 | 3 | 4 | 5
-type FollowUp = { text: string; done?: boolean }
-
 /** Form values for a debrief — empty defaults when none exists. Used for the
  * initial state and to hydrate once the round resolves (a deep-link load
  * mounts this before `apps` has populated). */
 export function debriefFormValues(d: Debrief | undefined) {
   return {
-    rating: d?.rating as Rating | undefined,
+    rating: d?.rating,
     assessment: d?.assessment ?? "",
     questionsAsked: d?.questionsAsked ?? "",
-    followUps: (d?.followUps ?? []) as FollowUp[],
+    followUps: d?.followUps ?? [],
     outcome: (d?.outcome ?? "") as DebriefOutcome | ""
   }
 }
@@ -58,10 +57,14 @@ export function DebriefWorkspace({ apps, roundId, onBack, onSaved }: Props) {
 
   const d = found?.round.debrief
   const initial = debriefFormValues(d)
-  const [rating, setRating] = useState<Rating | undefined>(initial.rating)
+  const [rating, setRating] = useState<DebriefRating | undefined>(
+    initial.rating
+  )
   const [assessment, setAssessment] = useState(initial.assessment)
   const [questionsAsked, setQuestionsAsked] = useState(initial.questionsAsked)
-  const [followUps, setFollowUps] = useState<FollowUp[]>(initial.followUps)
+  const [followUps, setFollowUps] = useState<DebriefFollowUp[]>(
+    initial.followUps
+  )
   const [outcome, setOutcome] = useState<DebriefOutcome | "">(initial.outcome)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")

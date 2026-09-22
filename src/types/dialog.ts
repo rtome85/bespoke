@@ -1,18 +1,12 @@
 import type { ApplicationStatus } from "~types/userProfile"
 
+import type { MatchResult } from "./match"
+
 export interface GeneratedDocuments {
   resumeContent: string
   resumeFilename: string
   coverLetterContent: string
   coverLetterFilename: string
-}
-
-export interface MatchResult {
-  percentage: number
-  summary: string
-  strengths: string[]
-  weaknesses: string[]
-  improvements: string[]
 }
 
 export interface GenerationResult {
