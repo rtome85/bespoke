@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
-import type { SyncConfig } from "~utils/googleDriveSync"
+import type { SyncConfig } from "~types/sync"
 
 export function useSyncConfig() {
   const [syncConfig, setSyncConfig] = useState<SyncConfig | null>(null)

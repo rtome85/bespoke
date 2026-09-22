@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
@@ -15,8 +16,6 @@ import type { UserProfile } from "~types/userProfile"
 
 const STATUS_DURATION_MS = 3_000
 
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
-
 interface Args {
   ollamaConfig: OllamaConfig
   perplexityConfig: PerplexityConfig
@@ -27,7 +26,7 @@ interface Args {
   matchModel: string
   providers: ProvidersConfig
   modelRouting: ModelRouting
-  setCustomPrompts: StorageSetter<CustomPrompts>
+  setCustomPrompts: Dispatch<SetStateAction<CustomPrompts>>
 }
 
 export function useSettingsPersistence({

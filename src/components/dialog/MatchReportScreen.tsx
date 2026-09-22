@@ -1,4 +1,3 @@
-import type { CompanyInfo } from "~api/perplexityClient"
 import { BackLink } from "~components/common/BackLink"
 import { CompanyResearchCard } from "~components/dialog/CompanyResearchCard"
 import { DocumentGenerationControls } from "~components/dialog/DocumentGenerationControls"
@@ -9,6 +8,7 @@ import { ScoreSummaryCard } from "~components/dialog/ScoreSummaryCard"
 import { StrengthenApplication } from "~components/dialog/StrengthenApplication"
 import { TriageActions } from "~components/dialog/TriageActions"
 import { getScorePresentation } from "~lib/dialog/scorePresentation"
+import type { CompanyInfo } from "~types/companyResearch"
 import type {
   AddedGapSkills,
   GeneratedDocuments,

@@ -1,18 +1,6 @@
 import { parseCompanyInfo } from "~lib/companyResearchParser"
+import type { CompanyInfo } from "~types/companyResearch"
 import type { PerplexityConfig } from "~types/config"
-
-export interface CompanyInfo {
-  industry: string
-  size: string
-  description: string
-  notableProjects: string[]
-  ratings: {
-    glassdoor?: number
-    indeed?: number
-    teamlyzer?: number
-  }
-  sources: string[]
-}
 
 export class PerplexityClient {
   private config: PerplexityConfig

@@ -1,20 +1,13 @@
 import type { GenerateRequest, LLMTuningConfig } from "~types/config"
 import { DEFAULT_LLM_TUNING, OUTPUT_LANGUAGE_META } from "~types/config"
+import type { MatchResult } from "~types/match"
 import type { UserProfile } from "~types/userProfile"
 
 import type { LLMClient } from "./llm/types"
 
 export type { GenerateRequest }
 
-export interface MatchAnalysis {
-  percentage: number
-  summary: string
-  strengths: string[]
-  weaknesses: string[]
-  improvements: string[]
-}
-
-const EMPTY_MATCH: MatchAnalysis = {
+const EMPTY_MATCH: MatchResult = {
   percentage: 0,
   summary: "Match analysis unavailable.",
   strengths: [],
@@ -495,7 +488,7 @@ ${rawText.substring(0, 6000)}`
     }
   }
 
-  async analyzeMatch(request: GenerateRequest): Promise<MatchAnalysis> {
+  async analyzeMatch(request: GenerateRequest): Promise<MatchResult> {
     const llmTuning = request.llmTuning ?? DEFAULT_LLM_TUNING
 
     const userPrompt = `You are a career advisor. Score this candidate on FOUR dimensions against the job posting, then provide qualitative analysis.

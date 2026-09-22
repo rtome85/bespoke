@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
@@ -7,10 +8,8 @@ import {
   type CustomPrompts
 } from "~types/config"
 
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
-
 export function usePromptVersionMigration(
-  setCustomPrompts: StorageSetter<CustomPrompts>
+  setCustomPrompts: Dispatch<SetStateAction<CustomPrompts>>
 ) {
   useEffect(() => {
     chrome.storage.local.get(STORAGE_KEYS.PROMPTS_VERSION, (result) => {

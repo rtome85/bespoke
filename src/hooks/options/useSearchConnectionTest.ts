@@ -1,10 +1,9 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useEffect, useRef, useState } from "react"
 
 import { searchWeb } from "~api/searchClient"
 import { SEARCH_ENGINE_META, type SearchConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
-
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
 
 const STATUS_RESET_MS = 5_000
 
@@ -15,7 +14,7 @@ const STATUS_RESET_MS = 5_000
  */
 export function useSearchConnectionTest(
   config: SearchConfig,
-  setConfig: StorageSetter<SearchConfig>
+  setConfig: Dispatch<SetStateAction<SearchConfig>>
 ) {
   const [status, setStatus] = useState<OperationStatus>({
     type: "idle",

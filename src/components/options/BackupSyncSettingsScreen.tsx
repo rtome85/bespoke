@@ -1,5 +1,5 @@
 import type { OperationStatus } from "~types/options"
-import type { SyncConfig } from "~utils/googleDriveSync"
+import type { SyncConfig } from "~types/sync"
 
 interface Props {
   syncConfig: SyncConfig | null

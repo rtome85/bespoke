@@ -1,4 +1,5 @@
 import { SYNC_KEYS, type SyncKey } from "~storage/keys"
+import type { SyncConfig } from "~types/sync"
 
 /**
  * OAuth client of type "Web application". Its authorized redirect URIs must
@@ -14,21 +15,6 @@ const DRIVE_API = "https://www.googleapis.com/drive/v3"
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3"
 /** Refresh a little before Google's expiry so a push never races it. */
 const TOKEN_EXPIRY_MARGIN_MS = 60_000
-
-export interface SyncConfig {
-  token: string
-  /**
-   * Set once per Connect and kept across token refreshes, so a disconnect or
-   * reconnect is detectable even though the token itself rotates.
-   */
-  connectionId?: string
-  /** Epoch ms the access token expires; absent on pre-launchWebAuthFlow configs. */
-  expiresAt?: number
-  lastSynced: string | null
-  error?: string
-  /** Google account the token belongs to, shown in the options rail. */
-  email?: string
-}
 
 export interface AuthResult {
   token: string

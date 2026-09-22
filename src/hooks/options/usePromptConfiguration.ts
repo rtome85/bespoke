@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useState } from "react"
 
 import {
@@ -12,13 +13,11 @@ import type {
   PromptDialogState
 } from "~types/options"
 
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
-
 interface Args {
   customPrompts: CustomPrompts
   perplexityConfig: PerplexityConfig
-  setCustomPrompts: StorageSetter<CustomPrompts>
-  setPerplexityConfig: StorageSetter<PerplexityConfig>
+  setCustomPrompts: Dispatch<SetStateAction<CustomPrompts>>
+  setPerplexityConfig: Dispatch<SetStateAction<PerplexityConfig>>
 }
 
 export function usePromptConfiguration({

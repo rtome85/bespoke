@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from "react"
 import { useEffect } from "react"
 
 import { STORAGE_KEYS } from "~storage/keys"
@@ -8,8 +9,6 @@ import {
   LEGACY_TECHNICAL_PREP_PROMPTS,
   type PerplexityConfig
 } from "~types/config"
-
-type StorageSetter<T> = (value: T | ((previous: T) => T)) => void
 
 /** The two prep prompts, each with the defaults it has shipped as. */
 const PREP_PROMPTS = [
@@ -35,7 +34,7 @@ const PREP_PROMPTS = [
  * even though it can't produce the newer sections.
  */
 export function useInterviewPrepPromptMigration(
-  setPerplexityConfig: StorageSetter<PerplexityConfig>
+  setPerplexityConfig: Dispatch<SetStateAction<PerplexityConfig>>
 ) {
   useEffect(() => {
     chrome.storage.local.get(STORAGE_KEYS.PERPLEXITY_CONFIG, (result) => {
