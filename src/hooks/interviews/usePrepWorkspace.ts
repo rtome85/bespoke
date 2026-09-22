@@ -8,6 +8,7 @@ import { companyOriginFrom } from "~lib/interviews/companySite"
 import { prepCheatSheet } from "~lib/interviews/prepCheatSheet"
 import {
   hasKeptWork,
+  locateItem,
   mergeGapDefenses,
   mergePrepItems,
   mergeStarStories,
@@ -530,14 +531,19 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   }
 
   /**
-   * Attach a finished lesson to its item, matched on the item's own text.
+   * Attach a finished lesson to the item it was opened from.
    *
-   * The index the panel was opened at is only a hint here: a regeneration can
-   * land while the lesson is being written, and writing by index onto a
-   * reordered list would file a lesson on React hooks under a Postgres
-   * exercise. When the text no longer appears the write is dropped — the
-   * panel still shows the lesson, it just isn't persisted onto an item that
-   * no longer exists.
+   * Resolved by position first and text second. The slot the panel was opened
+   * at is right in every case where nothing moved, and it is the only thing
+   * that can tell two items apart when they read the same: nothing dedupes
+   * the model's output, so a sheet can carry two exercises under one title,
+   * and a bare text search would file both their lessons on whichever came
+   * first. The text is what confirms the slot still holds the same item —
+   * a regeneration can land during the 90 seconds a lesson takes, and writing
+   * blind to an index on a reordered list would put a lesson on React hooks
+   * under a Postgres exercise. When neither resolves, the write is dropped:
+   * the panel still shows the lesson, it just isn't persisted onto an item
+   * that no longer exists.
    *
    * The list is rebuilt from the prep as stored, inside the mutation queue,
    * rather than from anything this render is holding. Closing the panel does
@@ -547,11 +553,16 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
    * would disappear. Serializing the write alone cannot fix that — the stale
    * array was already assembled by the time it reached the queue.
    */
-  const saveLesson = (kind: LessonKind, title: string, value: PrepLesson) =>
+  const saveLesson = (
+    kind: LessonKind,
+    index: number,
+    title: string,
+    value: PrepLesson
+  ) =>
     save((cur) => {
       if (kind === "exercise") {
         const list = cur.techExercises ?? []
-        const i = list.findIndex((e) => e.title === title)
+        const i = locateItem(list, index, (e) => e.title, title)
         return i < 0
           ? {}
           : {
@@ -561,7 +572,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
             }
       }
       const list = cur.techQuestions ?? []
-      const i = list.findIndex((q) => q.question === title)
+      const i = locateItem(list, index, (q) => q.question, title)
       return i < 0
         ? {}
         : {
@@ -627,7 +638,7 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
         markdown: r.markdown,
         generatedAt: r.generatedAt
       }
-      await saveLesson(kind, it.title, value)
+      await saveLesson(kind, index, it.title, value)
       setLesson((l) =>
         stillOpen(l)
           ? { ...(l as LessonView), ...value, busy: false, error: undefined }

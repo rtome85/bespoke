@@ -118,6 +118,30 @@ export function mergeTechExercises(
   )
 }
 
+/**
+ * Which entry in a section is the one the panel was opened at?
+ *
+ * Position first, text second. The index is right whenever nothing has moved,
+ * and it is the only thing that can separate two entries that read the same —
+ * nothing dedupes the model's output, so a sheet can carry two exercises under
+ * one title, and a bare text search would resolve both to whichever came
+ * first. The text is what confirms the slot still holds the same entry: a
+ * regeneration can reorder the list while a lesson is being written, and an
+ * index followed blindly would land on a different exercise entirely.
+ *
+ * Returns -1 when neither resolves, which callers read as "this entry is gone".
+ */
+export function locateItem<T>(
+  list: T[],
+  index: number,
+  text: (item: T) => string,
+  wanted: string
+): number {
+  const here = list[index]
+  if (here && text(here) === wanted) return index
+  return list.findIndex((item) => text(item) === wanted)
+}
+
 /** Does this section hold anything the user would lose to a regeneration? */
 export function hasKeptWork(
   ...sections: (
