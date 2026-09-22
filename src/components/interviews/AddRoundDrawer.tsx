@@ -2,6 +2,7 @@ import { X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 import { SegmentedControl } from "~components/common/SegmentedControl"
+import { ROUND_FORMAT_OPTIONS, ROUND_TYPE_OPTIONS } from "~constants/interviews"
 import { hasOpenRound } from "~lib/interviews/selectors"
 import { addRound, deleteRound, updateRound } from "~storage/savedApplications"
 import type { AddRoundEditRef } from "~types/options"
@@ -24,19 +25,6 @@ interface Props {
   onClose: () => void
   onDone?: () => void
 }
-
-const TYPE_OPTIONS: { value: RoundType; label: string }[] = [
-  { value: "HR", label: "HR Interview" },
-  { value: "Technical", label: "Technical" },
-  { value: "Final", label: "Final" },
-  { value: "Custom", label: "Custom…" }
-]
-
-const FORMAT_OPTIONS: { value: RoundFormat; label: string }[] = [
-  { value: "phone", label: "Phone call" },
-  { value: "video", label: "Video" },
-  { value: "onsite", label: "On-site" }
-]
 
 export function AddRoundDrawer({
   mode,
@@ -270,7 +258,7 @@ export function AddRoundDrawer({
                       Choose a round type…
                     </option>
                   )}
-                  {TYPE_OPTIONS.map((o) => (
+                  {ROUND_TYPE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
@@ -312,7 +300,7 @@ export function AddRoundDrawer({
                 <span className="aa-drawer-field-label">Format</span>
                 <SegmentedControl<RoundFormat>
                   ariaLabel="Format"
-                  options={FORMAT_OPTIONS}
+                  options={ROUND_FORMAT_OPTIONS}
                   value={format}
                   onChange={setFormat}
                 />
