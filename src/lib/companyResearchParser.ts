@@ -36,6 +36,7 @@ function cleanRating(value: unknown): number | undefined {
 function parseProjects(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
+      .filter((project): project is string => typeof project === "string")
       .map((project) => cleanString(project))
       .filter((project) => project.length > 3)
       .slice(0, 6)

@@ -17,7 +17,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     apiKey,
     baseUrl,
     provider = "ollama"
-  } = req.body as {
+  } = (req.body ?? {}) as {
     apiKey?: string
     baseUrl?: string
     provider?: LLMProviderId
