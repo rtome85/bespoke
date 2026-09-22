@@ -151,9 +151,9 @@ export function NeedsYouCard({
             </p>
           </div>
           <span
-            className={`shrink-0 rounded-aa-pill px-2.5 py-1 text-aa-11 font-semibold ${prepBadgeClass(
-              work.nextRoundPrepReady
-            )}`}>
+            className={`aa-pill shrink-0 ${
+              work.nextRoundPrepReady ? "aa-pill-ok" : "aa-pill-idle"
+            }`}>
             {work.nextRoundPrepReady ? "Prep ready" : "Not prepped"}
           </span>
           <button
@@ -187,11 +187,6 @@ export function NeedsYouCard({
 const plural = (n: number, word: string) => (n === 1 ? word : `${word}s`)
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
-
-const prepBadgeClass = (ready: boolean) =>
-  ready
-    ? "bg-aa-success-soft text-aa-success-strong"
-    : "bg-aa-neutral-100 text-aa-text-secondary"
 
 function firstFollowUp(items: { text: string }[]): string {
   const first = items[0]?.text ?? ""
