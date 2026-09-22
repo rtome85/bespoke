@@ -1,10 +1,12 @@
-import { Check, Star, X } from "lucide-react"
+import { BookOpen, Check, Star, X } from "lucide-react"
 
 import type { TechQuestion } from "~types/userProfile"
 
 interface Props {
   items: TechQuestion[]
   onChange: (next: TechQuestion[]) => void
+  /** Open the "Learn more" lesson for the question at this index. */
+  onLearnMore: (index: number) => void
 }
 
 /**
@@ -15,8 +17,13 @@ interface Props {
  * defense is — the model's wording is a draft, and the point of the drill is
  * saying it back in your own words. Rewriting one marks it `userAdded`, which
  * is what protects it from the next regeneration (see `prepMerge`).
+ *
+ * "Learn more" is for the question whose answer the candidate can read but
+ * not yet reconstruct: the drill wants four sentences said back, and the
+ * lesson behind that button is where the understanding to say them comes
+ * from.
  */
-export function TechQuestionList({ items, onChange }: Props) {
+export function TechQuestionList({ items, onChange, onLearnMore }: Props) {
   const patch = (i: number, p: Partial<TechQuestion>) =>
     onChange(items.map((it, idx) => (idx === i ? { ...it, ...p } : it)))
 
@@ -97,6 +104,14 @@ export function TechQuestionList({ items, onChange }: Props) {
             aria-label={`Your answer to: ${item.question}`}
             className="mt-2 w-full px-3 py-2 bg-aa-surface border border-aa-border rounded-aa-md text-aa-13 text-aa-text-primary focus:outline-none focus:border-aa-primary transition-colors resize-y"
           />
+          <button
+            type="button"
+            onClick={() => onLearnMore(i)}
+            aria-label={`Learn more about: ${item.question}`}
+            className="aa-btn-link mt-1 inline-flex items-center gap-aa-1 aa-no-print">
+            <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+            {item.lesson ? "Open lesson" : "Learn more"}
+          </button>
         </div>
       ))}
     </div>

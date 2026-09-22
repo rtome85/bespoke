@@ -1,10 +1,12 @@
-import { Check, Star, X } from "lucide-react"
+import { BookOpen, Check, Star, X } from "lucide-react"
 
 import type { TechExercise } from "~types/userProfile"
 
 interface Props {
   items: TechExercise[]
   onChange: (next: TechExercise[]) => void
+  /** Open the "Learn more" lesson for the exercise at this index. */
+  onLearnMore: (index: number) => void
 }
 
 /**
@@ -14,8 +16,12 @@ interface Props {
  * keyboard somewhere else, and the useful interaction here is ticking it once
  * it has been. `approach` is kept visually separate from the task so it can be
  * skipped on the first attempt and read as a self-review afterwards.
+ *
+ * "Learn more" is the way out of an exercise the candidate cannot start: the
+ * sheet says what to do, and the lesson behind that button says what it is
+ * testing and how the thing actually works.
  */
-export function TechExerciseList({ items, onChange }: Props) {
+export function TechExerciseList({ items, onChange, onLearnMore }: Props) {
   const patch = (i: number, p: Partial<TechExercise>) =>
     onChange(items.map((it, idx) => (idx === i ? { ...it, ...p } : it)))
 
@@ -97,6 +103,15 @@ export function TechExerciseList({ items, onChange }: Props) {
               </p>
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => onLearnMore(i)}
+            aria-label={`Learn more about: ${item.title}`}
+            className="aa-btn-link mt-2 inline-flex items-center gap-aa-1 aa-no-print">
+            <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
+            {item.lesson ? "Open lesson" : "Learn more"}
+          </button>
         </div>
       ))}
     </div>

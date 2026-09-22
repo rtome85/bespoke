@@ -220,14 +220,36 @@ export async function deleteRound(
   return apps
 }
 
+/**
+ * A prep patch, or a function that derives one from the prep as stored.
+ *
+ * The callback form exists for sections that are replaced wholesale rather
+ * than merged — an array field like `techExercises` overwrites its
+ * predecessor, so a patch built from a React snapshot carries whatever that
+ * snapshot was missing. Deriving it here instead puts the read and the write
+ * inside the same serialized cycle, which is the only place they are atomic.
+ */
+export type RoundPrepPatch =
+  | Partial<RoundPrep>
+  | ((current: RoundPrep) => Partial<RoundPrep>)
+
 export function setRoundPrep(
   appId: string,
   roundId: string,
-  patch: Partial<RoundPrep>
+  patch: RoundPrepPatch
 ): Promise<SavedApplication[]> {
   return mutateSavedApplications((apps) =>
     mapApp(apps, appId, (a) =>
-      mapRound(a, roundId, (r) => ({ ...r, prep: { ...r.prep, ...patch } }))
+      mapRound(a, roundId, (r) => {
+        const prep = r.prep ?? {}
+        return {
+          ...r,
+          prep: {
+            ...prep,
+            ...(typeof patch === "function" ? patch(prep) : patch)
+          }
+        }
+      })
     )
   )
 }

@@ -123,6 +123,22 @@ export interface StarStory {
 }
 
 /**
+ * A long-form lesson written on demand for one exercise or drill question —
+ * what "Learn more" produces.
+ *
+ * Stored on the item it was written for rather than in a cache of its own, so
+ * the model call is paid for once: re-opening the panel reads this back
+ * instead of generating the same lesson again. Its presence also counts as
+ * work the user did (see `prepMerge`), which is what keeps a regeneration of
+ * the sheet from throwing it away.
+ */
+export interface PrepLesson {
+  /** Markdown — rendered read-only through `MarkdownPreview`. */
+  markdown: string
+  generatedAt: string // ISO
+}
+
+/**
  * A technical question an interviewer is likely to ask, with an answer worth
  * rehearsing. `topic` is the technology or framework from the job description
  * the question comes out of, so the drill can be read stack by stack.
@@ -134,6 +150,8 @@ export interface TechQuestion {
   checked?: boolean // "I can answer this"
   pinned?: boolean
   userAdded?: boolean
+  /** The "Learn more" expansion of this question, once one was generated. */
+  lesson?: PrepLesson
 }
 
 /**
@@ -156,6 +174,8 @@ export interface TechExercise {
   checked?: boolean // "I worked through this"
   pinned?: boolean
   userAdded?: boolean
+  /** The "Learn more" expansion of this exercise, once one was generated. */
+  lesson?: PrepLesson
 }
 
 export interface RoundPrep {

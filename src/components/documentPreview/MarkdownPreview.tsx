@@ -133,6 +133,22 @@ function renderBlock(token: Token, i: number): ReactNode {
         </ul>
       )
     }
+    case "code": {
+      // Lessons ("Learn more" in Prep) are the only markdown here that comes
+      // back with fenced code in it. Without this case a fenced block fell to
+      // the default below and was set as a paragraph, collapsing its
+      // indentation and line breaks.
+      const t = token as Tokens.Code
+      return (
+        <pre
+          key={i}
+          className="mt-2 overflow-x-auto rounded-aa-md bg-aa-neutral-100 p-aa-3">
+          <code className="text-aa-11 font-mono leading-aa-1.55 text-aa-text-primary">
+            {t.text}
+          </code>
+        </pre>
+      )
+    }
     case "hr":
       return <hr key={i} className="my-4 border-aa-border" />
     case "space":
