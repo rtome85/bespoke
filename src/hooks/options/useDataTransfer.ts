@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from "react"
 
 import { PROVIDER_IDS } from "~constants/options"
+import { RESEARCH_PREFERENCES, SEARCH_ENGINE_IDS } from "~constants/research"
 import { migrateRestoredApplications } from "~lib/interviews/migrate"
 import { STORAGE_KEYS } from "~storage/keys"
 import { mutateSavedApplications } from "~storage/savedApplications"
-import { RESEARCH_PREFERENCES, SEARCH_ENGINE_IDS } from "~types/config"
 import type {
   CustomPrompts,
   LLMProviderId,

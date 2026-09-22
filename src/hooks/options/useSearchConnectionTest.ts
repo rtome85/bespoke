@@ -2,7 +2,8 @@ import type { Dispatch, SetStateAction } from "react"
 import { useEffect, useRef, useState } from "react"
 
 import { searchWeb } from "~api/searchClient"
-import { SEARCH_ENGINE_META, type SearchConfig } from "~types/config"
+import { SEARCH_ENGINE_META } from "~constants/research"
+import type { SearchConfig } from "~types/config"
 import type { OperationStatus } from "~types/options"
 
 const STATUS_RESET_MS = 5_000

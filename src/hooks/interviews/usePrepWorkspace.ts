@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
+import { RESEARCH_SOURCE_LABELS } from "~constants/research"
 import { requestHostPermission } from "~lib/hostPermissions"
 import { researchIsStale } from "~lib/interviews/companyResearch"
 import { companyOriginFrom } from "~lib/interviews/companySite"
@@ -25,7 +26,7 @@ import {
   roundLabel
 } from "~lib/interviews/selectors"
 import { setRoundPrep, type RoundPrepPatch } from "~storage/savedApplications"
-import { RESEARCH_SOURCE_LABELS, type ResearchSource } from "~types/config"
+import type { ResearchSource } from "~types/config"
 import type {
   PrepLesson,
   PrepLessonKind,

@@ -1,4 +1,4 @@
-import { PROVIDER_META } from "~types/config"
+import { PROVIDER_META } from "~constants/providers"
 
 import type { ChatOptions, LLMClient } from "./types"
 

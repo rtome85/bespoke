@@ -1,6 +1,6 @@
+import { PROVIDER_META } from "~constants/providers"
 import { encodeRoute, providerModels } from "~lib/options/modelRouting"
 import {
-  PROVIDER_META,
   type LLMProviderId,
   type ProvidersConfig,
   type RouteTarget

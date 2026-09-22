@@ -11,9 +11,9 @@ import { ProfileSettingsScreen } from "~components/options/ProfileSettingsScreen
 import { PromptsSettingsScreen } from "~components/options/PromptsSettingsScreen"
 import { ProvidersSettingsScreen } from "~components/options/ProvidersSettingsScreen"
 import { SettingsArea } from "~components/options/SettingsArea"
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import { settingsRoute } from "~constants/routes"
 import { useOptionsController } from "~hooks/options/useOptionsController"
-import { DEFAULT_LLM_TUNING } from "~types/config"
 
 import "./style.css"
 

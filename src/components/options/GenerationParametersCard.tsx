@@ -1,4 +1,5 @@
-import { DEFAULT_LLM_TUNING, type LLMTuningConfig } from "~types/config"
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
+import type { LLMTuningConfig } from "~types/config"
 
 interface Props {
   tuning: LLMTuningConfig

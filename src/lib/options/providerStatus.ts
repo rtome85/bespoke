@@ -1,8 +1,7 @@
 import { PROVIDER_IDS } from "~constants/options"
+import { hasProviderCredential, PROVIDER_META } from "~constants/providers"
+import { SEARCH_ENGINE_META } from "~constants/research"
 import {
-  hasProviderCredential,
-  PROVIDER_META,
-  SEARCH_ENGINE_META,
   type LLMProviderId,
   type PerplexityConfig,
   type ProvidersConfig,

@@ -1,18 +1,18 @@
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import {
   DEFAULT_INTERVIEW_PREP_PROMPT,
   DEFAULT_PERPLEXITY_PROMPT,
   DEFAULT_PROMPTS,
   DEFAULT_TECHNICAL_PREP_PROMPT
 } from "~constants/prompts"
+import { DEFAULT_MODEL_ROUTING } from "~constants/providers"
+import { DEFAULT_SEARCH_CONFIG } from "~constants/research"
 import { useInterviewPrepPromptMigration } from "~hooks/options/useInterviewPrepPromptMigration"
 import { useLegacyProviderMigration } from "~hooks/options/useLegacyProviderMigration"
 import { usePromptVersionMigration } from "~hooks/options/usePromptVersionMigration"
 import { useDebouncedStorage } from "~lib/useDebouncedStorage"
 import { STORAGE_KEYS } from "~storage/keys"
 import {
-  DEFAULT_LLM_TUNING,
-  DEFAULT_MODEL_ROUTING,
-  DEFAULT_SEARCH_CONFIG,
   type CustomPrompts,
   type LLMTuningConfig,
   type ModelRouting,

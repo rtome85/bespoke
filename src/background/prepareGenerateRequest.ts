@@ -1,4 +1,11 @@
+import { DEFAULT_LLM_TUNING } from "~constants/generation"
 import { DEFAULT_PROMPTS } from "~constants/prompts"
+import {
+  DEFAULT_MODEL_ROUTING,
+  hasProviderCredential,
+  normalizeModelRouting,
+  PROVIDER_META
+} from "~constants/providers"
 import { STORAGE_KEYS } from "~storage/keys"
 import type {
   GenerateRequest,
@@ -9,13 +16,6 @@ import type {
   ProvidersConfig,
   RoutableJob,
   RouteTarget
-} from "~types/config"
-import {
-  DEFAULT_LLM_TUNING,
-  DEFAULT_MODEL_ROUTING,
-  hasProviderCredential,
-  normalizeModelRouting,
-  PROVIDER_META
 } from "~types/config"
 import type { UserProfile } from "~types/userProfile"
 

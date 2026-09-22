@@ -4,9 +4,9 @@ import { getLLMClient } from "~api/llm"
 import {
   hasProviderCredential,
   missingCredentialMessage,
-  PROVIDER_META,
-  type LLMProviderId
-} from "~types/config"
+  PROVIDER_META
+} from "~constants/providers"
+import { type LLMProviderId } from "~types/config"
 
 /** Fetches the selectable model ids for a provider account. */
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {

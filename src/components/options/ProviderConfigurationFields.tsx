@@ -1,10 +1,7 @@
 import { RefreshCw } from "lucide-react"
 
-import {
-  PROVIDER_META,
-  type LLMProviderId,
-  type ProviderConfig
-} from "~types/config"
+import { PROVIDER_META } from "~constants/providers"
+import { type LLMProviderId, type ProviderConfig } from "~types/config"
 import type { ProviderTestResult } from "~types/options"
 
 interface Props {

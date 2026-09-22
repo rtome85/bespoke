@@ -1,5 +1,5 @@
+import { DEFAULT_LLM_TUNING, OUTPUT_LANGUAGE_META } from "~constants/generation"
 import type { GenerateRequest, LLMTuningConfig } from "~types/config"
-import { DEFAULT_LLM_TUNING, OUTPUT_LANGUAGE_META } from "~types/config"
 import type { MatchResult } from "~types/match"
 import type { UserProfile } from "~types/userProfile"
 
