@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import { sendToBackground } from "@plasmohq/messaging"
 
@@ -257,8 +257,21 @@ export function usePrepWorkspace({ apps, roundId, onBack }: Options) {
   // several times in that window — from a tick, from a notes save, from a
   // regeneration. The write-back has to see the prep as it stands when the
   // response lands, not the snapshot that was current when the panel opened.
+  //
+  // Synced on commit rather than during render: a render React abandons never
+  // happened, and assigning from inside one would leave the ref describing a
+  // sheet nobody was ever shown. A layout effect rather than a passive one,
+  // because a passive effect runs after paint and a click landing in that gap
+  // would read the previous commit's prep.
+  //
+  // `prep` is `round?.prep ?? {}`, so the dependency changes identity on every
+  // render of a round that has no prep yet. That is fine — the effect is one
+  // assignment — and the fresh object is exactly what must not be memoized
+  // away, since a stale `{}` here would silently drop a lesson's write-back.
   const prepRef = useRef(prep)
-  prepRef.current = prep
+  useLayoutEffect(() => {
+    prepRef.current = prep
+  }, [prep])
 
   const save = (patch: Partial<RoundPrep>) =>
     app && round ? setRoundPrep(app.id, round.id, patch) : Promise.resolve()
