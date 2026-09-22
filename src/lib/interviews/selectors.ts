@@ -302,6 +302,16 @@ export function roundsThisWeek(
     .sort(compareRounds)
 }
 
+/** Upcoming or unscheduled rounds that haven't been prepped yet. */
+export function needsPrep(
+  list: RoundRef[],
+  now: Date = new Date()
+): RoundRef[] {
+  return [...upcoming(list, now), ...unscheduled(list)].filter(
+    (r) => !prepReady(r.round)
+  )
+}
+
 /** Past, non-synthesized rounds with no logged debrief. */
 export function needsDebrief(
   list: RoundRef[],
