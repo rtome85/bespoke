@@ -54,7 +54,8 @@ export class OllamaAdapter implements LLMClient {
       )
     }
     const data = (await res.json()) as OllamaChatResponse
-    return data?.message?.content ?? ""
+    const content = data?.message?.content
+    return typeof content === "string" ? content : ""
   }
 
   async listModels(): Promise<string[]> {

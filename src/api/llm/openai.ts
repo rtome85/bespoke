@@ -78,7 +78,8 @@ export class OpenAIAdapter implements LLMClient {
       )
     }
     const data = (await res.json()) as OpenAIChatCompletionResponse
-    return data?.choices?.[0]?.message?.content ?? ""
+    const content = data?.choices?.[0]?.message?.content
+    return typeof content === "string" ? content : ""
   }
 
   async listModels(): Promise<string[]> {
