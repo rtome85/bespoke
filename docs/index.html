@@ -745,22 +745,6 @@
         color: var(--on-dark-2);
       }
 
-      /* ─── PRIVACY (LIGHT) ────────────────────────────────────────── */
-      .privacy-light {
-        background: var(--canvas-2);
-        border-bottom: 1px solid var(--line);
-        display: flex;
-        gap: 56px;
-        padding-block: 84px;
-      }
-
-      .pl-col {
-        flex: 1 1 0;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
       /* ─── CLOSING CTA ────────────────────────────────────────────── */
       .cta {
         display: flex;
@@ -882,14 +866,12 @@
         }
 
         .steps,
-        .frow,
-        .privacy-light {
+        .frow {
           flex-wrap: wrap;
         }
 
         .step,
-        .fcard,
-        .pl-col {
+        .fcard {
           flex: 1 1 calc(50% - 1px);
           min-width: 260px;
         }
@@ -945,8 +927,7 @@
 
         .steps,
         .frow,
-        .tcards,
-        .privacy-light {
+        .tcards {
           flex-direction: column;
           gap: 32px;
         }
@@ -1690,54 +1671,6 @@
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section class="privacy-light">
-        <div class="pl-col">
-          <svg
-            class="ic"
-            width="20"
-            height="20"
-            style="color: #c05a3c"
-            aria-hidden="true">
-            <use href="#i-shield" />
-          </svg>
-          <h3 class="fcard-title">Your data stays with you</h3>
-          <p class="fcard-body">
-            Your profile lives in browser storage and is sent only to the AI
-            endpoint you configured. Nowhere else.
-          </p>
-        </div>
-        <div class="pl-col">
-          <svg
-            class="ic"
-            width="20"
-            height="20"
-            style="color: #c05a3c"
-            aria-hidden="true">
-            <use href="#i-eye-off" />
-          </svg>
-          <h3 class="fcard-title">No tracking, no analytics</h3>
-          <p class="fcard-body">
-            No pixels, no telemetry, no usage reporting. What you do with it is
-            your business.
-          </p>
-        </div>
-        <div class="pl-col">
-          <svg
-            class="ic"
-            width="20"
-            height="20"
-            style="color: #c05a3c"
-            aria-hidden="true">
-            <use href="#i-scan-line" />
-          </svg>
-          <h3 class="fcard-title">Open source and auditable</h3>
-          <p class="fcard-body">
-            Every line is on GitHub. Read it, fork it, build on it — or just
-            check that we mean it.
-          </p>
         </div>
       </section>
 
