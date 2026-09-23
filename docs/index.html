@@ -44,6 +44,7 @@
         --grotesk: "Space Grotesk", system-ui, sans-serif;
         --mono: "JetBrains Mono", ui-monospace, monospace;
         --gutter: 64px;
+        --maxw: 1440px;
       }
 
       html {
@@ -58,9 +59,16 @@
       }
 
       .page {
-        max-width: 1440px;
-        margin: 0 auto;
         overflow: hidden;
+      }
+
+      /* Full-bleed sections: each backdrop spans the viewport while the
+         content inside stays centred on a 1440px column. */
+      .page > * {
+        padding-inline: max(
+          var(--gutter),
+          calc((100% - var(--maxw)) / 2 + var(--gutter))
+        );
       }
 
       .ic {
@@ -81,7 +89,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 22px var(--gutter);
+        padding-block: 22px;
         border-bottom: 1px solid var(--line);
         background: var(--canvas);
         position: sticky;
@@ -180,7 +188,7 @@
       .hero {
         display: flex;
         gap: 72px;
-        padding: 96px var(--gutter) 104px;
+        padding-block: 96px 104px;
       }
 
       .hero-copy {
@@ -390,7 +398,7 @@
       .proof {
         display: flex;
         align-items: center;
-        padding: 26px var(--gutter);
+        padding-block: 26px;
         background: var(--canvas-2);
         border-top: 1px solid var(--line);
         border-bottom: 1px solid var(--line);
@@ -410,7 +418,7 @@
 
       /* ─── SECTION SHELL ──────────────────────────────────────────── */
       .sec {
-        padding: 100px var(--gutter);
+        padding-block: 100px;
       }
 
       .sec-head {
@@ -656,7 +664,8 @@
         border-bottom: 1px solid var(--line-darker);
         display: flex;
         gap: 64px;
-        padding: 88px 56px;
+        --gutter: 56px;
+        padding-block: 88px;
       }
 
       .pd-copy {
@@ -742,7 +751,7 @@
         border-bottom: 1px solid var(--line);
         display: flex;
         gap: 56px;
-        padding: 84px var(--gutter);
+        padding-block: 84px;
       }
 
       .pl-col {
@@ -758,7 +767,7 @@
         flex-direction: column;
         align-items: center;
         gap: 26px;
-        padding: 96px var(--gutter) 104px;
+        padding-block: 96px 104px;
       }
 
       .cta-kicker {
@@ -798,7 +807,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 40px;
-        padding: 36px var(--gutter);
+        padding-block: 36px;
         flex-wrap: wrap;
       }
 
@@ -888,7 +897,8 @@
         .privacy-dark {
           flex-direction: column;
           gap: 40px;
-          padding: 72px 40px;
+          --gutter: 40px;
+          padding-block: 72px;
         }
 
         .pd-copy {
@@ -917,7 +927,7 @@
         }
 
         .sec {
-          padding: 72px var(--gutter);
+          padding-block: 72px;
         }
 
         .sec-title,
