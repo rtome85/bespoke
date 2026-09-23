@@ -36,6 +36,12 @@
       border-bottom: 1px solid #e0e0e0;
       padding-bottom: 0.25rem;
     }
+    h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 1.25rem;
+      margin-bottom: 0.4rem;
+    }
     p { margin-bottom: 0.75rem; }
     ul {
       margin: 0.5rem 0 0.75rem 1.5rem;
@@ -59,7 +65,7 @@
     <a class="back" href="index.html">← Back to Bespoke</a>
 
     <h1>Privacy Policy</h1>
-    <p class="meta">Bespoke Browser Extension &nbsp;|&nbsp; Last updated: March 2026</p>
+    <p class="meta">Bespoke Browser Extension &nbsp;|&nbsp; Last updated: September 2026</p>
 
     <!-- 1. Introduction -->
     <h2>1. Introduction</h2>
@@ -68,7 +74,9 @@
       (<a href="mailto:contact@robtome.com">contact@robtome.com</a>).
       It helps job seekers generate tailored CVs and cover letters by combining
       their saved profile with job descriptions extracted from the current web page,
-      then sending that information to a user-configured AI model (Ollama).
+      track applications through an interview pipeline, and prepare for individual
+      interview rounds. Document generation, match scoring, and interview prep use
+      an AI model provider that you configure and authenticate yourself.
     </p>
     <p>
       This Privacy Policy explains what data the extension collects, how it is used,
@@ -79,18 +87,28 @@
     <!-- 2. Data We Collect -->
     <h2>2. Data We Collect</h2>
     <p>
-      The extension stores the following information <strong>locally on your device</strong>
-      using the browser's <code>chrome.storage.local</code> API:
+      Bespoke has no server of its own. Everything below is stored
+      <strong>locally on your device</strong> using the browser's
+      <code>chrome.storage.local</code> API:
     </p>
     <ul>
       <li>Personal details you enter in the extension profile: name, email address, phone number, location</li>
-      <li>Professional history: work experience, education, skills, languages, certifications</li>
-      <li>Extension configuration: Ollama API endpoint URL, selected model, Google Drive backup preference</li>
-      <li>Temporarily, during document generation: the job description extracted from the current page</li>
+      <li>Professional history: work experience, education, skills, languages, certifications, projects</li>
+      <li>
+        Provider configuration: the AI provider(s) you enable and their API keys or endpoint
+        URLs, and the search/research provider(s) you enable and their API keys
+      </li>
+      <li>
+        Application and interview data: saved applications, status, interview rounds and
+        schedules, prep notes, STAR stories, talking points, debriefs, and cached company
+        research
+      </li>
+      <li>Output preferences: writing tone, prompt templates, temperature/top-p/token settings, notification and reminder settings</li>
+      <li>Temporarily, during document generation or match scoring: the job description extracted from the current page</li>
     </ul>
     <p>
-      We do <strong>not</strong> collect browser history, browsing behaviour, cookies,
-      or any data beyond what you explicitly enter in the extension.
+      We do <strong>not</strong> collect browser history, general browsing behaviour, cookies,
+      or any data beyond what you explicitly enter into or generate within the extension.
     </p>
 
     <!-- 3. How We Use Your Data -->
@@ -98,17 +116,34 @@
     <p>Your data is used exclusively for the following purposes:</p>
     <ul>
       <li>
-        <strong>CV / cover letter generation:</strong> when you click "Generate", your profile
-        and the extracted job description are sent to the Ollama API endpoint you configured
-        (which may be a local or remote server you control) to produce the document.
+        <strong>CV / cover letter generation and match scoring:</strong> when you generate
+        or score a match, your profile and the extracted job description are sent to the AI
+        provider and model you have configured for that task, using the API key or endpoint
+        you provided, to produce the document or score.
       </li>
       <li>
-        <strong>Profile persistence:</strong> your profile is stored locally so you do not have
-        to re-enter it each session.
+        <strong>Interview prep:</strong> when you generate prep material (talking points, STAR
+        stories, technical drills, lessons), your profile, the relevant application/interview
+        data, and any cached company research are sent to your configured AI provider for
+        that task.
       </li>
       <li>
-        <strong>Optional Google Drive backup:</strong> if you enable Drive backup, your profile
-        is copied to your Google Drive account's private app folder (see Section 5).
+        <strong>Company research:</strong> when you request company research, the company
+        name and related context are sent to the research source you have configured
+        (see Section 4) to produce the research summary, which is then cached locally.
+      </li>
+      <li>
+        <strong>Profile and application persistence:</strong> your profile, saved applications,
+        and interview data are stored locally so you do not have to re-enter them each session.
+      </li>
+      <li>
+        <strong>Optional Google Drive backup:</strong> if you enable Drive backup, the data
+        described in Section 5 is copied to your Google Drive account's private app folder.
+      </li>
+      <li>
+        <strong>Interview reminders:</strong> if enabled, the extension schedules local
+        browser notifications for upcoming interview rounds using the dates and times you
+        entered. No data leaves your device for this feature.
       </li>
     </ul>
 
@@ -118,21 +153,33 @@
       Bespoke does <strong>not</strong> sell, rent, or share your data with any advertising
       networks, analytics providers, or unrelated third parties.
     </p>
-    <p>The only external services that may receive your data are:</p>
-    <ul>
-      <li>
-        <strong>Ollama API</strong> — the endpoint URL is set by you in the extension settings.
-        This server may be running locally on your machine or on a remote server you own or trust.
-        Your profile and the job description are sent to this endpoint solely to generate
-        the requested document. We have no control over, and no visibility into, the server
-        you configure.
-      </li>
-      <li>
-        <strong>Google Drive (optional)</strong> — if you enable backup, your profile data is
-        uploaded to the private <code>drive.appdata</code> folder of your Google account.
-        This folder is not visible to other users or other apps; only Bespoke can access it.
-      </li>
-    </ul>
+    <p>The only external services that may receive your data are the ones you configure:</p>
+    <h3>AI / document providers</h3>
+    <p>
+      Bespoke supports Ollama, OpenAI, Anthropic, Google Gemini, OpenRouter, DeepSeek,
+      Mistral, or any custom OpenAI-compatible endpoint. You choose which provider(s) to
+      enable and supply their API key (or, for Ollama, an endpoint URL). Your profile, the
+      extracted job description, and — for interview prep — your relevant application data
+      are sent to whichever provider and model you route each task to (scoring, drafting,
+      or interview prep can each use a different provider). We have no control over, and no
+      visibility into, how a third-party provider handles data you send it; refer to that
+      provider's own privacy policy.
+    </p>
+    <h3>Company research providers</h3>
+    <p>
+      If you enable company research, the company name and related context may be sent to
+      Perplexity, Tavily, Brave Search, or Exa — whichever you have configured — or, when no
+      research provider is configured, the extension may instead fetch the company's own
+      public website directly. Only the provider(s) you enable and authorise with your own
+      API key are used.
+    </p>
+    <h3>Google Drive (optional)</h3>
+    <p>
+      If you enable backup, the data listed in Section 5 is uploaded to the private
+      <code>drive.appdata</code> folder of your Google account. This folder is not visible
+      to other users, other apps, or to us; only Bespoke can access it, using the
+      authorisation you grant.
+    </p>
 
     <!-- 5. Google OAuth and Drive -->
     <h2>5. Google OAuth and Drive Access</h2>
@@ -141,6 +188,12 @@
       scope. This scope grants access only to a hidden application data folder in your
       Google Drive; it does not provide access to files you have created or any other
       part of your Drive.
+    </p>
+    <p>
+      When enabled, the following locally-stored data is included in the backup: your
+      profile, saved applications and interview data (rounds, prep, debriefs), AI and
+      research provider configuration (including API keys), model routing preferences,
+      prompt templates, and generation tuning settings.
     </p>
     <p>
       You will be shown Google's standard consent screen before any Drive access is granted.
@@ -157,42 +210,46 @@
     <!-- 6. Job Data Extraction -->
     <h2>6. Job Data Extraction</h2>
     <p>
-      When you click "Generate CV" on a job listing page, the extension's content script
-      reads text from that page (job title, company name, job description) to use as context
-      for document generation.
+      When you use "Generate CV for this job" or open the match dialog on a job listing
+      page, the extension's content script reads text from that page (job title, company
+      name, job description) to use as context for document generation and scoring. The
+      content script is present on pages you visit so it can respond when you trigger it,
+      but it only reads page content at that point — it does not run continuously or report
+      pages you browse.
     </p>
     <p>
-      This data is held only in memory for the duration of the generation request and is
-      discarded immediately afterwards. It is never stored persistently or sent to any
-      service other than your configured Ollama endpoint.
+      This data is held only in memory for the duration of the request and is discarded
+      immediately afterwards, other than the fields you choose to save with an application
+      record (which are then stored locally as described in Section 2). It is never sent to
+      any service other than the AI provider you configured for that task.
     </p>
 
     <!-- 7. Data Retention & Deletion -->
     <h2>7. Data Retention and Deletion</h2>
     <p>
-      Your profile data remains in <code>chrome.storage.local</code> until you explicitly
-      delete it. You can remove all locally stored data by opening the extension and
-      using the <strong>"Clear Data"</strong> option in the settings.
+      Your data remains in <code>chrome.storage.local</code> until you explicitly delete it.
+      You can remove locally stored data from the extension's Settings → Storage screen.
     </p>
     <p>
       If you have enabled Google Drive backup, disabling the integration or revoking
-      Google's permission will stop future backups. To delete existing backup data,
-      use the "Delete Drive backup" option in the extension settings, or delete the
-      app data folder manually via Google Drive settings.
+      Google's permission will stop future backups. To delete existing backup data, use the
+      restore/delete controls in the extension's Backup & Sync settings, or delete the app
+      data folder manually via your Google Account permissions page.
     </p>
     <p>Uninstalling the extension removes all data stored in <code>chrome.storage.local</code>.</p>
 
     <!-- 8. Security -->
     <h2>8. Security</h2>
     <p>
-      Profile data is stored in the browser's local storage mechanism, which is sandboxed
-      to the extension and not accessible by websites or other extensions. No additional
-      encryption is applied beyond what the browser provides natively.
+      Your data, including any API keys you enter, is stored in the browser's local storage
+      mechanism, which is sandboxed to the extension and not accessible by websites or other
+      extensions. No additional encryption is applied beyond what the browser provides
+      natively.
     </p>
     <p>
-      Communications between the extension and the Ollama API use the protocol of the
-      endpoint URL you provide (HTTP or HTTPS). We strongly recommend using an HTTPS
-      endpoint, especially for remote servers.
+      Communications with AI and research providers use HTTPS, except for a self-hosted
+      Ollama endpoint, where the protocol follows the endpoint URL you provide — we
+      strongly recommend using HTTPS for any remote Ollama server.
     </p>
     <p>
       Communications between the extension and Google Drive use HTTPS enforced by
