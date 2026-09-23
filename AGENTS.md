@@ -221,11 +221,13 @@ the helpers in `selectors.ts` (`todayISO`, `addDaysISO`, `daysUntil`,
 
 ## Git workflow
 
-- Default / integration branch is **`dev`**. `main` is the release branch (the
-  `submit.yml` workflow — manual `workflow_dispatch` — publishes from it via
-  `PlasmoHQ/bpp`, artifact `build/chrome-mv3-prod.zip`).
-- **Never commit or push directly to `dev`.** Branch (`feat/*`, `fix/*`,
-  `chore/*`, `refactor/*`, `docs/*`), push, open a PR against `dev`.
+- Default / integration branch is **`main`**, which is also the release branch
+  (the `submit.yml` workflow — manual `workflow_dispatch` — publishes from it
+  via `PlasmoHQ/bpp`, artifact `build/chrome-mv3-prod.zip`) and the branch
+  GitHub Pages serves from `/docs`. `dev` still exists but is out of the loop
+  for now — nothing needs to land there.
+- **Never commit or push directly to `main`.** Branch (`feat/*`, `fix/*`,
+  `chore/*`, `refactor/*`, `docs/*`), push, open a PR against `main`.
 - **Do the work, stop at "builds green", and wait** for an explicit
   "commit" / "open a PR" instruction before committing — unless the user has
   already said to proceed.

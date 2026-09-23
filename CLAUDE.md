@@ -17,5 +17,5 @@ Quick reminders that bite most often here:
   `src/style.css` instead.
 - Mutate the application list only through `mutateSavedApplications()` in
   `src/storage/savedApplications.ts`.
-- Branch off `dev`, open a PR against `dev`, never commit to `dev` directly.
+- Branch off `main`, open a PR against `main`, never commit to `main` directly.
   Stop at "builds green" and wait for an explicit commit/PR instruction.
