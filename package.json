@@ -68,7 +68,19 @@
       "firefox": {
         "optional_permissions": [
           "https://*/*"
-        ]
+        ],
+        "browser_specific_settings": {
+          "gecko": {
+            "id": "bespoke@robtome.com",
+            "data_collection_permissions": {
+              "required": [
+                "websiteContent",
+                "personallyIdentifyingInfo",
+                "searchTerms"
+              ]
+            }
+          }
+        }
       }
     },
     "host_permissions": [
