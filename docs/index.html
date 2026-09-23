@@ -31,14 +31,14 @@
         --line: #e4ded3;
         --line-dark: #3a3430;
         --line-darker: #2b2724;
-        --accent: #c05a3c;
+        --accent: #9e4529;
         --accent-light: #e8987c;
         --text: #1a1714;
         --text-2: #5b544d;
-        --text-3: #8c847a;
+        --text-3: #6f675f;
         --on-dark: #f4efe9;
         --on-dark-2: #a69c93;
-        --on-dark-3: #7c736c;
+        --on-dark-3: #9d938b;
         --display: "Fraunces", Georgia, serif;
         --sans: "Inter", system-ui, sans-serif;
         --grotesk: "Space Grotesk", system-ui, sans-serif;
@@ -78,6 +78,11 @@
 
       a {
         text-decoration: none;
+      }
+
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
       }
 
       ul {
@@ -264,12 +269,12 @@
 
       .panel-url {
         font-family: var(--mono);
-        font-size: 11px;
+        font-size: 12px;
         color: var(--on-dark-3);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        line-height: 15px;
+        line-height: 16px;
       }
 
       .panel-body {
@@ -343,12 +348,12 @@
 
       .doc-name {
         font-family: var(--mono);
-        font-size: 11.5px;
+        font-size: 12px;
         color: var(--on-dark-2);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        line-height: 15px;
+        line-height: 16px;
       }
 
       .lines {
@@ -382,10 +387,10 @@
         border-radius: 999px;
         background: #c05a3c2e;
         border: 1px solid #c05a3c59;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 500;
         color: var(--accent-light);
-        line-height: 13px;
+        line-height: 16px;
       }
 
       .chip-gap {
@@ -438,10 +443,10 @@
 
       .sec-label {
         font-family: var(--mono);
-        font-size: 11px;
+        font-size: 12px;
         letter-spacing: 1.2px;
         color: var(--accent);
-        line-height: 15px;
+        line-height: 16px;
       }
 
       .sec-title {
@@ -623,9 +628,9 @@
         border-radius: 999px;
         padding: 4px 10px;
         font-family: var(--mono);
-        font-size: 9.5px;
+        font-size: 12px;
         letter-spacing: 0.8px;
-        line-height: 13px;
+        line-height: 16px;
       }
 
       .tagline {
@@ -756,10 +761,10 @@
 
       .cta-kicker {
         font-family: var(--mono);
-        font-size: 11px;
+        font-size: 12px;
         letter-spacing: 1.2px;
         color: var(--accent);
-        line-height: 15px;
+        line-height: 16px;
       }
 
       .cta-title {
@@ -1084,6 +1089,7 @@
           <a class="nav-link" href="#how-it-works">How it works</a
           ><a class="nav-link" href="#features">Features</a
           ><a class="nav-link" href="#templates">Templates</a
+          ><a class="nav-link" href="guide.html">Docs</a
           ><a class="nav-link" href="#privacy">Privacy</a
           ><a class="nav-link" href="https://github.com/rtome85/bespoke"
             >GitHub</a
@@ -1719,6 +1725,7 @@
             class="foot-link"
             href="https://github.com/rtome85/bespoke/releases"
             >Releases</a
+          ><a class="foot-link" href="guide.html">Documentation</a
           ><a class="foot-link" href="privacy-policy.html">Privacy Policy</a
           ><a class="foot-link" href="mailto:contact@robtome.com">Contact</a>
         </div>
