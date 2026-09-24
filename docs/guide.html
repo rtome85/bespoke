@@ -685,8 +685,10 @@
         <a class="nav-link" href="index.html">Product</a>
         <a class="nav-link" href="guide.html" aria-current="page">Docs</a>
         <a class="nav-link" href="https://github.com/rtome85/bespoke">GitHub</a>
-        <a class="nav-button" href="https://github.com/rtome85/bespoke/releases"
-          >Download</a
+        <a
+          class="nav-button"
+          href="https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd"
+          >Add to Chrome</a
         >
       </div>
     </nav>
@@ -768,40 +770,51 @@
           <span class="section-num">02</span>
           <h2>Install the extension</h2>
           <p class="lede">
-            Use a packaged release for everyday use, or load a local build if
-            you want to inspect or change the source.
+            Install from the Chrome Web Store for everyday use and automatic
+            updates, or load a build yourself if you want to inspect or change
+            the source.
           </p>
-          <h3>From a release</h3>
+          <h3>Chrome and Edge</h3>
+          <ol>
+            <li>
+              Open
+              <a
+                href="https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd"
+                >Bespoke on the Chrome Web Store</a
+              >.
+            </li>
+            <li>
+              Choose <strong>Add to Chrome</strong>. In Edge, first allow
+              extensions from other stores when the banner asks.
+            </li>
+            <li>Pin Bespoke to the browser toolbar.</li>
+          </ol>
+          <h3>Firefox</h3>
+          <p>
+            The Firefox listing is awaiting review on addons.mozilla.org. Until
+            it is published, load a release build as a temporary add-on:
+          </p>
           <ol>
             <li>
               Open the
               <a href="https://github.com/rtome85/bespoke/releases"
                 >latest GitHub release</a
-              >
-              and download the archive for your browser.
-            </li>
-            <li>Extract the archive to a permanent folder.</li>
-            <li>
-              In Chrome or Edge, open <code>chrome://extensions</code> or
-              <code>edge://extensions</code>, enable
-              <strong>Developer mode</strong>, then choose
-              <strong>Load unpacked</strong>.
+              >, download the Firefox archive, and extract it to a permanent
+              folder.
             </li>
             <li>
-              In Firefox, open <code>about:debugging</code>, choose
+              Open <code>about:debugging</code>, choose
               <strong>This Firefox</strong>, then
               <strong>Load Temporary Add-on</strong> and select the extracted
               <code>manifest.json</code> file.
             </li>
-            <li>Pin Bespoke to the browser toolbar.</li>
           </ol>
           <div class="callout">
-            <strong>Keep the folder in place</strong>
+            <strong>Temporary add-ons don't persist</strong>
             <p>
-              A browser loaded in developer mode reads the extension from that
-              folder. Moving or deleting it will disable the extension. Firefox
-              removes a temporary add-on when the browser restarts, so load it
-              again for the next session.
+              Firefox removes a temporary add-on when the browser restarts, so
+              load it again for the next session. Keep the extracted folder in
+              place while it is loaded.
             </p>
           </div>
           <h3>From source</h3>
@@ -1069,14 +1082,13 @@ pnpm dev</code></pre>
         <span class="aside-label">QUICK START</span>
         <h2>Ready to set up?</h2>
         <p>
-          Install the latest release, connect one provider, then complete your
-          profile before opening a job post.
+          Install Bespoke, connect one provider, then complete your profile
+          before opening a job post.
         </p>
         <a
           class="action-link"
-          href="https://github.com/rtome85/bespoke/releases"
-          ><span>Get the latest release</span
-          ><span aria-hidden="true">↗</span></a
+          href="https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd"
+          ><span>Add to Chrome</span><span aria-hidden="true">↗</span></a
         >
         <a class="action-link" href="https://github.com/rtome85/bespoke/issues"
           ><span>Report an issue</span><span aria-hidden="true">↗</span></a
@@ -1092,6 +1104,10 @@ pnpm dev</code></pre>
       <div class="footer-links">
         <a href="index.html">Product</a>
         <a href="https://github.com/rtome85/bespoke">GitHub</a>
+        <a
+          href="https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd"
+          >Chrome Web Store</a
+        >
         <a href="https://github.com/rtome85/bespoke/releases">Releases</a>
         <a href="privacy-policy.html">Privacy Policy</a>
         <a href="mailto:contact@robtome.com">Contact</a>
