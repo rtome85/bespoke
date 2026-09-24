@@ -8,6 +8,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Plasmo](https://img.shields.io/badge/built%20with-Plasmo-blueviolet)](https://docs.plasmo.com)
 
+[![Get it on Chrome Web Store](https://img.shields.io/badge/Get%20it%20on-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd)
+
 ## What it does
 
 Bespoke reads a job posting, compares it with your saved profile, and produces
@@ -31,6 +33,18 @@ round-by-round interview preparation and debrief workspaces.
   STAR stories, technical drills, and on-demand lessons
 - Record debriefs, follow-ups, and outcomes after each interview
 - Back up synced settings and application data to Google Drive
+
+## Install
+
+- **Chrome and Edge:** install from the
+  [Chrome Web Store](https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd). In Edge, allow
+  extensions from other stores when prompted.
+- **Firefox:** the addons.mozilla.org listing is awaiting review. Until then,
+  load the Firefox archive from the
+  [latest release](https://github.com/rtome85/bespoke/releases) as a temporary
+  add-on via `about:debugging`.
+
+To build from source instead, see [Install and run](#install-and-run).
 
 ## Tech stack
 
