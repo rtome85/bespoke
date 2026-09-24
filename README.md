@@ -10,6 +10,11 @@
 
 [![Get it on Chrome Web Store](https://img.shields.io/badge/Get%20it%20on-Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/bespoke/fojiljenclkaajpmlhhhepgmlnlllcbd)
 
+https://github.com/user-attachments/assets/49dc9789-5e1f-47c7-97a6-fa50f54e353b
+
+_A real run on a LinkedIn posting: match score, gap check, then a tailored CV
+and cover letter. The generation wait is sped up._
+
 ## What it does
 
 Bespoke reads a job posting, compares it with your saved profile, and produces
