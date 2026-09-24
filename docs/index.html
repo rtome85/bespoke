@@ -473,6 +473,31 @@
         gap: 56px;
       }
 
+      .demo {
+        width: 880px;
+        max-width: 100%;
+        margin-inline: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .demo-video {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1280 / 1118;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+      }
+
+      .demo-caption {
+        color: var(--text-3);
+        font-size: 13px;
+        text-align: center;
+      }
+
       .steps {
         display: flex;
       }
@@ -1351,6 +1376,24 @@
             </p>
           </div>
         </div>
+        <figure class="demo">
+          <video
+            class="demo-video"
+            src="demo.mp4"
+            poster="demo-poster.jpg"
+            width="1280"
+            height="1118"
+            autoplay
+            muted
+            loop
+            playsinline
+            controls
+            aria-label="Bespoke scoring a LinkedIn posting and generating a tailored CV and cover letter"></video>
+          <figcaption class="demo-caption">
+            A real run on a LinkedIn posting: match score, gap check, then a
+            tailored CV and cover letter. The generation wait is sped up.
+          </figcaption>
+        </figure>
       </section>
 
       <section class="sec features" id="features">
