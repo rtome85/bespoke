@@ -473,7 +473,8 @@ ${rawText.substring(0, 6000)}`
       ],
       temperature: 0,
       topP: 1,
-      maxTokens: 512
+      // Room to echo a 6000-char description plus a reasoning model's thinking
+      maxTokens: 2048
     })
 
     const jsonMatch = (content || "{}").match(/\{[\s\S]*\}/)
@@ -557,7 +558,8 @@ ${this.formatUserProfile(request.userProfile, true)}`
         ],
         temperature: Math.min(llmTuning.temperature, 0.4),
         topP: llmTuning.topP,
-        maxTokens: 1024,
+        // Headroom for reasoning models, whose thinking counts against the cap
+        maxTokens: 4096,
         signal: controller.signal
       })
     } finally {
