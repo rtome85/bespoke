@@ -65,7 +65,7 @@ function IndexDialog() {
     useCompanyResearch(companyName, Boolean(result), pendingJobUrl)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
   const [matchAccordionOpen, setMatchAccordionOpen] =
-    useState<MatchAccordionSection | null>("strengths")
+    useState<MatchAccordionSection | null>(null)
   const {
     editingApplication,
     setEditingApplication,
