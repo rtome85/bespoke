@@ -5,7 +5,7 @@ import { PROVIDER_META } from "~constants/providers"
 import { AnthropicAdapter } from "./anthropic"
 import { GoogleAdapter } from "./google"
 import { getLLMClient } from "./index"
-import { OllamaAdapter } from "./ollama"
+import { estimateNumCtx, OllamaAdapter } from "./ollama"
 import { OpenAIAdapter } from "./openai"
 import { splitSystem, type ChatOptions } from "./types"
 
@@ -328,8 +328,27 @@ describe("OllamaAdapter", () => {
     expect(JSON.parse(init.body)).toMatchObject({
       model: "test/model",
       stream: false,
-      max_tokens: 321
+      options: {
+        temperature: 0.3,
+        top_p: 0.8,
+        num_predict: 321,
+        num_ctx: 8_192
+      }
     })
+    expect(JSON.parse(init.body)).not.toHaveProperty("max_tokens")
+  })
+
+  it("sizes num_ctx to the prompt, rounded to a power of two and capped", () => {
+    const withPrompt = (chars: number, maxTokens = 4_096) => ({
+      ...chatOptions(),
+      messages: [{ role: "user" as const, content: "x".repeat(chars) }],
+      maxTokens
+    })
+
+    expect(estimateNumCtx(withPrompt(3_000))).toBe(8_192)
+    expect(estimateNumCtx(withPrompt(30_000))).toBe(16_384)
+    expect(estimateNumCtx(withPrompt(60_000))).toBe(32_768)
+    expect(estimateNumCtx(withPrompt(1_000_000))).toBe(32_768)
   })
 
   it("returns only string model names", async () => {

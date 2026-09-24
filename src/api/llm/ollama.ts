@@ -10,6 +10,21 @@ interface OllamaTagsResponse {
   models?: { name?: string }[]
 }
 
+// Ollama's default context window is small and silently truncates long
+// prompts, so size it per request. Rounding to a power of two keeps the
+// value stable across similar requests — a changed num_ctx forces a reload.
+const MIN_NUM_CTX = 8_192
+const MAX_NUM_CTX = 32_768
+const CHARS_PER_TOKEN = 3
+
+export function estimateNumCtx(opts: ChatOptions): number {
+  const promptChars = opts.messages.reduce((n, m) => n + m.content.length, 0)
+  const needed = Math.ceil(promptChars / CHARS_PER_TOKEN) + opts.maxTokens
+  let ctx = MIN_NUM_CTX
+  while (ctx < needed && ctx < MAX_NUM_CTX) ctx *= 2
+  return ctx
+}
+
 /**
  * Ollama — both the local server and the hosted cloud API speak the same
  * `/chat` shape used here.
@@ -41,9 +56,13 @@ export class OllamaAdapter implements LLMClient {
         model: opts.model,
         messages: opts.messages,
         stream: false,
-        temperature: opts.temperature,
-        top_p: opts.topP,
-        max_tokens: opts.maxTokens
+        // The native /api/chat only reads sampling parameters from `options`.
+        options: {
+          temperature: opts.temperature,
+          top_p: opts.topP,
+          num_predict: opts.maxTokens,
+          num_ctx: estimateNumCtx(opts)
+        }
       }),
       signal: opts.signal
     })
