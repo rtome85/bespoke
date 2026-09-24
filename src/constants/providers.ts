@@ -42,17 +42,6 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     scoringProfile: "generous"
   },
   {
-    id: "minimax-m3:cloud",
-    name: "MiniMax M3",
-    description:
-      "MoE model. Scores more strictly than other models — weighs missing required skills heavily.",
-    size: "MoE",
-    recommended: false,
-    costProfile: "medium",
-    speedProfile: "slow",
-    scoringProfile: "strict"
-  },
-  {
     id: "nemotron-3-nano:30b-cloud",
     name: "Nemotron 3 Nano",
     description:
