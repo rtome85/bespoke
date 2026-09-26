@@ -295,7 +295,7 @@
         margin-top: 14px;
       }
 
-      .guide a:not(.action-link) {
+      .guide a:not(.action-link):not(.shot-link) {
         color: var(--accent);
         text-decoration: underline;
         text-decoration-color: color-mix(
@@ -414,6 +414,114 @@
       .path b {
         color: var(--text-3);
         font-size: 12px;
+      }
+
+      .shot {
+        margin-top: 26px;
+      }
+
+      .shot-link {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow:
+          0 1px 2px rgba(27, 25, 23, 0.04),
+          0 12px 28px -16px rgba(27, 25, 23, 0.22);
+        display: block;
+        overflow: hidden;
+        transition: border-color 0.15s ease;
+      }
+
+      .shot-link:hover {
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+      }
+
+      .shot img {
+        display: block;
+        height: auto;
+        width: 100%;
+      }
+
+      .shot figcaption {
+        color: var(--text-3);
+        font-size: 13px;
+        line-height: 20px;
+        margin-top: 10px;
+      }
+
+      .shot-row {
+        align-items: start;
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 26px;
+      }
+
+      .shot-row .shot {
+        margin-top: 0;
+      }
+
+      .table-wrap {
+        margin-top: 20px;
+        overflow-x: auto;
+      }
+
+      .settings-table {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-collapse: separate;
+        border-radius: 12px;
+        border-spacing: 0;
+        min-width: 560px;
+        width: 100%;
+      }
+
+      .settings-table th,
+      .settings-table td {
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+        line-height: 22px;
+        padding: 14px 16px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .settings-table tbody tr:last-child th,
+      .settings-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .settings-table thead th {
+        color: var(--text-3);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .settings-table tbody th {
+        color: var(--text);
+        font-family: var(--grotesk);
+        font-weight: 700;
+        width: 170px;
+      }
+
+      .settings-table tbody th span {
+        color: var(--text-3);
+        display: block;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 400;
+        margin-top: 4px;
+      }
+
+      .settings-table td {
+        color: var(--text-2);
+      }
+
+      .settings-table td:last-child {
+        white-space: normal;
       }
 
       .workflow {
@@ -668,6 +776,16 @@
           min-height: auto;
         }
 
+        .shot-row {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+
+        .shot-row .shot {
+          max-width: 340px;
+          width: 100%;
+        }
+
         .footer {
           align-items: flex-start;
           flex-direction: column;
@@ -701,6 +819,7 @@
           <li><a href="#install">Install the extension</a></li>
           <li><a href="#provider">Connect an AI provider</a></li>
           <li><a href="#profile">Build your profile</a></li>
+          <li><a href="#generation">Shape the documents</a></li>
           <li><a href="#application">Tailor an application</a></li>
           <li><a href="#interviews">Prepare for interviews</a></li>
           <li><a href="#data">Data &amp; privacy</a></li>
@@ -878,6 +997,34 @@ pnpm dev</code></pre>
               primary provider is unavailable.
             </li>
           </ol>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/provider-detail.webp">
+              <img
+                src="screenshots/provider-detail.webp"
+                alt="Ollama provider dialog with endpoint toggle, API key, base URL, Test connection and Refresh models buttons, and the list of available models"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              A provider dialog. Test the connection, then refresh the model
+              list before saving.
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/model-routing.webp">
+              <img
+                src="screenshots/model-routing.webp"
+                alt="Model routing screen assigning a provider and model to match scoring, document drafting, interview prep, and company research"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              Model routing. Each job can use a different provider, for example
+              a local model for scoring and a hosted one for drafting.
+            </figcaption>
+          </figure>
           <div class="callout">
             <strong>Company research is separate</strong>
             <p>
@@ -899,6 +1046,20 @@ pnpm dev</code></pre>
           <div class="path" aria-label="Navigation path">
             <span>Settings</span><b>→</b><span>Profile</span>
           </div>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/profile-personal.webp">
+              <img
+                src="screenshots/profile-personal.webp"
+                alt="Personal info screen with name, email, phone, location, website, LinkedIn, GitHub, and professional summary fields"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              Personal info supplies the contact block and summary used in every
+              document.
+            </figcaption>
+          </figure>
           <h3>What to add</h3>
           <ul>
             <li>
@@ -914,15 +1075,338 @@ pnpm dev</code></pre>
               to the roles you pursue.
             </li>
           </ul>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/profile-experience.webp">
+              <img
+                src="screenshots/profile-experience.webp"
+                alt="Experience screen listing three roles with dates and edit and delete buttons"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              Each role holds its own achievements. Open a role to edit its
+              bullets.
+            </figcaption>
+          </figure>
           <p>
-            Use <strong>Output style</strong> to set tone, emphasis, bullet
-            density, reading level, language, and generation parameters. You can
-            also edit the underlying templates under <strong>Prompts</strong>.
+            Once your profile is in place, decide how the documents should read.
+            See <a href="#generation">Shape the documents</a>.
           </p>
         </section>
 
-        <section class="guide-section" id="application">
+        <section class="guide-section" id="generation">
           <span class="section-num">05</span>
+          <h2>Shape the documents</h2>
+          <p class="lede">
+            Three sets of controls decide how the CV and cover letter read:
+            Output style for the voice, Prompts for the exact instructions sent
+            to the model, and Generation parameters for how freely the model
+            writes. All three save automatically.
+          </p>
+
+          <h3>Output style</h3>
+          <div class="path" aria-label="Navigation path">
+            <span>Settings</span><b>→</b><span>Generation</span><b>→</b
+            ><span>Output style</span>
+          </div>
+          <p>
+            Each setting adds one sentence of style instructions to the system
+            prompt, after your own prompt. The middle stops,
+            <strong>Balanced</strong> and <strong>Standard</strong>, add
+            nothing, so the prompt alone decides.
+          </p>
+          <div class="table-wrap">
+            <table class="settings-table">
+              <thead>
+                <tr>
+                  <th scope="col">Setting</th>
+                  <th scope="col">What it changes</th>
+                  <th scope="col">Applies to</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Match strictness</th>
+                  <td>
+                    <strong>Rigorous</strong> weighs missing skills heavily, and
+                    imperfect matches can score below 50%.
+                    <strong>Lenient</strong> gives credit for transferable and
+                    adjacent experience.
+                  </td>
+                  <td>Match score</td>
+                </tr>
+                <tr>
+                  <th scope="row">Language</th>
+                  <td>
+                    <strong>Match the job posting</strong> writes in the
+                    posting's language. Choosing a language forces it for every
+                    posting. Headings are translated, and names, job titles, and
+                    technologies stay as written.
+                  </td>
+                  <td>CV and cover letter</td>
+                </tr>
+                <tr>
+                  <th scope="row">Tone</th>
+                  <td>
+                    <strong>Formal</strong> uses precise corporate language.
+                    <strong>Professional</strong> is approachable.
+                    <strong>Conversational</strong> is warmer while staying
+                    professional.
+                  </td>
+                  <td>CV and cover letter</td>
+                </tr>
+                <tr>
+                  <th scope="row">Resume focus</th>
+                  <td>
+                    <strong>Skills-first</strong> puts technical skills near the
+                    top. <strong>Experience-first</strong> leads with roles and
+                    achievements.
+                  </td>
+                  <td>CV only</td>
+                </tr>
+                <tr>
+                  <th scope="row">Bullet density</th>
+                  <td>
+                    <strong>Concise</strong> keeps each bullet to one line of
+                    action and result. <strong>Detailed</strong> adds the tools,
+                    scale, and context behind it.
+                  </td>
+                  <td>CV only</td>
+                </tr>
+                <tr>
+                  <th scope="row">Reading level</th>
+                  <td>
+                    <strong>Simple</strong> uses plain words and short
+                    sentences. <strong>Advanced</strong> allows domain
+                    vocabulary and more complex sentences.
+                  </td>
+                  <td>CV and cover letter</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/output-style.webp">
+              <img
+                src="screenshots/output-style.webp"
+                alt="Output style screen with sliders for match strictness, tone, resume focus, and bullet density, a language dropdown, and a sample bullet and cover letter opener"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              The sample on the right is a fixed example that changes with Tone
+              and Resume focus. It gives a feel for the style without calling a
+              model.
+            </figcaption>
+          </figure>
+          <p>
+            Output style only affects documents you generate afterwards. To
+            apply a change to existing documents, generate them again.
+          </p>
+
+          <h3>Prompts</h3>
+          <div class="path" aria-label="Navigation path">
+            <span>Settings</span><b>→</b><span>Generation</span><b>→</b
+            ><span>Prompts</span>
+          </div>
+          <p>
+            Prompts are the exact instructions the model receives. The CV and
+            cover letter each have two prompts:
+          </p>
+          <ul>
+            <li>
+              The <strong>system prompt</strong> sets the rules: the model's
+              role, the document structure, and what it must never do.
+            </li>
+            <li>
+              The <strong>user prompt template</strong> carries the specific
+              job. <code>{{companyName}}</code>, <code>{{jobTitle}}</code>,
+              <code>{{jobDescription}}</code>, and
+              <code>{{userProfile}}</code> are replaced with the real values
+              before sending. Remove a placeholder and the model never sees that
+              information.
+            </li>
+          </ul>
+          <p>
+            <strong>Start from a preset</strong> fills all four prompts at once.
+            <strong>Standard</strong> suits any industry.
+            <strong>Tech / Engineering</strong> emphasises quantified impact,
+            technical depth, and project links.
+            <strong>Creative / Portfolio</strong> puts portfolio work first, in
+            a warmer narrative voice. Applying a preset overwrites your custom
+            prompts.
+          </p>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/prompts.webp">
+              <img
+                src="screenshots/prompts.webp"
+                alt="Prompts screen with Standard, Tech / Engineering, and Creative / Portfolio presets above the custom prompt editors"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              Choose a preset, then fine-tune the prompts below it.
+            </figcaption>
+          </figure>
+          <p>When you edit a CV prompt, keep these rules in mind:</p>
+          <ul>
+            <li>
+              Keep the content rules that limit the model to skills and
+              experience in your profile. They are the main protection against
+              invented claims.
+            </li>
+            <li>
+              Keep the formatting rules. The preview and PDF render the model's
+              Markdown as-is, so headings, bullets, and section dividers come
+              straight from the prompt.
+            </li>
+            <li>
+              Don't contradict Output style. Its instructions are added after
+              your prompt, so conflicting instructions make the result
+              unpredictable.
+            </li>
+          </ul>
+          <p>
+            The same screen holds three more prompts. The
+            <strong>company research</strong> prompt is used only when research
+            runs on Perplexity. The <strong>interview prep</strong> and
+            <strong>technical interview prep</strong> prompts must return the
+            JSON fields listed on screen. A section the prompt drops won't
+            appear in the prep workspace.
+          </p>
+          <div class="callout">
+            <strong>Keep a copy of custom CV and cover letter prompts</strong>
+            <p>
+              When an update ships improved default prompts, Bespoke replaces
+              the four CV and cover letter prompts with the new defaults, and
+              your edits to them are lost. The research and interview prep
+              prompts are kept. Save your versions somewhere else so you can
+              paste them back after an update.
+            </p>
+          </div>
+
+          <h3>Generation parameters</h3>
+          <div class="path" aria-label="Navigation path">
+            <span>Settings</span><b>→</b><span>Model routing</span><b>→</b
+            ><span>Generation parameters</span>
+          </div>
+          <p>
+            These three sliders control how the model writes, not what it is
+            told. They apply to whichever model each job is routed to, and
+            <strong>Reset to defaults</strong> restores the values below.
+          </p>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/generation-params.webp">
+              <img
+                src="screenshots/generation-params.webp"
+                alt="Generation parameters card with sliders for temperature at 0.7, top P at 0.90, and max output tokens at 4,096"
+                width="1346"
+                height="558"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              The defaults: temperature 0.7, top P 0.90, max output tokens
+              4,096.
+            </figcaption>
+          </figure>
+          <div class="table-wrap">
+            <table class="settings-table">
+              <thead>
+                <tr>
+                  <th scope="col">Parameter</th>
+                  <th scope="col">Lower</th>
+                  <th scope="col">Higher</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    Temperature<span>0.1–1.5, default 0.7</span>
+                  </th>
+                  <td>
+                    Predictable, consistent wording that stays close to your
+                    profile, but it can read flat and repeat between
+                    applications.
+                  </td>
+                  <td>
+                    More varied phrasing, but more likely to embellish, drift
+                    from the facts, or break the formatting rules. Above about
+                    1.0, check the output carefully.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Top P<span>0.50–1.00, default 0.90</span></th>
+                  <td>
+                    Only the most likely words are considered, so the vocabulary
+                    is safe and conventional.
+                  </td>
+                  <td>
+                    Less common words are allowed, which adds variety but can
+                    produce unusual word choices.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    Max output tokens<span>1,024–8,192, default 4,096</span>
+                  </th>
+                  <td>
+                    A hard length limit. Too low, and a long CV is cut off
+                    mid-section.
+                  </td>
+                  <td>
+                    Room for long CVs and for reasoning models, whose hidden
+                    thinking counts against the limit. Each call can cost more
+                    and take longer.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Temperature and top P both control variety, so change one at a time.
+            For length and detail, use Bullet density and the prompts rather
+            than max output tokens: the limit truncates output, it doesn't make
+            the model write more.
+          </p>
+          <h3>Where each parameter applies</h3>
+          <ul>
+            <li>
+              <strong>CV and cover letter</strong> use all three values exactly
+              as set.
+            </li>
+            <li>
+              <strong
+                >Match scoring, interview prep, and company research</strong
+              >
+              cap temperature at 0.4, and <strong>Learn more</strong> lessons
+              cap it at 0.5. A lower setting passes through, but a higher one
+              can't make scores or prep erratic. These jobs use top P as set,
+              but have fixed length limits of their own.
+            </li>
+            <li>
+              <strong>Job extraction</strong> ignores these settings entirely.
+            </li>
+            <li>
+              <strong>Ollama</strong> sizes its context window from the prompt
+              length plus max output tokens, between 8K and 32K tokens. A higher
+              limit can make a local model use more memory and load more slowly.
+            </li>
+          </ul>
+          <div class="callout">
+            <strong>If a document comes back cut off or empty</strong>
+            <p>
+              Raise max output tokens, especially with a reasoning model. If it
+              invents details or ignores the structure, lower the temperature
+              before you edit the prompt.
+            </p>
+          </div>
+        </section>
+
+        <section class="guide-section" id="application">
+          <span class="section-num">06</span>
           <h2>Tailor an application</h2>
           <p class="lede">
             Start from the real posting so Bespoke can compare the role with the
@@ -931,26 +1415,101 @@ pnpm dev</code></pre>
           <ol>
             <li>Open the job posting in the browser.</li>
             <li>
-              Click the extension icon, or right-click the page and choose
-              <strong>Check my match for this job</strong>.
+              Right-click the page and choose
+              <strong>Check my match for this job</strong>. To limit what
+              Bespoke reads, select the job description first. The side panel
+              opens (in Firefox, a dialog window) and Bespoke extracts the
+              company, title, and description.
             </li>
             <li>
-              Review the extracted company, title, location, posting URL, and
-              description. Correct anything the job board presented poorly.
+              If it finds the company and title, the match analysis starts
+              straight away. If it can't, the
+              <strong>Check your match</strong> form opens. Fill in or correct
+              the details, then choose <strong>Analyze match</strong>.
             </li>
             <li>
-              Run the match analysis. Review strengths, gaps, and suggested
-              improvements before generating documents.
+              Read the match report: the score, strengths, weaknesses, suggested
+              improvements, and a short company profile.
             </li>
             <li>
-              Choose <strong>Generate Docs</strong>. Preview each document, edit
-              the Markdown, and download Markdown or PDF.
+              Choose <strong>Generate Docs</strong>. On
+              <strong>Strengthen this application</strong>, add any gap you can
+              honestly cover so the documents include it, then choose
+              <strong>Generate CV + cover letter</strong>.
+            </li>
+            <li>
+              Open the preview to switch between the resume and cover letter,
+              edit the Markdown, and download it as Markdown or PDF.
             </li>
             <li>
               Save the application so its match report, documents, notes, tags,
-              and interview history stay together.
+              and interview history stay together. If you aren't ready to apply,
+              choose <strong>Save for later</strong> from the report.
             </li>
           </ol>
+          <div class="shot-row">
+            <figure class="shot">
+              <a class="shot-link" href="screenshots/panel-review.webp">
+                <img
+                  src="screenshots/panel-review.webp"
+                  alt="Check your match form with company name, job title, extracted job description, and the models used for scoring and drafting"
+                  width="720"
+                  height="1110"
+                  loading="lazy" />
+              </a>
+              <figcaption>Check the extracted details.</figcaption>
+            </figure>
+            <figure class="shot">
+              <a class="shot-link" href="screenshots/panel-report.webp">
+                <img
+                  src="screenshots/panel-report.webp"
+                  alt="Match report showing a 79% strong match, strengths, weaknesses, improvements, company profile, and the Generate Docs button"
+                  width="720"
+                  height="1260"
+                  loading="lazy" />
+              </a>
+              <figcaption>Review the match report.</figcaption>
+            </figure>
+            <figure class="shot">
+              <a class="shot-link" href="screenshots/panel-docs.webp">
+                <img
+                  src="screenshots/panel-docs.webp"
+                  alt="Strengthen this application screen listing two gaps with Add buttons and a Generate CV + cover letter button"
+                  width="720"
+                  height="765"
+                  loading="lazy" />
+              </a>
+              <figcaption>Address gaps, then generate.</figcaption>
+            </figure>
+          </div>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/doc-preview.webp">
+              <img
+                src="screenshots/doc-preview.webp"
+                alt="Document preview window showing a tailored resume with Resume and Cover letter tabs, Edit and Preview modes, and Markdown and PDF download buttons"
+                width="1650"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              The preview window. Edits save automatically, and Revert restores
+              the generated text.
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/applications.webp">
+              <img
+                src="screenshots/applications.webp"
+                alt="Applications list with search, status filters, and six applications showing match score, status, and last update"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              Saved applications, filterable by status. Click a row to open its
+              details, notes, and tags.
+            </figcaption>
+          </figure>
           <div class="callout">
             <strong>Review before you send</strong>
             <p>
@@ -962,7 +1521,7 @@ pnpm dev</code></pre>
         </section>
 
         <section class="guide-section" id="interviews">
-          <span class="section-num">06</span>
+          <span class="section-num">07</span>
           <h2>Prepare for interviews</h2>
           <p class="lede">
             Applications move from Saved or Applied into Interviewing, where
@@ -972,6 +1531,20 @@ pnpm dev</code></pre>
             <span>Applications</span><b>→</b><span>Interviews</span><b>→</b
             ><span>Round</span>
           </div>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/schedule.webp">
+              <img
+                src="screenshots/schedule.webp"
+                alt="Interview schedule with next interview, this week, and awaiting result summaries above a list of upcoming and earlier rounds"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              The schedule lists upcoming and past rounds. Use
+              <strong>Add round</strong> to schedule one.
+            </figcaption>
+          </figure>
           <ol>
             <li>
               Change an application's status to <strong>Interviewing</strong> or
@@ -990,6 +1563,34 @@ pnpm dev</code></pre>
               the outcome while the details are fresh.
             </li>
           </ol>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/prep.webp">
+              <img
+                src="screenshots/prep.webp"
+                alt="Prep sheet for a technical interview with a section list, readiness progress, what to expect, company research, and a stack-to-review checklist"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              A prep sheet for a technical round. Check items off as you prepare
+              and the progress bar fills.
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <a class="shot-link" href="screenshots/debrief.webp">
+              <img
+                src="screenshots/debrief.webp"
+                alt="Debrief form with a 4 of 5 rating, a one-line assessment, questions asked, a follow-up checklist, and the outcome"
+                width="1920"
+                height="1200"
+                loading="lazy" />
+            </a>
+            <figcaption>
+              A debrief. Setting the outcome also updates the application's
+              status.
+            </figcaption>
+          </figure>
           <p>
             Only one open, non-synthesised round is allowed per application. Add
             the next round after completing the current round's debrief.
@@ -997,7 +1598,7 @@ pnpm dev</code></pre>
         </section>
 
         <section class="guide-section" id="data">
-          <span class="section-num">07</span>
+          <span class="section-num">08</span>
           <h2>Data &amp; privacy</h2>
           <p class="lede">
             Bespoke is local-first. Your profile, settings, credentials, and
@@ -1025,7 +1626,7 @@ pnpm dev</code></pre>
         </section>
 
         <section class="guide-section" id="troubleshooting">
-          <span class="section-num">08</span>
+          <span class="section-num">09</span>
           <h2>Troubleshooting</h2>
           <p class="lede">
             Most issues come from a provider connection, browser permission, or
