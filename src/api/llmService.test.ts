@@ -69,6 +69,25 @@ describe("LLM response parsing", () => {
     )
   })
 
+  it.each([
+    ["strict", "Weight missing skills and experience gaps heavily"],
+    ["balanced", "Consider both explicit requirements and transferable skills"],
+    ["generous", "give credit for transferable skills and adjacent experience"]
+  ] as const)(
+    "puts the %s match strictness into the scoring prompt",
+    async (matchStrictness, expected) => {
+      const { service, chat } = serviceReturning("{}")
+
+      await service.analyzeMatch(
+        request({ llmTuning: { ...DEFAULT_LLM_TUNING, matchStrictness } })
+      )
+
+      const userPrompt = chat.mock.calls[0][0].messages[1].content
+      expect(userPrompt).toContain(`SCORING STANCE`)
+      expect(userPrompt).toContain(expected)
+    }
+  )
+
   it("returns the empty match fallback for malformed JSON", async () => {
     const { service } = serviceReturning("This is not JSON")
 
