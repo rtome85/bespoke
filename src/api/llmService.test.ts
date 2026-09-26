@@ -83,8 +83,13 @@ describe("LLM response parsing", () => {
       )
 
       const userPrompt = chat.mock.calls[0][0].messages[1].content
-      expect(userPrompt).toContain(`SCORING STANCE`)
+      expect(userPrompt).toContain(
+        `SCORING STANCE — apply this only when judging "experienceMatch" and "domainFit": `
+      )
       expect(userPrompt).toContain(expected)
+      expect(userPrompt).toContain(
+        `"skillsCoverage" and "bonusSkills" are literal counts and ignore the stance`
+      )
     }
   )
 
