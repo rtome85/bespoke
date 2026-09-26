@@ -494,14 +494,18 @@ ${rawText.substring(0, 6000)}`
 
   async analyzeMatch(request: GenerateRequest): Promise<MatchResult> {
     const llmTuning = request.llmTuning ?? DEFAULT_LLM_TUNING
+    const { strictnessInstruction } = this.tuningInstructions(llmTuning)
 
     const userPrompt = `You are a career advisor. Score this candidate on FOUR dimensions against the job posting, then provide qualitative analysis.
 
-DIMENSION SCORING — be literal, score only what is explicitly stated in the candidate profile:
+DIMENSION SCORING — base every score on what the candidate profile states; never assume skills or experience it does not mention:
 - "skillsCoverage" (0–100): what % of the job's REQUIRED skills/technologies the candidate explicitly lists. 100 = all required skills present, 50 = half present, 0 = none.
 - "experienceMatch" (0–100): how well the candidate's seniority and years of experience match the role. 100 = exact fit, 50 = somewhat under/over-qualified, 0 = completely mismatched.
 - "domainFit" (0–100): relevance of the candidate's industry/domain background. 100 = same domain, 50 = adjacent, 0 = unrelated.
 - "bonusSkills" (0–100): coverage of the job's nice-to-have/preferred (non-required) skills. 100 = all bonus skills present, 0 = none.
+
+SCORING STANCE — apply this only when judging "experienceMatch" and "domainFit": ${strictnessInstruction}
+"skillsCoverage" and "bonusSkills" are literal counts and ignore the stance: count only skills the candidate explicitly lists — never credit transferable skills or adjacent experience toward them.
 
 HUMAN LANGUAGE REQUIREMENTS — report every spoken/written language the posting mentions in "languageRequirements" (never programming languages):
 - "required": true only when the posting states the language as a hard requirement — listed among the requirements/qualifications, or phrased as "must", "fluent in", "mandatory", or with a required level such as B2/C1. Use false when it is framed as nice to have, a plus, an asset, an advantage, preferred, desirable or optional.
